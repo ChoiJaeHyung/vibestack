@@ -1,0 +1,40 @@
+{
+  "name": "@vibestack/mcp-server",
+  "version": "0.1.0",
+  "description": "VibeStack MCP Server - Sync your vibe-coded projects for tech stack analysis and learning",
+  "type": "module",
+  "bin": {
+    "vibestack-mcp": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc && chmod 755 dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "mcp",
+    "vibestack",
+    "vibe-coding",
+    "tech-stack",
+    "learning"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vibestack/vibestack.git",
+    "directory": "packages/mcp-server"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "glob": "^11.0.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
