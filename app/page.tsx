@@ -1,10 +1,9 @@
 import Link from "next/link";
 import {
-  Layers,
+  GraduationCap,
   ArrowRight,
   Code,
   Brain,
-  GraduationCap,
   Cable,
   Cpu,
   BookOpen,
@@ -19,9 +18,9 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/80">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2">
-            <Layers className="h-6 w-6 text-zinc-900 dark:text-zinc-100" />
+            <GraduationCap className="h-6 w-6 text-zinc-900 dark:text-zinc-100" />
             <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-              VibeStack
+              VibeUniv
             </span>
           </Link>
           <nav className="hidden items-center gap-6 md:flex">
@@ -74,26 +73,26 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(120,119,198,0.08),transparent_50%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(120,119,198,0.15),transparent_50%)]" />
           <div className="relative mx-auto max-w-6xl px-6 py-28 text-center sm:py-36">
             <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-              <Layers className="h-4 w-4" />
-              먼저 만들고, 그 다음에 이해한다
+              <GraduationCap className="h-4 w-4" />
+              내 프로젝트로 배우는 가장 쉬운 방법
             </div>
             <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl lg:text-6xl dark:text-zinc-100">
-              AI로 만들었다면,
+              만들었으면 반은 왔어요
               <br />
               <span className="bg-gradient-to-r from-zinc-900 via-zinc-600 to-zinc-900 bg-clip-text text-transparent dark:from-zinc-100 dark:via-zinc-400 dark:to-zinc-100">
-                이제 이해할 차례
+                나머지 반, 여기서 채워요
               </span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">
-              바이브 코딩으로 만든 프로젝트의 기술 스택을 AI가 분석하고, 맞춤
-              학습 로드맵을 만들어 드립니다
+              AI 코딩 도구로 앱을 만들었나요? 프로젝트를 연결하면 AI가 기술
+              스택을 분석하고, 딱 필요한 것만 알려드려요
             </p>
             <div className="mt-10 flex justify-center gap-4">
               <Link
                 href="/signup"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-zinc-900 px-6 text-base font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
               >
-                무료로 시작하기
+                5분만에 시작하기
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -121,20 +120,20 @@ export default function LandingPage() {
               <StepCard
                 step={1}
                 icon={<Code className="h-6 w-6" />}
-                title="MCP 연결"
-                description="코딩 도구에서 자동으로 프로젝트를 동기화합니다"
+                title="프로젝트 연결"
+                description="코딩 도구에서 MCP로 원클릭 연결"
               />
               <StepCard
                 step={2}
                 icon={<Brain className="h-6 w-6" />}
-                title="AI 분석"
-                description="멀티 LLM이 기술 스택을 자동 감지하고 분석합니다"
+                title="AI가 분석"
+                description="기술 스택, 구조, 패턴을 자동으로 파악"
               />
               <StepCard
                 step={3}
                 icon={<GraduationCap className="h-6 w-6" />}
-                title="맞춤 학습"
-                description="내 프로젝트 기반의 학습 로드맵으로 공부합니다"
+                title="내 코드로 학습"
+                description="내 프로젝트 코드가 교재가 됩니다"
               />
             </div>
           </div>
@@ -154,23 +153,23 @@ export default function LandingPage() {
             <div className="mt-16 grid gap-6 sm:grid-cols-2">
               <FeatureCard
                 icon={<Cable className="h-6 w-6" />}
-                title="MCP 원클릭 연동"
-                description="Claude Code, Cursor, Windsurf 등에서 한 번의 설정으로 자동 연동"
+                title="원클릭 프로젝트 연동"
+                description="Claude Code, Cursor 등에서 한 번만 설정하면 끝"
               />
               <FeatureCard
                 icon={<Cpu className="h-6 w-6" />}
-                title="11개 LLM 지원"
-                description="Anthropic, OpenAI, Google 등 11개 LLM 프로바이더 지원, BYOK"
+                title="11개 AI 모델 지원"
+                description="Anthropic, OpenAI, Google 등 원하는 모델로 분석"
               />
               <FeatureCard
                 icon={<BookOpen className="h-6 w-6" />}
-                title="프로젝트 기반 학습"
-                description="내 프로젝트 코드를 예시로 활용하는 맞춤 학습 경험"
+                title="내 코드가 교과서"
+                description="추상적인 튜토리얼 대신, 내가 만든 코드로 배워요"
               />
               <FeatureCard
                 icon={<MessageCircle className="h-6 w-6" />}
                 title="AI 튜터"
-                description="궁금한 것을 AI 튜터에게 물어보세요. 내 코드로 설명해줍니다"
+                description="모르는 건 바로 물어보세요. 내 코드로 설명해줘요"
               />
             </div>
           </div>
@@ -253,7 +252,7 @@ export default function LandingPage() {
               />
               <FaqItem
                 question="MCP는 어떻게 연결하나요?"
-                answer="VibeStack MCP 서버를 npm으로 설치한 후, 사용 중인 코딩 도구(Claude Code, Cursor 등)의 MCP 설정에 추가하면 됩니다. 설정 페이지에서 API 키를 발급받아 사용하세요."
+                answer="VibeUniv MCP 서버를 npm으로 설치한 후, 사용 중인 코딩 도구(Claude Code, Cursor 등)의 MCP 설정에 추가하면 됩니다. 설정 페이지에서 API 키를 발급받아 사용하세요."
               />
               <FaqItem
                 question="어떤 LLM을 지원하나요?"
@@ -281,9 +280,9 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-6 py-12">
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
             <div className="flex items-center gap-2">
-              <Layers className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+              <GraduationCap className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
               <span className="font-semibold text-zinc-900 dark:text-zinc-100">
-                VibeStack
+                VibeUniv
               </span>
             </div>
             <div className="flex items-center gap-6 text-sm text-zinc-500 dark:text-zinc-400">
@@ -310,7 +309,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="mt-8 text-center text-sm text-zinc-400 dark:text-zinc-500">
-            &copy; 2026 VibeStack. All rights reserved.
+            &copy; 2026 VibeUniv. All rights reserved.
           </div>
         </div>
       </footer>

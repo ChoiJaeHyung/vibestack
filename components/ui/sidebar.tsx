@@ -11,7 +11,7 @@ import {
   Menu,
   X,
   LogOut,
-  Layers,
+  GraduationCap as SidebarLogo,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -62,9 +62,9 @@ export function Sidebar({ userEmail }: SidebarProps) {
         {/* Logo */}
         <div className="flex h-16 items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2">
-            <Layers className="h-6 w-6 text-zinc-900 dark:text-zinc-100" />
+            <SidebarLogo className="h-6 w-6 text-zinc-900 dark:text-zinc-100" />
             <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-              VibeStack
+              VibeUniv
             </span>
           </Link>
           <button
