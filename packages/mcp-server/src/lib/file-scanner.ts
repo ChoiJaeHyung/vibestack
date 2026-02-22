@@ -87,6 +87,38 @@ const SOURCE_PATTERNS = [
 
 // ─── Ignore patterns ────────────────────────────────────────────────
 
+// ─── Teaching-critical file patterns ─────────────────────────────────
+// These files contain core logic essential for personalized education.
+// They skip header extraction and retain full content so the AI tutor
+// can reference the student's actual code (e.g. "In your middleware.ts…").
+
+const TEACHING_CRITICAL_PATTERNS = [
+  "app/**/page.tsx",
+  "app/**/page.ts",
+  "app/**/layout.tsx",
+  "app/**/layout.ts",
+  "app/api/**/*.ts",
+  "middleware.ts",
+  "middleware.js",
+  "lib/**/*.ts",
+  "server/**/*.ts",
+  "types/**/*.ts",
+];
+
+function isTeachingCriticalFile(relativePath: string): boolean {
+  return TEACHING_CRITICAL_PATTERNS.some((pattern) => {
+    // Convert glob pattern to regex
+    const regexStr = pattern
+      .replace(/\*\*/g, "<<GLOBSTAR>>")
+      .replace(/\*/g, "[^/]*")
+      .replace(/<<GLOBSTAR>>/g, ".*")
+      .replace(/\./g, "\\.");
+    return new RegExp(`^${regexStr}$`).test(relativePath);
+  });
+}
+
+// ─── Ignore patterns ────────────────────────────────────────────────
+
 const IGNORE_PATTERNS = [
   "node_modules/**",
   ".next/**",
@@ -273,9 +305,12 @@ export async function scanProjectFiles(
       let content = await readFileContent(absolutePath, relativePath);
 
       // For source code files (not config/dependency files), extract only
-      // import/export headers to reduce upload size (~500 bytes vs ~50KB)
+      // import/export headers to reduce upload size (~500 bytes vs ~50KB).
+      // Exception: teaching-critical files retain full content so the AI
+      // tutor can reference the student's actual code during lessons.
       const isConfig = configFileSet.has(relativePath);
-      if (!isConfig && isSourceCodeFile(relativePath)) {
+      const isTeachingCritical = isTeachingCriticalFile(relativePath);
+      if (!isConfig && !isTeachingCritical && isSourceCodeFile(relativePath)) {
         content = extractFileHeader(content);
       }
 

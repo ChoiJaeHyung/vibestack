@@ -5,7 +5,11 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { createLLMProvider } from "@/lib/llm/factory";
 import { getDefaultLlmKeyForUser } from "@/server/actions/llm-keys";
 import { checkUsageLimit } from "@/lib/utils/usage-limits";
-import { buildRoadmapPrompt } from "@/lib/prompts/learning-roadmap";
+import {
+  buildStructurePrompt,
+  buildContentBatchPrompt,
+} from "@/lib/prompts/learning-roadmap";
+import { buildProjectDigest } from "@/lib/learning/project-digest";
 import { buildTutorPrompt } from "@/lib/prompts/tutor-chat";
 import type { Database, Json } from "@/types/database";
 
@@ -168,12 +172,28 @@ interface ConversationListResult {
 
 // ─── LLM Response Types ──────────────────────────────────────────────
 
-interface RoadmapModuleResponse {
+// Phase 1 — structure only (no content)
+interface StructureModuleResponse {
   title: string;
   description: string;
   module_type: string;
   estimated_minutes: number;
   tech_name: string;
+  relevant_files: string[];
+  learning_objectives: string[];
+}
+
+interface StructureResponse {
+  title: string;
+  description: string;
+  difficulty: string;
+  estimated_hours: number;
+  modules: StructureModuleResponse[];
+}
+
+// Phase 2 — content batch per tech_name
+interface ContentBatchItem {
+  module_title: string;
   content: {
     sections: Array<{
       type: string;
@@ -184,14 +204,6 @@ interface RoadmapModuleResponse {
       quiz_answer?: number;
     }>;
   };
-}
-
-interface RoadmapResponse {
-  title: string;
-  description: string;
-  difficulty: string;
-  estimated_hours: number;
-  modules: RoadmapModuleResponse[];
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -292,8 +304,11 @@ export async function generateLearningPath(
     // Create LLM provider
     const provider = createLLMProvider(llmKeyData.provider, llmKeyData.apiKey);
 
-    // Build the prompt
-    const prompt = buildRoadmapPrompt(
+    // Build project digest for personalized content
+    const digest = await buildProjectDigest(projectId);
+
+    // ─── Phase 1: Generate roadmap structure ──────────────────────────
+    const structurePrompt = buildStructurePrompt(
       techStacks.map((t) => ({
         technology_name: t.technology_name,
         category: t.category,
@@ -301,28 +316,101 @@ export async function generateLearningPath(
         version: t.version,
         description: t.description,
       })),
+      digest.raw,
       difficulty,
     );
 
-    // Call LLM
-    const chatResult = await provider.chat({
-      messages: [{ role: "user", content: prompt }],
+    const structureResult = await provider.chat({
+      messages: [{ role: "user", content: structurePrompt }],
     });
 
-    // Parse the JSON response
-    const cleanedResponse = stripCodeFences(chatResult.content);
-    let roadmap: RoadmapResponse;
+    let totalInputTokens = structureResult.input_tokens;
+    let totalOutputTokens = structureResult.output_tokens;
+
+    let structure: StructureResponse;
     try {
-      roadmap = JSON.parse(cleanedResponse) as RoadmapResponse;
+      structure = JSON.parse(
+        stripCodeFences(structureResult.content),
+      ) as StructureResponse;
     } catch {
-      return { success: false, error: "Failed to parse learning roadmap from LLM response" };
+      return {
+        success: false,
+        error: "Failed to parse learning roadmap structure from LLM response",
+      };
     }
+
+    // ─── Phase 2: Generate content in batches by tech_name ────────────
+    // Group modules by tech_name for batch processing
+    const techBatches = new Map<string, StructureModuleResponse[]>();
+    for (const mod of structure.modules) {
+      const key = mod.tech_name.toLowerCase();
+      const batch = techBatches.get(key) ?? [];
+      batch.push(mod);
+      techBatches.set(key, batch);
+    }
+
+    // Build content map: module_title -> content
+    const contentMap = new Map<
+      string,
+      ContentBatchItem["content"]
+    >();
+
+    for (const [, batchModules] of techBatches) {
+      // Collect relevant code from digest for this batch
+      const relevantPaths = new Set<string>();
+      for (const mod of batchModules) {
+        for (const fp of mod.relevant_files ?? []) {
+          relevantPaths.add(fp);
+        }
+      }
+
+      const relevantCode = digest.criticalFiles.filter((f) =>
+        relevantPaths.has(f.path),
+      );
+
+      const techName = batchModules[0].tech_name;
+
+      const contentPrompt = buildContentBatchPrompt(
+        techName,
+        batchModules.map((m) => ({
+          title: m.title,
+          description: m.description,
+          module_type: m.module_type,
+          learning_objectives: m.learning_objectives ?? [],
+        })),
+        relevantCode,
+        difficulty,
+      );
+
+      const contentResult = await provider.chat({
+        messages: [{ role: "user", content: contentPrompt }],
+      });
+
+      totalInputTokens += contentResult.input_tokens;
+      totalOutputTokens += contentResult.output_tokens;
+
+      let batchContent: ContentBatchItem[];
+      try {
+        batchContent = JSON.parse(
+          stripCodeFences(contentResult.content),
+        ) as ContentBatchItem[];
+      } catch {
+        // If batch parsing fails, generate empty content for these modules
+        batchContent = [];
+      }
+
+      for (const item of batchContent) {
+        contentMap.set(item.module_title, item.content);
+      }
+    }
+
+    // ─── Persist to database ──────────────────────────────────────────
 
     // Validate and normalize difficulty
     const roadmapDifficulty = VALID_DIFFICULTIES.has(
-      roadmap.difficulty as Difficulty,
+      structure.difficulty as Difficulty,
     )
-      ? (roadmap.difficulty as Difficulty)
+      ? (structure.difficulty as Difficulty)
       : difficulty ?? "beginner";
 
     // Use service client for inserting records (bypass RLS)
@@ -332,11 +420,11 @@ export async function generateLearningPath(
     const pathInsert: LearningPathInsert = {
       project_id: projectId,
       user_id: user.id,
-      title: roadmap.title,
-      description: roadmap.description ?? null,
+      title: structure.title,
+      description: structure.description ?? null,
       difficulty: roadmapDifficulty,
-      estimated_hours: roadmap.estimated_hours ?? null,
-      total_modules: roadmap.modules.length,
+      estimated_hours: structure.estimated_hours ?? null,
+      total_modules: structure.modules.length,
       llm_provider: provider.providerName,
       status: "active",
     };
@@ -357,8 +445,8 @@ export async function generateLearningPath(
       techNameToId.set(tech.technology_name.toLowerCase(), tech.id);
     }
 
-    // Create learning_modules records
-    const moduleInserts: LearningModuleInsert[] = roadmap.modules.map(
+    // Create learning_modules records with Phase 2 content
+    const moduleInserts: LearningModuleInsert[] = structure.modules.map(
       (mod, index) => {
         const moduleType = VALID_MODULE_TYPES.has(
           mod.module_type as ModuleType,
@@ -369,6 +457,9 @@ export async function generateLearningPath(
         const techStackId =
           techNameToId.get(mod.tech_name.toLowerCase()) ?? null;
 
+        // Look up content from Phase 2 batch results
+        const content = contentMap.get(mod.title) ?? { sections: [] };
+
         return {
           learning_path_id: learningPath.id,
           title: mod.title,
@@ -377,7 +468,7 @@ export async function generateLearningPath(
           module_order: index + 1,
           estimated_minutes: mod.estimated_minutes ?? null,
           tech_stack_id: techStackId,
-          content: mod.content as unknown as Json,
+          content: content as unknown as Json,
         };
       },
     );
@@ -390,7 +481,7 @@ export async function generateLearningPath(
       return { success: false, error: "Failed to create learning modules" };
     }
 
-    // Create analysis_jobs record for tracking
+    // Create analysis_jobs record for tracking (aggregate token usage)
     const jobInsert: AnalysisJobInsert = {
       project_id: projectId,
       user_id: user.id,
@@ -398,8 +489,8 @@ export async function generateLearningPath(
       status: "completed",
       llm_provider: provider.providerName,
       llm_model: provider.modelName,
-      input_tokens: chatResult.input_tokens,
-      output_tokens: chatResult.output_tokens,
+      input_tokens: totalInputTokens,
+      output_tokens: totalOutputTokens,
       started_at: new Date().toISOString(),
       completed_at: new Date().toISOString(),
     };
@@ -410,8 +501,8 @@ export async function generateLearningPath(
       success: true,
       data: {
         learning_path_id: learningPath.id,
-        title: roadmap.title,
-        total_modules: roadmap.modules.length,
+        title: structure.title,
+        total_modules: structure.modules.length,
       },
     };
   } catch (error) {

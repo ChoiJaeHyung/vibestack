@@ -246,30 +246,194 @@ export default function LandingPage() {
               </h2>
             </div>
             <div className="mt-12 space-y-3">
-              <FaqItem
-                question="바이브 코딩이 뭔가요?"
-                answer="바이브 코딩(Vibe Coding)은 AI 코딩 도구(Claude Code, Cursor, Bolt 등)를 사용하여 직접 코드를 작성하지 않고 앱을 만드는 방식입니다. 프롬프트로 의도를 전달하면 AI가 코드를 생성합니다."
-              />
-              <FaqItem
-                question="MCP는 어떻게 연결하나요?"
-                answer="VibeUniv MCP 서버를 npm으로 설치한 후, 사용 중인 코딩 도구(Claude Code, Cursor 등)의 MCP 설정에 추가하면 됩니다. 설정 페이지에서 API 키를 발급받아 사용하세요."
-              />
-              <FaqItem
-                question="어떤 LLM을 지원하나요?"
-                answer="Anthropic(Claude), OpenAI(GPT), Google(Gemini), Groq, Mistral, DeepSeek, Cohere, Together AI, Fireworks AI, xAI(Grok), OpenRouter 등 11개 프로바이더를 지원합니다."
-              />
-              <FaqItem
-                question="Free 플랜으로 충분한가요?"
-                answer="개인 프로젝트 1-2개를 학습하기에 충분합니다. 프로젝트 3개와 월 20회 AI 대화가 포함됩니다. 더 많은 프로젝트나 무제한 기능이 필요하면 Pro 플랜을 추천합니다."
-              />
-              <FaqItem
-                question="내 코드는 안전한가요?"
-                answer="프로젝트 데이터는 암호화되어 저장되며, 분석에 필요한 메타데이터(의존성 파일, 설정 파일 등)만 수집합니다. 소스 코드 전체를 저장하지 않으며, 언제든지 데이터를 삭제할 수 있습니다."
-              />
-              <FaqItem
-                question="BYOK가 뭔가요?"
-                answer="BYOK(Bring Your Own Key)는 본인의 LLM API 키를 사용하는 기능입니다. Pro 플랜 이상에서 사용 가능하며, 원하는 LLM 프로바이더의 API 키를 등록하면 해당 모델로 분석과 학습이 진행됩니다."
-              />
+              <FaqItem question="바이브 코딩이 뭔가요?">
+                <p>
+                  바이브 코딩(Vibe Coding)은 AI 코딩 도구(Claude Code, Cursor,
+                  Bolt 등)를 사용하여 <strong>프롬프트만으로 앱을 만드는 방식</strong>이에요.
+                  &quot;이런 기능 만들어줘&quot;라고 말하면 AI가 코드를 생성하죠.
+                </p>
+                <p>
+                  문제는, 이렇게 만든 앱이 <em>왜</em> 돌아가는지 모를 수 있다는 거예요.
+                  VibeUniv는 바로 그 부분을 채워드립니다. 내 프로젝트 코드를 교재 삼아서,
+                  진짜 이해할 수 있도록 도와드려요.
+                </p>
+              </FaqItem>
+
+              <FaqItem question="MCP로 프로젝트를 연결하는 방법이 궁금해요">
+                <p>
+                  MCP(Model Context Protocol)를 사용하면 코딩 도구에서 프로젝트를
+                  자동으로 VibeUniv에 연결할 수 있어요. 아래 순서대로 따라해 보세요.
+                </p>
+                <p className="font-medium text-zinc-800 dark:text-zinc-200">
+                  1단계: API 키 발급
+                </p>
+                <p>
+                  VibeUniv에 가입한 뒤, <strong>Settings &gt; API Keys</strong> 페이지에서
+                  API 키를 하나 발급하세요. 이 키가 프로젝트를 내 계정에 연결하는 열쇠예요.
+                </p>
+                <p className="font-medium text-zinc-800 dark:text-zinc-200">
+                  2단계: MCP 서버 설정 추가
+                </p>
+                <p>사용 중인 도구에 맞게 MCP 설정 파일을 열어주세요.</p>
+                <ul className="list-inside list-disc space-y-1 pl-2">
+                  <li>
+                    <strong>Claude Code</strong> &mdash;{" "}
+                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                      ~/.claude/claude_desktop_config.json
+                    </code>
+                  </li>
+                  <li>
+                    <strong>Cursor</strong> &mdash;{" "}
+                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                      ~/.cursor/mcp.json
+                    </code>
+                  </li>
+                </ul>
+                <p>아래 내용을 추가하세요.</p>
+                <pre className="overflow-x-auto rounded-lg bg-zinc-100 p-4 text-xs leading-relaxed dark:bg-zinc-800">
+{`{
+  "mcpServers": {
+    "vibeuniv": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@vibeuniv/mcp-server@latest"
+      ],
+      "env": {
+        "VIBEUNIV_API_KEY": "여기에_발급받은_API_키"
+      }
+    }
+  }
+}`}
+                </pre>
+                <p className="font-medium text-zinc-800 dark:text-zinc-200">
+                  3단계: 프로젝트 동기화
+                </p>
+                <p>
+                  코딩 도구를 재시작하면 MCP 서버가 자동으로 연결돼요.
+                  프로젝트 폴더에서 작업을 시작하면 파일 구조와 기술 스택이 자동으로
+                  VibeUniv에 전송됩니다. 대시보드에서 프로젝트가 등록된 걸 확인하세요!
+                </p>
+              </FaqItem>
+
+              <FaqItem question="MCP 없이 프로젝트를 직접 업로드할 수도 있나요?">
+                <p>
+                  네! MCP를 사용할 수 없는 환경이라면, REST API를 통해 직접 업로드할 수
+                  있어요.
+                </p>
+                <p className="font-medium text-zinc-800 dark:text-zinc-200">
+                  방법 1: 대시보드에서 업로드
+                </p>
+                <p>
+                  로그인 후 <strong>Dashboard &gt; New Project</strong> 버튼을
+                  클릭하면 프로젝트 이름을 입력하고, 주요 파일들을 직접 업로드할 수
+                  있어요. package.json, tsconfig.json 같은 설정 파일과 소스 코드를
+                  선택하면 됩니다.
+                </p>
+                <p className="font-medium text-zinc-800 dark:text-zinc-200">
+                  방법 2: REST API로 전송
+                </p>
+                <p>
+                  자동화를 원한다면 API를 사용하세요. 프로젝트 생성 후 파일을 전송하는
+                  흐름입니다.
+                </p>
+                <pre className="overflow-x-auto rounded-lg bg-zinc-100 p-4 text-xs leading-relaxed dark:bg-zinc-800">
+{`# 1. 프로젝트 생성
+curl -X POST https://vibeuniv.com/api/v1/projects \\
+  -H "Authorization: Bearer 여기에_API_키" \\
+  -H "Content-Type: application/json" \\
+  -d '{"name": "my-awesome-app"}'
+
+# 2. 파일 업로드 (프로젝트 ID를 사용)
+curl -X POST https://vibeuniv.com/api/v1/projects/{id}/files \\
+  -H "Authorization: Bearer 여기에_API_키" \\
+  -H "Content-Type: application/json" \\
+  -d '{"files": [
+    {"name": "package.json", "content": "..."},
+    {"name": "app/page.tsx", "content": "..."}
+  ]}'
+
+# 3. 기술 스택 분석 요청
+curl -X POST https://vibeuniv.com/api/v1/projects/{id}/analyze \\
+  -H "Authorization: Bearer 여기에_API_키"`}
+                </pre>
+                <p>
+                  업로드가 완료되면 대시보드에서 AI 분석을 실행하고, 학습 로드맵을
+                  생성할 수 있어요.
+                </p>
+              </FaqItem>
+
+              <FaqItem question="어떤 AI 모델을 지원하나요?">
+                <p>
+                  총 <strong>11개 LLM 프로바이더</strong>를 지원합니다.
+                  원하는 모델로 분석하고 학습할 수 있어요.
+                </p>
+                <ul className="list-inside list-disc space-y-1 pl-2">
+                  <li>Anthropic (Claude)</li>
+                  <li>OpenAI (GPT)</li>
+                  <li>Google (Gemini)</li>
+                  <li>Groq, Mistral, DeepSeek</li>
+                  <li>Cohere, Together AI, Fireworks AI</li>
+                  <li>xAI (Grok), OpenRouter</li>
+                </ul>
+                <p>
+                  Pro 플랜에서는 BYOK(Bring Your Own Key) 기능으로 본인의 API 키를
+                  등록해서 쓸 수 있어요. 어떤 모델이든 자유롭게 골라보세요.
+                </p>
+              </FaqItem>
+
+              <FaqItem question="Free 플랜으로 충분한가요?">
+                <p>
+                  개인 사이드 프로젝트 1~2개를 학습하기에는 충분해요!
+                  Free 플랜에 포함된 내용은 다음과 같습니다.
+                </p>
+                <ul className="list-inside list-disc space-y-1 pl-2">
+                  <li>프로젝트 3개까지 등록</li>
+                  <li>기본 기술 스택 분석</li>
+                  <li>월 1회 학습 로드맵 생성</li>
+                  <li>월 20회 AI 튜터 대화</li>
+                </ul>
+                <p>
+                  더 많은 프로젝트를 분석하거나, 무제한 AI 대화가 필요하다면
+                  Pro($19/mo)를 추천해요. 팀으로 함께 학습하고 싶다면
+                  Team($49/mo)도 있어요.
+                </p>
+              </FaqItem>
+
+              <FaqItem question="내 코드는 안전하게 보관되나요?">
+                <p>
+                  보안은 최우선 사항이에요. 안심하고 사용하셔도 됩니다.
+                </p>
+                <ul className="list-inside list-disc space-y-1 pl-2">
+                  <li>모든 데이터는 암호화되어 전송 및 저장됩니다</li>
+                  <li>
+                    MCP 스캐너는 분석에 필요한 설정 파일과 코드 구조만 수집하며,
+                    민감한 파일(.env, credentials 등)은 자동으로 제외돼요
+                  </li>
+                  <li>
+                    LLM API 키는 AES-256-GCM으로 암호화되어 저장됩니다
+                  </li>
+                  <li>
+                    원하시면 언제든 프로젝트 데이터를 완전 삭제할 수 있어요
+                  </li>
+                </ul>
+              </FaqItem>
+
+              <FaqItem question="BYOK(Bring Your Own Key)가 뭔가요?">
+                <p>
+                  BYOK는 <strong>본인이 가진 LLM API 키</strong>를 VibeUniv에 등록해서
+                  사용하는 기능이에요. Pro 플랜 이상에서 사용할 수 있습니다.
+                </p>
+                <p>
+                  예를 들어, OpenAI API 키를 가지고 계시다면 그 키를 등록하면
+                  GPT 모델로 분석과 학습이 진행돼요. 키는 암호화되어 저장되고,
+                  VibeUniv가 직접 키를 사용하거나 저장하지 않습니다.
+                </p>
+                <p>
+                  설정 방법: <strong>Settings &gt; LLM Keys</strong>에서
+                  프로바이더를 선택하고 API 키를 입력하면 바로 사용할 수 있어요.
+                </p>
+              </FaqItem>
             </div>
           </div>
         </section>
@@ -454,10 +618,10 @@ function PricingCard({
 
 function FaqItem({
   question,
-  answer,
+  children,
 }: {
   question: string;
-  answer: string;
+  children: React.ReactNode;
 }) {
   return (
     <details className="group rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
@@ -465,8 +629,8 @@ function FaqItem({
         {question}
         <ChevronDown className="h-4 w-4 flex-shrink-0 text-zinc-500 transition-transform group-open:rotate-180 dark:text-zinc-400" />
       </summary>
-      <div className="px-5 pb-5 text-sm text-zinc-600 dark:text-zinc-400">
-        {answer}
+      <div className="space-y-3 px-5 pb-5 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+        {children}
       </div>
     </details>
   );
