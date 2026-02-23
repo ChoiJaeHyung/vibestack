@@ -46,6 +46,7 @@ next-env.d.ts
 
 # screenshots
 *.png
+!app/icon.png
 
 # playwright mcp
 .playwright-mcp/
