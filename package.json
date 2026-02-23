@@ -4,10 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:full": "bash scripts/dev.sh",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "deploy": "bash scripts/deploy.sh",
+    "mcp:build": "cd packages/mcp-server && npm run build",
+    "mcp:dev": "cd packages/mcp-server && npm run dev"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

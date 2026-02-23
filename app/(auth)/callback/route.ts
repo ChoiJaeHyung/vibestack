@@ -7,6 +7,12 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get("next") ?? "/dashboard";
 
   if (code) {
+    const cookiesToSet: Array<{
+      name: string;
+      value: string;
+      options?: Record<string, unknown>;
+    }> = [];
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -15,10 +21,11 @@ export async function GET(request: NextRequest) {
           getAll() {
             return request.cookies.getAll();
           },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) =>
+          setAll(cookies) {
+            cookies.forEach(({ name, value }) =>
               request.cookies.set(name, value),
             );
+            cookiesToSet.push(...cookies);
           },
         },
       },
@@ -30,16 +37,24 @@ export async function GET(request: NextRequest) {
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocalEnv = process.env.NODE_ENV === "development";
 
+      let redirectUrl: string;
       if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`);
+        redirectUrl = `${origin}${next}`;
       } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`);
+        redirectUrl = `https://${forwardedHost}${next}`;
       } else {
-        return NextResponse.redirect(`${origin}${next}`);
+        redirectUrl = `${origin}${next}`;
       }
+
+      const response = NextResponse.redirect(redirectUrl);
+
+      cookiesToSet.forEach(({ name, value, options }) => {
+        response.cookies.set(name, value, options);
+      });
+
+      return response;
     }
   }
 
-  // If there's an error or no code, redirect to login with error
   return NextResponse.redirect(`${origin}/login?error=auth_callback_error`);
 }
