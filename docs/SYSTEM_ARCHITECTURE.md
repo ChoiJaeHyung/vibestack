@@ -775,40 +775,92 @@ createLLMProvider(provider: LlmProviderName, apiKey: string): LLMProvider
 
 ## 10. MCP 서버
 
-### 10.1 개요
+### 10.1 아키텍처
+
+MCP 서버는 **별도의 서버 프로세스가 아니다.** 사용자의 IDE 안에서 stdio 프로세스로 실행되며, Next.js 앱의 REST API를 호출하는 **HTTP 클라이언트**다.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    사용자 PC (로컬)                               │
+│                                                                  │
+│  ┌──────────────┐     stdio      ┌─────────────────────────┐   │
+│  │  IDE          │◄─────────────►│  MCP Server             │   │
+│  │  Claude Code  │  MCP Protocol │  (@vibestack/mcp-server)│   │
+│  │  Cursor       │               │                         │   │
+│  │  Windsurf     │               │  - 파일 스캔            │   │
+│  └──────────────┘               │  - 프로젝트 구조 분석   │   │
+│                                  └────────────┬────────────┘   │
+│                                               │                 │
+└───────────────────────────────────────────────┼─────────────────┘
+                                                │
+                                    HTTPS fetch │ Bearer vs_xxx
+                                    /api/v1/*   │
+                                                │
+┌───────────────────────────────────────────────▼─────────────────┐
+│                  Vercel (vibeuniv.com)                            │
+│                                                                   │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  Next.js App (port 3000)                                 │    │
+│  │                                                          │    │
+│  │  /api/v1/projects      ← MCP가 호출하는 동일한 API     │    │
+│  │  /api/v1/projects/:id/files                              │    │
+│  │  /api/v1/projects/:id/analyze                            │    │
+│  │  /api/v1/learning/*                                      │    │
+│  │  ...                                                     │    │
+│  └─────────────────────────────────────────────────────────┘    │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**핵심 포인트:**
+- MCP 서버는 네트워크 포트를 열지 않는다 (stdio 전송만 사용)
+- Next.js 앱과 동일한 `/api/v1/*` 엔드포인트를 호출한다
+- 별도 백엔드가 아니라 REST API의 클라이언트 역할이다
+- 기본 URL은 `https://vibeuniv.com/api/v1`, 로컬 테스트 시 `http://localhost:3000/api/v1`
+
+### 10.2 개요
 
 | 항목 | 값 |
 |------|-----|
 | 패키지명 | `@vibestack/mcp-server` |
 | 바이너리 | `vibestack-mcp` |
 | 프로토콜 | MCP (Model Context Protocol) |
-| 전송 | StdioServerTransport |
+| 전송 | StdioServerTransport (네트워크 포트 사용 안 함) |
 | 의존성 | `@modelcontextprotocol/sdk`, `glob`, `zod` |
+| API 통신 | Next.js `/api/v1/*`에 HTTP fetch (Bearer 인증) |
 
-### 10.2 MCP 도구 (6개)
+### 10.3 MCP 도구 (6개)
 
-| 도구 | 설명 |
-|------|------|
-| `vibeuniv_sync_project` | 프로젝트 폴더 스캔 → 파일 트리, 의존성 추출 → 메타데이터 업로드 |
-| `vibeuniv_upload_files` | 선택된 소스/설정 파일 업로드 |
-| `vibeuniv_analyze` | 기술 스택 분석 API 호출 트리거 |
-| `vibeuniv_get_learning` | 학습 경로 조회 |
-| `vibeuniv_ask_tutor` | AI 튜터에게 질문 |
-| `vibeuniv_log_session` | MCP 세션 활동 로그 |
+모든 도구는 내부적으로 `VibeStackClient`(`packages/mcp-server/src/lib/api-client.ts`)를 통해 Next.js REST API를 호출한다.
 
-### 10.3 파일 스캐너 특징
+| 도구 | 호출하는 API | 설명 |
+|------|-------------|------|
+| `vibeuniv_sync_project` | `POST /api/v1/projects` | 프로젝트 폴더 스캔 → 메타데이터 업로드 |
+| `vibeuniv_upload_files` | `POST /api/v1/projects/:id/files` | 소스/설정 파일 업로드 |
+| `vibeuniv_analyze` | `POST /api/v1/projects/:id/analyze` | 기술 스택 분석 트리거 |
+| `vibeuniv_get_learning` | `GET /api/v1/learning/paths` | 학습 경로 조회 |
+| `vibeuniv_ask_tutor` | `POST /api/v1/learning/chat` | AI 튜터에게 질문 |
+| `vibeuniv_log_session` | `POST /api/v1/projects/:id/sessions` | MCP 세션 활동 로그 |
+
+### 10.4 파일 스캐너 특징
 
 - 소스 파일은 헤더만 추출 (업로드 크기 최소화)
 - "교육 핵심 파일"은 전체 콘텐츠 보존 (pages, layouts, middleware, types, server 코드)
-- 민감 파일 자동 제외
+- 민감 파일 자동 제외 (`.env*`, `*.pem`, `*.key`, `credentials.json` 등)
 - 프로젝트당 최대 50개 소스 파일
 
-### 10.4 환경변수
+### 10.5 환경변수
 
 ```
 VIBEUNIV_API_KEY=vs_xxxxxxxxxxxxxxxx
-VIBEUNIV_API_URL=https://vibeuniv.com   # (기본값)
+VIBEUNIV_API_URL=https://vibeuniv.com/api/v1   # (기본값, 생략 가능)
 ```
+
+| 변수 | 필수 | 기본값 | 설명 |
+|------|------|--------|------|
+| `VIBEUNIV_API_KEY` | O | - | 사용자 API 키 (Settings에서 발급) |
+| `VIBEUNIV_API_URL` | X | `https://vibeuniv.com/api/v1` | API 서버 주소 |
+
+로컬 개발 시에는 `VIBEUNIV_API_URL=http://localhost:3000/api/v1`로 설정하면 로컬 Next.js 서버를 사용한다.
 
 ---
 

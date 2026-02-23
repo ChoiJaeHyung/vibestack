@@ -8,9 +8,9 @@
 ## 목차
 
 1. [환경 설정](#1-환경-설정)
-2. [로컬 개발](#2-로컬-개발)
+2. [로컬 개발](#2-로컬-개발) — `npm run dev:full`, MCP 로컬 테스트
 3. [Git 워크플로우](#3-git-워크플로우)
-4. [배포](#4-배포)
+4. [배포](#4-배포) — `npm run deploy` 원스톱 배포, 수동 배포, 롤백
 5. [데이터베이스 관리](#5-데이터베이스-관리)
 6. [보안 운영](#6-보안-운영)
 7. [모니터링 및 로깅](#7-모니터링-및-로깅)
@@ -92,27 +92,53 @@ cd packages/mcp-server && npm install && npm run build && cd ../..
 npm run dev
 ```
 
-### 2.2 개발 서버
+### 2.2 npm scripts
 
 ```bash
-npm run dev        # http://localhost:3000 (Turbopack 활성화)
+npm run dev        # Next.js 개발 서버 (Turbopack)
+npm run dev:full   # 환경 체크 + 자동 설정 + 개발 서버 (권장)
 npm run build      # 프로덕션 빌드
 npm run start      # 프로덕션 모드 실행
 npm run lint       # ESLint 검사
 npm run format     # Prettier 포맷팅
+npm run deploy     # 커밋 → push → PR → merge → Vercel 배포 원스톱
+npm run mcp:build  # MCP 서버 빌드
+npm run mcp:dev    # MCP 서버 개발 모드
 ```
 
-### 2.3 테스트 계정
+### 2.3 개발 서버 스크립트 (`scripts/dev.sh`)
+
+`npm run dev:full`로 실행한다. 수동 설정 없이 바로 개발을 시작할 수 있다.
+
+**실행 흐름:**
+1. `.env.local` 파일 존재 확인 (없으면 에러)
+2. 필수 환경변수 비어있으면 경고 표시 (`SUPABASE_URL`, `ANON_KEY`, `ENCRYPTION_KEY`)
+3. `node_modules/` 없으면 자동 `npm install`
+4. `packages/mcp-server/dist/` 없으면 자동 MCP 서버 빌드
+5. `next dev --turbopack` 실행
+
+```bash
+# 권장 사용법
+npm run dev:full
+
+# 또는 직접 실행
+bash scripts/dev.sh
+```
+
+### 2.4 테스트 계정
 
 - **Email:** test@vibestack.dev
 - **Password:** testpass123
 
-### 2.4 MCP 서버 로컬 테스트
+### 2.5 MCP 서버 로컬 테스트
 
 ```bash
-cd packages/mcp-server
+# npm script 사용
+npm run mcp:build   # 빌드
+npm run mcp:dev     # 개발 모드 (tsx)
 
-# 개발 모드 (tsx)
+# 환경변수와 함께 직접 실행
+cd packages/mcp-server
 VIBEUNIV_API_KEY=vs_xxx VIBEUNIV_API_URL=http://localhost:3000 npm run dev
 
 # 빌드 후 실행
@@ -161,13 +187,63 @@ main (프로덕션)
 
 ## 4. 배포
 
-### 4.1 Vercel 배포
+### 4.1 배포 스크립트 (`scripts/deploy.sh`)
 
-- **자동 배포:** main 브랜치 push 시 Vercel이 자동으로 빌드 및 배포
+`npm run deploy`로 커밋부터 프로덕션 배포까지 한 번에 처리한다.
+
+**실행 흐름:**
+1. main 브랜치 직접 배포 차단
+2. 변경사항이 있으면:
+   - `npm run build`로 빌드 검증 (실패 시 중단)
+   - `npm run lint`로 린트 검사
+   - 커밋 메시지 입력 → 스테이징 + 커밋
+3. `git push -u origin <branch>`
+4. 기존 PR이 있으면 자동 반영, 없으면 PR 생성 (제목 입력)
+5. merge 여부 확인 → Y 시:
+   - `gh pr merge` 실행
+   - `vercel --prod`로 프로덕션 배포
+6. 배포 완료 후 원래 브랜치로 복귀
+
+```bash
+# 사용법
+npm run deploy
+
+# 또는 직접 실행
+bash scripts/deploy.sh
+```
+
+**전제 조건:**
+- `gh` (GitHub CLI) 설치 및 로그인
+- `vercel` CLI 접근 가능 (npx로 자동 실행)
+- 기능 브랜치에서 실행 (main에서는 차단)
+
+### 4.2 수동 배포
+
+스크립트를 사용하지 않고 수동으로 배포하는 경우:
+
+```bash
+# 1. 커밋 + push
+git add -A && git commit -m "feat: ..." && git push
+
+# 2. PR 생성 (또는 기존 PR에 자동 반영)
+gh pr create --base main --title "PR 제목"
+
+# 3. merge
+gh pr merge <PR번호> --merge
+
+# 4. Vercel 배포
+git checkout main && git pull
+npx vercel --prod
+```
+
+### 4.3 Vercel 자동 배포
+
+- **자동 배포:** Vercel에 GitHub 연동 시 main push로 자동 빌드/배포
 - **프리뷰:** PR 생성 시 프리뷰 URL 자동 생성
 - **도메인:** vibeuniv.com
+- **현재:** `vercel --prod` 수동 트리거 방식 사용 중
 
-### 4.2 환경변수 관리
+### 4.4 환경변수 관리
 
 Vercel Dashboard → Settings → Environment Variables에서 관리한다.
 
@@ -181,7 +257,7 @@ Vercel Dashboard → Settings → Environment Variables에서 관리한다.
 | `STRIPE_WEBHOOK_SECRET` | Production only | 비밀 |
 | `NEXT_PUBLIC_APP_URL` | Production, Preview | 환경별 다름 |
 
-### 4.3 배포 전 체크리스트
+### 4.5 배포 전 체크리스트
 
 - [ ] `npm run build` 로컬에서 성공 확인
 - [ ] TypeScript 타입 에러 없음
@@ -190,7 +266,7 @@ Vercel Dashboard → Settings → Environment Variables에서 관리한다.
 - [ ] DB 마이그레이션 필요 시 먼저 실행 완료
 - [ ] Stripe 웹훅 엔드포인트 정상 동작 확인
 
-### 4.4 롤백
+### 4.6 롤백
 
 Vercel Dashboard → Deployments에서 이전 배포로 즉시 롤백 가능.
 
@@ -368,7 +444,27 @@ Stripe Dashboard → Events에서 실패한 이벤트를 확인한다:
 
 ## 8. MCP 서버 관리
 
-### 8.1 npm 패키지 배포
+### 8.1 MCP 서버 구조 이해
+
+MCP 서버는 **별도의 서버가 아니다.** 사용자의 IDE에서 stdio 프로세스로 실행되며, Next.js 앱의 `/api/v1/*` REST API를 호출하는 HTTP 클라이언트다.
+
+```
+사용자 PC                                    Vercel
+┌────────────────────────┐                  ┌────────────────────┐
+│  IDE (Claude Code 등)  │                  │  Next.js App       │
+│        ▲               │                  │  (vibeuniv.com)    │
+│   stdio│MCP Protocol   │                  │                    │
+│        ▼               │   HTTPS fetch    │  /api/v1/projects  │
+│  MCP Server ──────────────────────────────►  /api/v1/learning  │
+│  (npm 패키지)          │   Bearer vs_xxx  │  /api/v1/...       │
+└────────────────────────┘                  └────────────────────┘
+```
+
+- **포트를 열지 않는다** — stdio 전송만 사용
+- **Next.js와 동일한 API** — 웹 대시보드와 MCP가 같은 엔드포인트를 공유
+- **로컬 테스트 시** — `VIBEUNIV_API_URL=http://localhost:3000/api/v1`로 로컬 Next.js 개발 서버 사용
+
+### 8.2 npm 패키지 배포
 
 ```bash
 cd packages/mcp-server
@@ -383,7 +479,7 @@ npm run build
 npm publish
 ```
 
-### 8.2 사용자 설정 가이드
+### 8.3 사용자 설정 가이드
 
 사용자가 MCP 서버를 설정하는 방법:
 
@@ -401,18 +497,21 @@ claude mcp add vibeuniv -- npx -y @vibestack/mcp-server
       "args": ["-y", "@vibestack/mcp-server"],
       "env": {
         "VIBEUNIV_API_KEY": "vs_xxxxx",
-        "VIBEUNIV_API_URL": "https://vibeuniv.com"
+        "VIBEUNIV_API_URL": "https://vibeuniv.com/api/v1"
       }
     }
   }
 }
 ```
 
-### 8.3 MCP 서버 버전 관리
+`VIBEUNIV_API_URL`은 생략 가능 (기본값: `https://vibeuniv.com/api/v1`).
+
+### 8.4 MCP 서버 버전 관리
 
 - MCP 서버는 REST API의 하위 호환성에 의존한다
 - API 변경 시 MCP 서버도 함께 업데이트해야 한다
 - 주요 API 변경 시 MCP 서버 메이저 버전을 올린다
+- `/api/v1/*` 엔드포인트 변경은 MCP 서버 배포와 동시에 진행할 것
 
 ---
 
