@@ -33,6 +33,12 @@ function matchRateLimitPrefix(pathname: string): string | null {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Skip middleware for auth callback — PKCE code verifier must not be
+  // consumed by the session refresh that runs in updateSession().
+  if (pathname === "/callback") {
+    return NextResponse.next();
+  }
+
   // Rate limiting for API routes
   const prefix = matchRateLimitPrefix(pathname);
   if (prefix) {
