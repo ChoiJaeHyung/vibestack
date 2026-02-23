@@ -48,6 +48,12 @@ export default function LandingPage() {
             >
               FAQ
             </a>
+            <Link
+              href="/guide"
+              className="text-sm text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              가이드
+            </Link>
           </nav>
           <div className="flex items-center gap-3">
             <Link
@@ -94,6 +100,13 @@ export default function LandingPage() {
               >
                 5분만에 시작하기
                 <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/guide"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-6 text-base font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                가이드 보기
+                <BookOpen className="h-4 w-4" />
               </Link>
             </div>
           </div>
@@ -313,6 +326,14 @@ export default function LandingPage() {
                   코딩 도구를 재시작하면 MCP 서버가 자동으로 연결돼요.
                   프로젝트 폴더에서 작업을 시작하면 파일 구조와 기술 스택이 자동으로
                   VibeUniv에 전송됩니다. 대시보드에서 프로젝트가 등록된 걸 확인하세요!
+                </p>
+                <p className="mt-2">
+                  <Link
+                    href="/guide"
+                    className="font-medium text-zinc-900 underline underline-offset-4 dark:text-zinc-100"
+                  >
+                    자세한 가이드 보기 &rarr;
+                  </Link>
                 </p>
               </FaqItem>
 
