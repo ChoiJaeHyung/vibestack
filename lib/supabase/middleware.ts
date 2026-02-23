@@ -38,7 +38,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Redirect unauthenticated users away from dashboard routes
-  const protectedPaths = ["/dashboard", "/projects", "/settings", "/learning"];
+  const protectedPaths = ["/dashboard", "/projects", "/settings", "/learning", "/admin"];
   const isProtectedPath = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path),
   );
