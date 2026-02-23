@@ -71,7 +71,7 @@ export class AnthropicProvider implements LLMProvider {
 
       const response = await this.client.messages.create({
         model: this.modelName,
-        max_tokens: MAX_TOKENS,
+        max_tokens: input.maxTokens ?? MAX_TOKENS,
         messages,
         ...(systemMessage ? { system: systemMessage } : {}),
       });

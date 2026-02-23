@@ -7,6 +7,7 @@ import { generateDigest, digestToMarkdown } from "@/lib/analysis/digest-generato
 import { getDefaultLlmKeyForUser } from "@/server/actions/llm-keys";
 import { createLLMProvider } from "@/lib/llm/factory";
 import { buildDigestAnalysisPrompt } from "@/lib/prompts/tech-analysis";
+import { decryptContent } from "@/lib/utils/content-encryption";
 import type { Database } from "@/types/database";
 import type { TechHint, TechnologyResult } from "@/lib/llm/types";
 
@@ -48,6 +49,11 @@ export interface ProjectDetailData {
   techStacks: TechStackItem[];
 }
 
+interface DeleteProjectResult {
+  success: boolean;
+  error?: string;
+}
+
 interface StartAnalysisResult {
   success: boolean;
   job_id?: string;
@@ -64,6 +70,37 @@ interface GetProjectStatusResult {
   success: boolean;
   status?: string;
   error?: string;
+}
+
+export async function deleteProject(
+  projectId: string,
+): Promise<DeleteProjectResult> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { error: deleteError } = await supabase
+      .from("projects")
+      .delete()
+      .eq("id", projectId)
+      .eq("user_id", user.id);
+
+    if (deleteError) {
+      return { success: false, error: "Failed to delete project" };
+    }
+
+    return { success: true };
+  } catch {
+    return { success: false, error: "An unexpected error occurred" };
+  }
 }
 
 export async function startAnalysis(
@@ -266,7 +303,13 @@ async function runAnalysisPipeline(
       throw new Error("Failed to load project files");
     }
 
-    const techHints = extractTechHints(files);
+    // Decrypt raw_content for all files
+    const decryptedFiles = files.map((f) => ({
+      ...f,
+      raw_content: f.raw_content ? decryptContent(f.raw_content) : f.raw_content,
+    }));
+
+    const techHints = extractTechHints(decryptedFiles);
 
     const llmKeyData = await getDefaultLlmKeyForUser(userId);
     if (!llmKeyData) {
@@ -281,7 +324,7 @@ async function runAnalysisPipeline(
       .eq("id", jobId);
 
     // Check for existing digest or generate one on the fly
-    const digestFile = files.find(
+    const digestFile = decryptedFiles.find(
       (f) => f.file_name === "_project_digest.md",
     );
 
@@ -311,7 +354,7 @@ async function runAnalysisPipeline(
         .single();
 
       const projectName = projectData?.name ?? "Unknown Project";
-      const nonDigestFiles = files.filter((f) => f.file_name !== "_project_digest.md");
+      const nonDigestFiles = decryptedFiles.filter((f) => f.file_name !== "_project_digest.md");
       const digest = generateDigest(projectName, nonDigestFiles);
       const digestMarkdown = digestToMarkdown(digest);
       digestPromptOverride = buildDigestAnalysisPrompt(
@@ -320,7 +363,7 @@ async function runAnalysisPipeline(
       );
     }
 
-    const nonDigestFiles = files.filter(
+    const nonDigestFiles = decryptedFiles.filter(
       (f) => f.file_name !== "_project_digest.md" && f.raw_content,
     );
 

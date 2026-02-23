@@ -1,4 +1,5 @@
 import { createServiceClient } from "@/lib/supabase/service";
+import { decryptContent } from "@/lib/utils/content-encryption";
 
 const MAX_CONTENT_LINES = 200;
 
@@ -139,7 +140,7 @@ export async function buildProjectDigest(
 
   const files: DigestFile[] = (filesResult.data ?? []).map((f) => ({
     file_path: f.file_path ?? f.file_name,
-    raw_content: f.raw_content ?? "",
+    raw_content: f.raw_content ? decryptContent(f.raw_content) : "",
   }));
 
   const techStacks: DigestTechStack[] = (techResult.data ?? []) as DigestTechStack[];

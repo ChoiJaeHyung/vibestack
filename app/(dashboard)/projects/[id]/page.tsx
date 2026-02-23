@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectAnalysis } from "@/components/features/project-analysis";
+import { DeleteProjectButton } from "@/components/features/delete-project-button";
 import { createClient } from "@/lib/supabase/server";
 
 interface ProjectDetailPageProps {
@@ -132,6 +133,9 @@ export default async function ProjectDetailPage({
             <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusInfo.color}`}>
               {statusInfo.label}
             </span>
+            <div className="ml-auto">
+              <DeleteProjectButton projectId={project.id} />
+            </div>
           </div>
           {project.description && (
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">

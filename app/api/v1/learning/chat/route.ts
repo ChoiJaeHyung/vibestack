@@ -6,6 +6,7 @@ import { createLLMProvider } from "@/lib/llm/factory";
 import { getDefaultLlmKeyForUser } from "@/server/actions/llm-keys";
 import { checkUsageLimit } from "@/lib/utils/usage-limits";
 import { buildTutorPrompt } from "@/lib/prompts/tutor-chat";
+import { decryptContent } from "@/lib/utils/content-encryption";
 import type { Json } from "@/types/database";
 
 interface ChatRequestBody {
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
         )
         .map((f) => ({
           file_name: f.file_name,
-          raw_content: f.raw_content,
+          raw_content: decryptContent(f.raw_content),
         })),
       learningContext,
     );

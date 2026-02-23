@@ -45,6 +45,8 @@ export interface ChatInput {
     content: string;
   }>;
   systemPrompt?: string;
+  /** Override the default max_tokens for this request. */
+  maxTokens?: number;
 }
 
 export interface ChatOutput {

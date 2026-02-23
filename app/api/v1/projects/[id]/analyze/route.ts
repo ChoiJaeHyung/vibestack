@@ -6,6 +6,7 @@ import { extractTechHints } from "@/lib/analysis/file-parser";
 import { getDefaultLlmKeyForUser } from "@/server/actions/llm-keys";
 import { createLLMProvider } from "@/lib/llm/factory";
 import { buildDigestAnalysisPrompt } from "@/lib/prompts/tech-analysis";
+import { decryptContent } from "@/lib/utils/content-encryption";
 import type { Database } from "@/types/database";
 import type { AnalyzeResponse } from "@/types/api";
 import type { TechHint, TechnologyResult } from "@/lib/llm/types";
@@ -139,8 +140,14 @@ async function runAnalysis(
       throw new Error("Failed to load project files");
     }
 
+    // Decrypt raw_content for all files
+    const decryptedFiles = files.map((f) => ({
+      ...f,
+      raw_content: f.raw_content ? decryptContent(f.raw_content) : f.raw_content,
+    }));
+
     // Step 3: Extract tech hints from files
-    const techHints = extractTechHints(files);
+    const techHints = extractTechHints(decryptedFiles);
 
     // Step 4: Load user's default LLM key
     const llmKeyData = await getDefaultLlmKeyForUser(userId);
@@ -164,7 +171,7 @@ async function runAnalysis(
 
     // Step 6: Call provider.analyze()
     // Use digest-based prompt if _project_digest.md exists (more efficient)
-    const digestFile = files.find(
+    const digestFile = decryptedFiles.find(
       (f) => f.file_name === "_project_digest.md",
     );
 
@@ -177,7 +184,7 @@ async function runAnalysis(
       }),
     );
 
-    const nonDigestFiles = files.filter(
+    const nonDigestFiles = decryptedFiles.filter(
       (f) => f.file_name !== "_project_digest.md" && f.raw_content,
     );
 

@@ -11,6 +11,7 @@ import {
 } from "@/lib/prompts/learning-roadmap";
 import { buildProjectDigest } from "@/lib/learning/project-digest";
 import { buildTutorPrompt } from "@/lib/prompts/tutor-chat";
+import { decryptContent } from "@/lib/utils/content-encryption";
 import type { Database, Json } from "@/types/database";
 
 // ─── Type Aliases ────────────────────────────────────────────────────
@@ -236,6 +237,36 @@ function stripCodeFences(text: string): string {
   return cleaned.trim();
 }
 
+/**
+ * Extract a JSON array from LLM output.
+ * Handles: bare array, or wrapper objects like { "modules": [...] }.
+ */
+function extractContentArray(raw: string): ContentBatchItem[] {
+  const cleaned = stripCodeFences(raw);
+  const parsed: unknown = JSON.parse(cleaned);
+
+  if (Array.isArray(parsed)) {
+    return parsed as ContentBatchItem[];
+  }
+
+  // If the LLM wrapped the array in an object, try common keys
+  if (parsed && typeof parsed === "object") {
+    const obj = parsed as Record<string, unknown>;
+    for (const key of Object.keys(obj)) {
+      if (Array.isArray(obj[key])) {
+        return obj[key] as ContentBatchItem[];
+      }
+    }
+  }
+
+  throw new Error("Response is neither an array nor an object containing an array");
+}
+
+/** Normalize a title for fuzzy comparison. */
+function normalizeTitle(title: string): string {
+  return title.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 // ─── Server Actions ──────────────────────────────────────────────────
 
 export async function generateLearningPath(
@@ -322,6 +353,7 @@ export async function generateLearningPath(
 
     const structureResult = await provider.chat({
       messages: [{ role: "user", content: structurePrompt }],
+      maxTokens: 16384,
     });
 
     let totalInputTokens = structureResult.input_tokens;
@@ -332,7 +364,15 @@ export async function generateLearningPath(
       structure = JSON.parse(
         stripCodeFences(structureResult.content),
       ) as StructureResponse;
-    } catch {
+    } catch (parseError) {
+      console.error(
+        "[learning] Phase 1 parse error:",
+        parseError instanceof Error ? parseError.message : parseError,
+      );
+      console.error(
+        "[learning] Raw LLM response (first 500 chars):",
+        structureResult.content.slice(0, 500),
+      );
       return {
         success: false,
         error: "Failed to parse learning roadmap structure from LLM response",
@@ -350,7 +390,18 @@ export async function generateLearningPath(
     }
 
     // Build content map: module_title -> content
+    // Uses both exact and normalized title matching, plus index-based fallback.
     const contentMap = new Map<
+      string,
+      ContentBatchItem["content"]
+    >();
+    // Normalized title -> content for fuzzy matching
+    const normalizedContentMap = new Map<
+      string,
+      ContentBatchItem["content"]
+    >();
+    // Per-batch index fallback: structureModuleTitle -> content
+    const indexFallbackMap = new Map<
       string,
       ContentBatchItem["content"]
     >();
@@ -384,6 +435,7 @@ export async function generateLearningPath(
 
       const contentResult = await provider.chat({
         messages: [{ role: "user", content: contentPrompt }],
+        maxTokens: 16384,
       });
 
       totalInputTokens += contentResult.input_tokens;
@@ -391,17 +443,42 @@ export async function generateLearningPath(
 
       let batchContent: ContentBatchItem[];
       try {
-        batchContent = JSON.parse(
-          stripCodeFences(contentResult.content),
-        ) as ContentBatchItem[];
-      } catch {
-        // If batch parsing fails, generate empty content for these modules
+        batchContent = extractContentArray(contentResult.content);
+      } catch (batchParseError) {
+        console.error(
+          `[learning] Phase 2 parse error for tech "${techName}":`,
+          batchParseError instanceof Error ? batchParseError.message : batchParseError,
+        );
+        console.error(
+          "[learning] Raw Phase 2 response (first 500 chars):",
+          contentResult.content.slice(0, 500),
+        );
         batchContent = [];
       }
 
+      // Store by exact title and normalized title
       for (const item of batchContent) {
-        contentMap.set(item.module_title, item.content);
+        contentMap.set(item.module_title.trim(), item.content);
+        normalizedContentMap.set(normalizeTitle(item.module_title), item.content);
       }
+
+      // Index-based fallback: match Phase 2 items to Phase 1 modules by position
+      // This handles cases where titles differ but the order is preserved
+      if (batchContent.length === batchModules.length) {
+        for (let i = 0; i < batchModules.length; i++) {
+          indexFallbackMap.set(batchModules[i].title, batchContent[i].content);
+        }
+      } else if (batchContent.length > 0) {
+        // Partial match: assign what we can by index
+        const limit = Math.min(batchContent.length, batchModules.length);
+        for (let i = 0; i < limit; i++) {
+          indexFallbackMap.set(batchModules[i].title, batchContent[i].content);
+        }
+      }
+
+      console.log(
+        `[learning] Phase 2 batch "${techName}": expected ${batchModules.length} modules, got ${batchContent.length} items`,
+      );
     }
 
     // ─── Persist to database ──────────────────────────────────────────
@@ -458,7 +535,18 @@ export async function generateLearningPath(
           techNameToId.get(mod.tech_name.toLowerCase()) ?? null;
 
         // Look up content from Phase 2 batch results
-        const content = contentMap.get(mod.title) ?? { sections: [] };
+        // 1. Exact match → 2. Normalized match → 3. Index fallback → 4. Empty
+        const content = contentMap.get(mod.title)
+          ?? contentMap.get(mod.title.trim())
+          ?? normalizedContentMap.get(normalizeTitle(mod.title))
+          ?? indexFallbackMap.get(mod.title)
+          ?? { sections: [] };
+
+        if (!content.sections || content.sections.length === 0) {
+          console.warn(
+            `[learning] No content matched for module "${mod.title}" (tech: ${mod.tech_name})`,
+          );
+        }
 
         return {
           learning_path_id: learningPath.id,
@@ -938,7 +1026,7 @@ export async function sendTutorMessage(
         )
         .map((f) => ({
           file_name: f.file_name,
-          raw_content: f.raw_content,
+          raw_content: decryptContent(f.raw_content),
         })),
       learningContext,
     );

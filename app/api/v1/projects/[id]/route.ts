@@ -4,6 +4,37 @@ import { authenticateApiKey, isAuthResult } from "@/server/middleware/api-auth";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { ProjectDetailResponse } from "@/types/api";
 
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const authResult = await authenticateApiKey(request);
+
+  if (!isAuthResult(authResult)) {
+    return authResult;
+  }
+
+  const { id } = await params;
+
+  try {
+    const supabase = createServiceClient();
+
+    const { error: deleteError } = await supabase
+      .from("projects")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", authResult.userId);
+
+    if (deleteError) {
+      return errorResponse("Failed to delete project", 500);
+    }
+
+    return successResponse({ deleted: true });
+  } catch {
+    return errorResponse("Internal server error", 500);
+  }
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },

@@ -64,6 +64,9 @@ export class GoogleProvider implements LLMProvider {
     try {
       const model = this.client.getGenerativeModel({
         model: this.modelName,
+        ...(input.maxTokens
+          ? { generationConfig: { maxOutputTokens: input.maxTokens } }
+          : {}),
       });
 
       const systemMessage =
