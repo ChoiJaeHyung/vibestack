@@ -21,6 +21,10 @@ type ProgressStatus = "not_started" | "in_progress" | "completed" | "skipped";
 type ContextType = "tech_analysis" | "learning" | "general" | "project_walkthrough";
 type LlmProvider = "anthropic" | "openai" | "google" | "groq" | "mistral" | "deepseek" | "cohere" | "together" | "fireworks" | "xai" | "openrouter";
 
+export type UserRole = "user" | "admin" | "super_admin";
+type SettingCategory = "llm_config" | "pricing" | "announcement" | "feature_toggle" | "general";
+type AnnouncementType = "info" | "warning" | "maintenance" | "update";
+
 export interface Database {
   public: {
     Tables: {
@@ -34,6 +38,10 @@ export interface Database {
           plan_expires_at: string | null;
           stripe_customer_id: string | null;
           onboarding_completed: boolean;
+          role: UserRole;
+          is_banned: boolean;
+          banned_at: string | null;
+          ban_reason: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -46,6 +54,10 @@ export interface Database {
           plan_expires_at?: string | null;
           stripe_customer_id?: string | null;
           onboarding_completed?: boolean;
+          role?: UserRole;
+          is_banned?: boolean;
+          banned_at?: string | null;
+          ban_reason?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -58,6 +70,10 @@ export interface Database {
           plan_expires_at?: string | null;
           stripe_customer_id?: string | null;
           onboarding_completed?: boolean;
+          role?: UserRole;
+          is_banned?: boolean;
+          banned_at?: string | null;
+          ban_reason?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -525,9 +541,117 @@ export interface Database {
         };
         Relationships: [];
       };
+      system_settings: {
+        Row: {
+          id: string;
+          setting_key: string;
+          setting_value: Json;
+          category: SettingCategory;
+          description: string | null;
+          updated_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          setting_key: string;
+          setting_value?: Json;
+          category: SettingCategory;
+          description?: string | null;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          setting_key?: string;
+          setting_value?: Json;
+          category?: SettingCategory;
+          description?: string | null;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      announcements: {
+        Row: {
+          id: string;
+          title: string;
+          content: string;
+          announcement_type: AnnouncementType;
+          is_active: boolean;
+          starts_at: string;
+          expires_at: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          content: string;
+          announcement_type?: AnnouncementType;
+          is_active?: boolean;
+          starts_at?: string;
+          expires_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          content?: string;
+          announcement_type?: AnnouncementType;
+          is_active?: boolean;
+          starts_at?: string;
+          expires_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      admin_audit_log: {
+        Row: {
+          id: string;
+          admin_id: string;
+          action_type: string;
+          target_type: string | null;
+          target_id: string | null;
+          details: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          admin_id: string;
+          action_type: string;
+          target_type?: string | null;
+          target_id?: string | null;
+          details?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          admin_id?: string;
+          action_type?: string;
+          target_type?: string | null;
+          target_id?: string | null;
+          details?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      is_admin: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      is_super_admin: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+    };
     Enums: {
       plan_type: PlanType;
       source_channel: SourceChannel;
@@ -543,6 +667,9 @@ export interface Database {
       progress_status: ProgressStatus;
       context_type: ContextType;
       llm_provider: LlmProvider;
+      user_role: UserRole;
+      setting_category: SettingCategory;
+      announcement_type: AnnouncementType;
     };
   };
 }

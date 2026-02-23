@@ -1,4 +1,5 @@
 import { createServiceClient } from "@/lib/supabase/service";
+import { getSystemSetting } from "@/lib/utils/system-settings";
 
 type UsageAction = "analysis" | "learning" | "chat";
 
@@ -9,7 +10,7 @@ interface UsageLimitResult {
   upgrade_message?: string;
 }
 
-const FREE_TIER_LIMITS: Record<UsageAction, number> = {
+const DEFAULT_FREE_TIER_LIMITS: Record<UsageAction, number> = {
   analysis: 3,
   learning: 1,
   chat: 20,
@@ -23,6 +24,18 @@ const UPGRADE_MESSAGES: Record<UsageAction, string> = {
   chat:
     "You've reached the free tier limit of 20 AI conversations per month. Upgrade to Pro for unlimited conversations.",
 };
+
+async function getFreeTierLimits(): Promise<Record<UsageAction, number>> {
+  const dynamic = await getSystemSetting<Record<string, number>>("free_tier_limits");
+  if (dynamic) {
+    return {
+      analysis: dynamic.analysis ?? DEFAULT_FREE_TIER_LIMITS.analysis,
+      learning: dynamic.learning ?? DEFAULT_FREE_TIER_LIMITS.learning,
+      chat: dynamic.chat ?? DEFAULT_FREE_TIER_LIMITS.chat,
+    };
+  }
+  return DEFAULT_FREE_TIER_LIMITS;
+}
 
 export async function checkUsageLimit(
   userId: string,
@@ -48,7 +61,8 @@ export async function checkUsageLimit(
     }
 
     // Free tier — check limits based on action
-    const limit = FREE_TIER_LIMITS[action];
+    const limits = await getFreeTierLimits();
+    const limit = limits[action];
     const currentCount = await getCurrentUsageCount(supabase, userId, action);
     const remaining = Math.max(0, limit - currentCount);
 
