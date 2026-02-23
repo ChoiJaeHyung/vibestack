@@ -1,13 +1,21 @@
-# CLAUDE.md — VibeStack 프로젝트 컨텍스트
+# CLAUDE.md — VibeUniv 프로젝트 컨텍스트
 
 ## 프로젝트 개요
-VibeStack은 바이브 코더(Vibe Coder)들이 AI로 만든 프로젝트의 기술 스택을 이해하고 학습할 수 있도록 돕는 플랫폼이다.
+VibeUniv(vibeuniv.com)는 바이브 코더(Vibe Coder)들이 AI로 만든 프로젝트의 기술 스택을 이해하고 학습할 수 있도록 돕는 플랫폼이다.
 
-**핵심 가치:** "먼저 만들고, 그 다음에 이해한다"
+**핵심 가치:** "만들었으면 반은 왔어요. 나머지 반, 여기서 채워요"
 - 바이브 코더가 코딩 도구(Claude Code, Cursor, Bolt 등)로 앱을 만든다
-- VibeStack MCP 서버를 통해 프로젝트 데이터를 자동 수집한다
+- VibeUniv MCP 서버를 통해 프로젝트 데이터를 자동 수집한다
 - AI가 기술 스택을 분석하고 맞춤 학습 로드맵을 생성한다
 - AI 튜터와 함께 실제 프로젝트 기반으로 학습한다
+
+## 브랜딩
+- **서비스명:** VibeUniv (VibeStack에서 리브랜딩됨)
+- **도메인:** vibeuniv.com
+- **로고 아이콘:** GraduationCap (lucide-react)
+- **톤:** 캐주얼하고 트렌디한 학습 플랫폼. 부담 없고 가볍고 재밌어 보이는 느낌
+- **디자인:** 깔끔한 zinc 모노크롬 (화려한 색상 X)
+- **GitHub repo:** ChoiJaeHyung/vibestack (레포명은 그대로)
 
 ## 기술 스택 (절대 변경 금지)
 - **Framework:** Next.js 15 (App Router)
@@ -48,7 +56,7 @@ vibestack/
 │   └── middleware/         # API 미들웨어 (인증 등)
 ├── types/                  # TypeScript 타입 정의
 ├── packages/
-│   └── mcp-server/         # @vibestack/mcp-server (npm 패키지)
+│   └── mcp-server/         # @vibeuniv/mcp-server (npm 패키지)
 └── supabase/
     └── migrations/         # DB 마이그레이션 SQL
 ```
@@ -67,7 +75,7 @@ vibestack/
 - 상수: UPPER_SNAKE_CASE (`MAX_FILE_SIZE`)
 - DB 테이블/컬럼: snake_case (`tech_stacks`, `user_id`)
 - API 엔드포인트: kebab-case (`/api/v1/projects`)
-- MCP Tool 이름: snake_case with prefix (`vibestack_sync_project`)
+- MCP Tool 이름: snake_case with prefix (`vibeuniv_sync_project`)
 
 ### 컴포넌트 규칙
 - Server Component를 기본으로 사용
@@ -121,10 +129,20 @@ NEXT_PUBLIC_APP_URL=
 - Pro ($19/mo): 무제한, 심화 분석, BYOK(자체 LLM 키)
 - Team ($49/mo): Pro + 팀 공유 + 우선순위
 
+## Git 워크플로우
+- main 브랜치 직접 push 금지 (hook으로 차단됨)
+- 기능 브랜치 생성 → PR → merge 방식으로 진행
+- 브랜치 네이밍: `feature/`, `fix/`, `rebrand/` 등 prefix 사용
+
+## 테스트 계정
+- **Email:** test@vibestack.dev
+- **Password:** testpass123
+
 ## 현재 진행 상황
-- [ ] Phase 1: 프로젝트 초기 설정
-- [ ] Phase 2: MCP 서버 개발
-- [ ] Phase 3: 프로젝트 수집 + 파일 파싱
-- [ ] Phase 4: 멀티 LLM + AI 분석 엔진
-- [ ] Phase 5: 학습 시스템
-- [ ] Phase 6: 대시보드 + 결제 + 출시
+- [x] Phase 1: 프로젝트 초기 설정
+- [x] Phase 2: MCP 서버 개발
+- [x] Phase 3: 프로젝트 수집 + 파일 파싱
+- [x] Phase 4: 멀티 LLM + AI 분석 엔진
+- [x] Phase 5: 학습 시스템
+- [x] Phase 6: 대시보드 + 결제 + 출시
+- [x] VibeStack → VibeUniv 리브랜딩 (PR #2)

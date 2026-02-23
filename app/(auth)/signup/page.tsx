@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Layers } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
@@ -58,7 +58,7 @@ export default function SignupPage() {
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
         <div className="w-full max-w-sm space-y-4 text-center">
-          <Layers className="mx-auto h-12 w-12 text-zinc-900 dark:text-zinc-100" />
+          <GraduationCap className="mx-auto h-12 w-12 text-zinc-900 dark:text-zinc-100" />
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             이메일을 확인해주세요
           </h1>
@@ -85,9 +85,9 @@ export default function SignupPage() {
         {/* Logo */}
         <div className="text-center">
           <Link href="/" className="inline-flex items-center gap-2">
-            <Layers className="h-8 w-8 text-zinc-900 dark:text-zinc-100" />
+            <GraduationCap className="h-8 w-8 text-zinc-900 dark:text-zinc-100" />
             <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-              VibeStack
+              VibeUniv
             </span>
           </Link>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">

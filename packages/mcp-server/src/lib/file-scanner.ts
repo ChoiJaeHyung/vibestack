@@ -87,7 +87,44 @@ const SOURCE_PATTERNS = [
 
 // ─── Ignore patterns ────────────────────────────────────────────────
 
-const IGNORE_PATTERNS = [
+// ─── Teaching-critical file patterns ─────────────────────────────────
+// These files contain core logic essential for personalized education.
+// They skip header extraction and retain full content so the AI tutor
+// can reference the student's actual code (e.g. "In your middleware.ts…").
+
+const TEACHING_CRITICAL_PATTERNS = [
+  "app/**/page.tsx",
+  "app/**/page.ts",
+  "app/**/layout.tsx",
+  "app/**/layout.ts",
+  "app/api/**/*.ts",
+  "middleware.ts",
+  "middleware.js",
+  "lib/**/*.ts",
+  "server/**/*.ts",
+  "types/**/*.ts",
+];
+
+function isTeachingCriticalFile(relativePath: string): boolean {
+  return TEACHING_CRITICAL_PATTERNS.some((pattern) => {
+    // Convert glob pattern to regex using placeholders to avoid
+    // conflicting replacements between glob wildcards and regex syntax.
+    const regexStr = pattern
+      .replace(/\*\*/g, "GLOB_DSTAR")
+      .replace(/\*/g, "GLOB_STAR")
+      .replace(/\./g, "\\.")
+      .replace(/GLOB_DSTAR\//g, "(?:[^/]+/)*")
+      .replace(/\/GLOB_DSTAR/g, "(?:/[^/]+)*")
+      .replace(/GLOB_DSTAR/g, ".*")
+      .replace(/GLOB_STAR/g, "[^/]*");
+    return new RegExp(`^${regexStr}$`).test(relativePath);
+  });
+}
+
+// ─── Ignore patterns ────────────────────────────────────────────────
+
+// Base ignore patterns applied to all file collection (build artifacts, tests, etc.)
+const BASE_IGNORE_PATTERNS = [
   "node_modules/**",
   ".next/**",
   "dist/**",
@@ -100,6 +137,31 @@ const IGNORE_PATTERNS = [
   "**/*.d.ts",
   "packages/mcp-server/dist/**",
 ];
+
+// Sensitive file patterns — applied only to source code glob, not to
+// ROOT_FILES (which are explicit safe filenames like .env.example).
+const SENSITIVE_PATTERNS = [
+  ".env",
+  ".env.*",
+  "**/.env",
+  "**/.env.*",
+  "**/credentials.json",
+  "**/service-account*.json",
+  "**/*.pem",
+  "**/*.key",
+  "**/id_rsa*",
+  "**/id_ed25519*",
+  "**/*.p12",
+  "**/*.pfx",
+  "**/*.jks",
+  "**/secrets.*",
+  "**/vault.*",
+  "**/.npmrc",
+  "**/.pypirc",
+];
+
+// Full ignore list for source code collection (base + sensitive)
+const IGNORE_PATTERNS = [...BASE_IGNORE_PATTERNS, ...SENSITIVE_PATTERNS];
 
 function computeSha256(content: string): string {
   return createHash("sha256").update(content, "utf-8").digest("hex");
@@ -237,7 +299,9 @@ export async function scanProjectFiles(
   const foundFiles: ProjectFile[] = [];
 
   // 1) Collect root-level config/dependency files
-  const rootMatches = await collectFiles(rootDir, ROOT_FILES, IGNORE_PATTERNS);
+  // Use BASE_IGNORE_PATTERNS only (not SENSITIVE_PATTERNS) because ROOT_FILES
+  // are explicit safe filenames like .env.example that we intentionally collect.
+  const rootMatches = await collectFiles(rootDir, ROOT_FILES, BASE_IGNORE_PATTERNS);
   const configFileSet = new Set(rootMatches);
 
   // 2) Collect source code files
@@ -273,9 +337,12 @@ export async function scanProjectFiles(
       let content = await readFileContent(absolutePath, relativePath);
 
       // For source code files (not config/dependency files), extract only
-      // import/export headers to reduce upload size (~500 bytes vs ~50KB)
+      // import/export headers to reduce upload size (~500 bytes vs ~50KB).
+      // Exception: teaching-critical files retain full content so the AI
+      // tutor can reference the student's actual code during lessons.
       const isConfig = configFileSet.has(relativePath);
-      if (!isConfig && isSourceCodeFile(relativePath)) {
+      const isTeachingCritical = isTeachingCriticalFile(relativePath);
+      if (!isConfig && !isTeachingCritical && isSourceCodeFile(relativePath)) {
         content = extractFileHeader(content);
       }
 

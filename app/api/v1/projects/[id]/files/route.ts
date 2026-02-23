@@ -4,6 +4,7 @@ import { authenticateApiKey, isAuthResult } from "@/server/middleware/api-auth";
 import { createServiceClient } from "@/lib/supabase/service";
 import { detectFileType } from "@/lib/analysis/file-parser";
 import { generateDigest, digestToMarkdown } from "@/lib/analysis/digest-generator";
+import { encryptContent, decryptContent } from "@/lib/utils/content-encryption";
 import type { FileUploadRequest } from "@/types/api";
 import type { Database } from "@/types/database";
 
@@ -77,7 +78,7 @@ export async function POST(
         file_name: file.file_name,
         file_type: fileType,
         file_path: file.file_path ?? null,
-        raw_content: file.content,
+        raw_content: encryptContent(file.content),
         file_size: Buffer.byteLength(file.content, "utf-8"),
         content_hash: file.content_hash ?? null,
       });
@@ -111,7 +112,11 @@ export async function POST(
       .neq("file_name", "_project_digest.md");
 
     if (allFiles && allFiles.length > 0) {
-      const digest = generateDigest(project.name, allFiles);
+      const decryptedFiles = allFiles.map((f) => ({
+        ...f,
+        raw_content: f.raw_content ? decryptContent(f.raw_content) : f.raw_content,
+      }));
+      const digest = generateDigest(project.name, decryptedFiles);
       const digestMarkdown = digestToMarkdown(digest);
 
       // Upsert _project_digest.md — delete existing then insert
@@ -127,7 +132,7 @@ export async function POST(
         file_name: "_project_digest.md",
         file_type: "other",
         file_path: "_project_digest.md",
-        raw_content: digestMarkdown,
+        raw_content: encryptContent(digestMarkdown),
         file_size: Buffer.byteLength(digestMarkdown, "utf-8"),
       };
       await supabase.from("project_files").insert(digestInsert);

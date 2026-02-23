@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Layers } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
@@ -52,9 +52,9 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center">
           <Link href="/" className="inline-flex items-center gap-2">
-            <Layers className="h-8 w-8 text-zinc-900 dark:text-zinc-100" />
+            <GraduationCap className="h-8 w-8 text-zinc-900 dark:text-zinc-100" />
             <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-              VibeStack
+              VibeUniv
             </span>
           </Link>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">

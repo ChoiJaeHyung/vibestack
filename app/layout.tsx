@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "VibeStack - AI로 만든 프로젝트, 이제 이해하기",
-    template: "%s | VibeStack",
+    default: "VibeUniv - AI로 만든 프로젝트, 이제 이해하기",
+    template: "%s | VibeUniv",
   },
   description:
     "바이브 코딩으로 만든 프로젝트의 기술 스택을 AI가 분석하고 맞춤 학습 로드맵을 제공합니다",
@@ -29,17 +29,17 @@ export const metadata: Metadata = {
     "Cursor",
   ],
   openGraph: {
-    title: "VibeStack - AI로 만든 프로젝트, 이제 이해하기",
+    title: "VibeUniv - AI로 만든 프로젝트, 이제 이해하기",
     description:
       "바이브 코딩으로 만든 프로젝트의 기술 스택을 AI가 분석하고 맞춤 학습 로드맵을 제공합니다",
-    url: "https://vibestack.dev",
-    siteName: "VibeStack",
+    url: "https://vibeuniv.com",
+    siteName: "VibeUniv",
     type: "website",
     locale: "ko_KR",
   },
   twitter: {
     card: "summary_large_image",
-    title: "VibeStack - AI로 만든 프로젝트, 이제 이해하기",
+    title: "VibeUniv - AI로 만든 프로젝트, 이제 이해하기",
     description:
       "바이브 코딩으로 만든 프로젝트의 기술 스택을 AI가 분석하고 맞춤 학습 로드맵을 제공합니다",
   },

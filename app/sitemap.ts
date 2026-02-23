@@ -3,19 +3,19 @@ import { MetadataRoute } from "next";
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
-      url: "https://vibestack.dev",
+      url: "https://vibeuniv.com",
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1,
     },
     {
-      url: "https://vibestack.dev/login",
+      url: "https://vibeuniv.com/login",
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.5,
     },
     {
-      url: "https://vibestack.dev/signup",
+      url: "https://vibeuniv.com/signup",
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.5,

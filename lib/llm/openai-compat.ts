@@ -150,7 +150,7 @@ export class OpenAICompatibleProvider implements LLMProvider {
 
       const response = await this.client.chat.completions.create({
         model: this.modelName,
-        max_tokens: MAX_TOKENS,
+        max_tokens: input.maxTokens ?? MAX_TOKENS,
         messages,
       });
 

@@ -92,7 +92,7 @@ export class CohereProvider implements LLMProvider {
 
       const response = await this.client.chat({
         model: this.modelName,
-        maxTokens: MAX_TOKENS,
+        maxTokens: input.maxTokens ?? MAX_TOKENS,
         messages,
       });
 
