@@ -33,26 +33,49 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   // Redirect unauthenticated users away from dashboard routes
   const protectedPaths = ["/dashboard", "/projects", "/settings", "/learning", "/admin"];
   const isProtectedPath = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path),
   );
 
+  const authPages = ["/login", "/signup"];
+  const isAuthPage = authPages.includes(request.nextUrl.pathname);
+  const isLandingPage = request.nextUrl.pathname === "/";
+
+  // Only call getUser() when the result actually matters:
+  // - protected pages (need auth check)
+  // - auth/landing pages (redirect logged-in users)
+  const needsAuthCheck = isProtectedPath || isAuthPage || isLandingPage;
+
+  if (!needsAuthCheck) {
+    return supabaseResponse;
+  }
+
+  // Quick bail: if no Supabase auth cookies exist, user is definitely not logged in
+  const hasAuthCookie = request.cookies.getAll().some(
+    (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token"),
+  );
+
+  if (!hasAuthCookie) {
+    if (isProtectedPath) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+    return supabaseResponse;
+  }
+
+  // Auth cookie exists — verify with Supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (!user && isProtectedPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
-
-  // Redirect authenticated users away from login/signup/landing to dashboard
-  const authPages = ["/login", "/signup"];
-  const isAuthPage = authPages.includes(request.nextUrl.pathname);
-  const isLandingPage = request.nextUrl.pathname === "/";
 
   if (user && (isAuthPage || isLandingPage)) {
     const url = request.nextUrl.clone();
