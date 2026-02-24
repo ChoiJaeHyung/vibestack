@@ -121,7 +121,7 @@ export function LearningGenerator() {
         setError(response.error ?? "로드맵 생성에 실패했습니다");
       }
     } catch {
-      setError("알 수 없는 오류가 발생했습니다");
+      setError("로드맵 생성 중 오류가 발생했습니다. 다시 시도해 주세요.");
     } finally {
       setLoading(false);
     }

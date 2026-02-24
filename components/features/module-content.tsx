@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Target,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 // Card components available but not currently used
@@ -22,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-import { updateLearningProgress } from "@/server/actions/learning";
+import { updateLearningProgress, generateModuleContent } from "@/server/actions/learning";
 import { TutorChat } from "@/components/features/tutor-chat";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -55,6 +56,7 @@ interface ModuleContentProps {
   learningPathId: string;
   projectId: string;
   nextModuleId: string | null;
+  needsGeneration?: boolean;
 }
 
 // ─── Module Type Config ─────────────────────────────────────────────
@@ -267,6 +269,7 @@ export function ModuleContent({
   learningPathId,
   projectId,
   nextModuleId,
+  needsGeneration,
 }: ModuleContentProps) {
   const router = useRouter();
   const [completing, setCompleting] = useState(false);
@@ -275,8 +278,14 @@ export function ModuleContent({
   );
   const startTimeRef = useRef<number>(Date.now());
   const [showChat, setShowChat] = useState(false);
+
+  // On-demand content generation state
+  const [localSections, setLocalSections] = useState<ContentSection[]>(sections);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+
   const [currentStep, setCurrentStep] = useState(0);
-  const totalSteps = sections.length;
+  const totalSteps = localSections.length;
 
   const typeConfig = moduleType ? MODULE_TYPE_CONFIG[moduleType] : null;
   const TypeIcon = typeConfig?.icon ?? BookOpen;
@@ -287,6 +296,58 @@ export function ModuleContent({
       updateLearningProgress(moduleId, "in_progress");
     }
   }, [moduleId, progress?.status]);
+
+  // On-demand content generation
+  useEffect(() => {
+    if (!needsGeneration || localSections.length > 0 || isGenerating) return;
+
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    async function generate() {
+      setIsGenerating(true);
+      setGenerationError(null);
+
+      try {
+        const result = await generateModuleContent(moduleId);
+
+        if (cancelled) return;
+
+        if (result.generating) {
+          // Another request is already generating — poll after 5s
+          timeoutId = setTimeout(() => {
+            if (!cancelled) {
+              setIsGenerating(false); // triggers re-run
+            }
+          }, 5000);
+          return;
+        }
+
+        if (result.success && result.data) {
+          setLocalSections(result.data.sections);
+        } else {
+          setGenerationError(
+            result.error ?? "콘텐츠 생성에 실패했습니다.",
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setGenerationError("콘텐츠 생성 중 오류가 발생했습니다.");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsGenerating(false);
+        }
+      }
+    }
+
+    generate();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [needsGeneration, localSections.length, isGenerating, moduleId]);
 
   // Keyboard navigation: ← → arrow keys
   useEffect(() => {
@@ -325,6 +386,12 @@ export function ModuleContent({
       setCompleting(false);
     }
   }, [moduleId]);
+
+  const handleRetryGeneration = useCallback(() => {
+    setGenerationError(null);
+    setIsGenerating(false);
+    setLocalSections([]);
+  }, []);
 
   function handleNext() {
     if (nextModuleId) {
@@ -370,125 +437,166 @@ export function ModuleContent({
         )}
       </div>
 
-      {/* Progress bar + step counter */}
-      <div className="space-y-2">
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-          <div
-            className="h-1.5 rounded-full bg-zinc-900 transition-all duration-300 dark:bg-white"
-            style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
-          />
+      {/* On-demand content generation states */}
+      {isGenerating && localSections.length === 0 && (
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 py-12 dark:border-zinc-800 dark:bg-zinc-900/50">
+          <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+          <div className="text-center">
+            <p className="font-medium text-zinc-700 dark:text-zinc-300">
+              학습 콘텐츠를 생성하고 있습니다...
+            </p>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              AI가 프로젝트 코드를 분석하여 맞춤 콘텐츠를 만들고 있어요
+            </p>
+          </div>
         </div>
-        <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-          {(() => {
-            const currentSection = sections[currentStep];
-            const sectionConfig = currentSection
-              ? SECTION_TYPE_CONFIG[currentSection.type]
-              : null;
-            const SectionIcon = sectionConfig?.icon ?? BookOpen;
-            return (
-              <span className="flex items-center gap-1">
-                <SectionIcon className="h-3 w-3" />
-                {sectionConfig?.label ?? "설명"}
+      )}
+
+      {generationError && localSections.length === 0 && (
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-red-200 bg-red-50 py-12 dark:border-red-900/50 dark:bg-red-900/20">
+          <XCircle className="h-8 w-8 text-red-500 dark:text-red-400" />
+          <div className="text-center">
+            <p className="font-medium text-red-700 dark:text-red-300">
+              콘텐츠 생성에 실패했습니다
+            </p>
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              {generationError}
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleRetryGeneration}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            다시 시도
+          </Button>
+        </div>
+      )}
+
+      {localSections.length > 0 && (
+        <>
+          {/* Progress bar + step counter */}
+          <div className="space-y-2">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+              <div
+                className="h-1.5 rounded-full bg-zinc-900 transition-all duration-300 dark:bg-white"
+                style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+              {(() => {
+                const currentSection = localSections[currentStep];
+                const sectionConfig = currentSection
+                  ? SECTION_TYPE_CONFIG[currentSection.type]
+                  : null;
+                const SectionIcon = sectionConfig?.icon ?? BookOpen;
+                return (
+                  <span className="flex items-center gap-1">
+                    <SectionIcon className="h-3 w-3" />
+                    {sectionConfig?.label ?? "설명"}
+                  </span>
+                );
+              })()}
+              <span>
+                {currentStep + 1} / {totalSteps}
               </span>
-            );
-          })()}
-          <span>
-            {currentStep + 1} / {totalSteps}
-          </span>
-        </div>
-      </div>
+            </div>
+          </div>
 
-      {/* Step cards: hidden/block toggle for state preservation */}
-      <div>
-        {sections.map((section, idx) => (
-          <div key={idx} className={idx === currentStep ? "block" : "hidden"}>
-            {section.title && (
-              <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                {section.title}
-              </h2>
-            )}
+          {/* Step cards: hidden/block toggle for state preservation */}
+          <div>
+            {localSections.map((section, idx) => (
+              <div key={idx} className={idx === currentStep ? "block" : "hidden"}>
+                {section.title && (
+                  <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                    {section.title}
+                  </h2>
+                )}
 
-            {section.type === "quiz_question" ? (
-              <QuizSection section={section} />
-            ) : section.type === "challenge" ? (
-              <ChallengeSection section={section} />
-            ) : (
-              <div className="space-y-4">
-                <div className="prose prose-sm prose-zinc max-w-none dark:prose-invert">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[rehypeHighlight]}
-                  >
-                    {section.body}
-                  </ReactMarkdown>
-                </div>
-                {section.code && (
-                  <div className="overflow-x-auto rounded-lg">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      rehypePlugins={[rehypeHighlight]}
-                    >
-                      {"```\n" + section.code + "\n```"}
-                    </ReactMarkdown>
+                {section.type === "quiz_question" ? (
+                  <QuizSection section={section} />
+                ) : section.type === "challenge" ? (
+                  <ChallengeSection section={section} />
+                ) : (
+                  <div className="space-y-4">
+                    <div className="prose prose-sm prose-zinc max-w-none dark:prose-invert">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[rehypeHighlight]}
+                      >
+                        {section.body}
+                      </ReactMarkdown>
+                    </div>
+                    {section.code && (
+                      <div className="overflow-x-auto rounded-lg">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          rehypePlugins={[rehypeHighlight]}
+                        >
+                          {"```\n" + section.code + "\n```"}
+                        </ReactMarkdown>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
+            ))}
+          </div>
+
+          {/* Bottom navigation */}
+          <div className="flex items-center justify-between border-t border-zinc-200 pt-6 dark:border-zinc-800">
+            <Button
+              variant="ghost"
+              onClick={() => setCurrentStep((prev) => prev - 1)}
+              disabled={currentStep === 0}
+            >
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              이전
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowChat(!showChat)}
+            >
+              {showChat ? "채팅 닫기" : "AI 튜터"}
+            </Button>
+
+            {currentStep < totalSteps - 1 ? (
+              <Button onClick={() => setCurrentStep((prev) => prev + 1)}>
+                다음
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            ) : !isCompleted ? (
+              <Button onClick={handleComplete} disabled={completing}>
+                {completing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    저장 중...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    완료
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button onClick={handleNext}>
+                {nextModuleId ? (
+                  <>
+                    다음 모듈
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                ) : (
+                  "학습 경로로 돌아가기"
+                )}
+              </Button>
             )}
           </div>
-        ))}
-      </div>
-
-      {/* Bottom navigation */}
-      <div className="flex items-center justify-between border-t border-zinc-200 pt-6 dark:border-zinc-800">
-        <Button
-          variant="ghost"
-          onClick={() => setCurrentStep((prev) => prev - 1)}
-          disabled={currentStep === 0}
-        >
-          <ChevronLeft className="mr-1 h-4 w-4" />
-          이전
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowChat(!showChat)}
-        >
-          {showChat ? "채팅 닫기" : "AI 튜터"}
-        </Button>
-
-        {currentStep < totalSteps - 1 ? (
-          <Button onClick={() => setCurrentStep((prev) => prev + 1)}>
-            다음
-            <ChevronRight className="ml-1 h-4 w-4" />
-          </Button>
-        ) : !isCompleted ? (
-          <Button onClick={handleComplete} disabled={completing}>
-            {completing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                저장 중...
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                완료
-              </>
-            )}
-          </Button>
-        ) : (
-          <Button onClick={handleNext}>
-            {nextModuleId ? (
-              <>
-                다음 모듈
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </>
-            ) : (
-              "학습 경로로 돌아가기"
-            )}
-          </Button>
-        )}
-      </div>
+        </>
+      )}
 
       {/* AI Tutor Chat Panel */}
       {showChat && (
