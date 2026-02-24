@@ -7,11 +7,12 @@ export interface Config {
 
 export function loadConfig(): Config {
   const apiKey =
-    process.env.VIBEUNIV_API_KEY || process.env.VIBESTACK_API_KEY;
+    process.env.VIBEUNIV_API_KEY || process.env.VIBESTACK_API_KEY || "";
 
   if (!apiKey) {
-    throw new Error(
-      "VIBEUNIV_API_KEY environment variable is required. " +
+    console.error(
+      "[vibeuniv] WARNING: VIBEUNIV_API_KEY is not set. " +
+        "Tools will return errors until configured. " +
         "Get your API key at https://vibeuniv.com/settings/api"
     );
   }

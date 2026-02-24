@@ -13,14 +13,18 @@ import { registerAskTutor } from "./tools/ask-tutor.js";
 import { registerSubmitAnalysis } from "./tools/submit-analysis.js";
 
 async function main(): Promise<void> {
-  console.error("[vibeuniv] Starting VibeUniv MCP Server v0.1.1...");
+  console.error("[vibeuniv] Starting VibeUniv MCP Server v0.2.0...");
 
   const config = loadConfig();
   const client = new VibeUnivClient(config.apiKey, config.apiUrl);
 
+  if (config.apiKey) {
+    console.error("[vibeuniv] API key configured, endpoint: " + config.apiUrl);
+  }
+
   const server = new McpServer({
     name: "vibeuniv-mcp-server",
-    version: "0.1.0",
+    version: "0.2.0",
   });
 
   registerSyncProject(server, client);

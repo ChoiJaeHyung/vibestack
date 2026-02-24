@@ -6,10 +6,65 @@ import type {
   Project,
   ProjectFile,
   SessionLog,
+  TutorResponse,
 } from "../types.js";
 
 const POLL_INTERVAL_MS = 3000;
 const MAX_POLL_ATTEMPTS = 60;
+
+// Raw API response types (snake_case from server)
+interface RawAnalyzeTriggerResponse {
+  job_id: string;
+  status: "pending";
+}
+
+interface RawAnalysisPollResponse {
+  job_id: string;
+  status: string;
+  error_message: string | null;
+  tech_stacks: RawTechStack[];
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+interface RawTechStack {
+  technology_name: string;
+  category: string;
+  version: string | null;
+  confidence_score: number;
+  importance: string;
+  description: string | null;
+}
+
+interface RawLearningPathResponse {
+  id: string;
+  title: string;
+  description: string | null;
+  difficulty: string;
+  total_modules: number;
+  status: string;
+  created_at: string;
+  modules: RawLearningModule[];
+}
+
+interface RawLearningModule {
+  id: string;
+  title: string;
+  description: string | null;
+  module_order: number;
+  estimated_minutes: number | null;
+  topics: string[];
+  status: string;
+}
+
+interface RawTutorResponse {
+  answer: string;
+  conversation_id: string;
+}
+
+interface RawSessionResponse {
+  session_id: string;
+}
 
 export class VibeUnivClient {
   private apiKey: string;
@@ -25,12 +80,21 @@ export class VibeUnivClient {
     path: string,
     body?: unknown
   ): Promise<T> {
+    if (!this.apiKey) {
+      throw new Error(
+        "VIBEUNIV_API_KEY is not configured. " +
+          'Add it to your MCP server config\'s "env" block:\n\n' +
+          '  "env": { "VIBEUNIV_API_KEY": "your-api-key-here" }\n\n' +
+          "Get your API key at https://vibeuniv.com/settings/api"
+      );
+    }
+
     const url = `${this.baseUrl}${path}`;
 
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.apiKey}`,
       "Content-Type": "application/json",
-      "User-Agent": "vibeuniv-mcp-server/0.1.1",
+      "User-Agent": "vibeuniv-mcp-server/0.2.0",
     };
 
     const response = await fetch(url, {
@@ -71,16 +135,23 @@ export class VibeUnivClient {
   }
 
   async triggerAnalysis(projectId: string): Promise<AnalysisResult> {
-    const job = await this.request<AnalysisResult>(
+    const raw = await this.request<RawAnalyzeTriggerResponse>(
       "POST",
       `/projects/${projectId}/analyze`
     );
 
-    if (job.status === "completed") {
-      return job;
+    const result: AnalysisResult = {
+      id: raw.job_id,
+      projectId,
+      status: raw.status,
+      createdAt: new Date().toISOString(),
+    };
+
+    if (result.status === "completed") {
+      return result;
     }
 
-    return this.pollAnalysis(projectId, job.id);
+    return this.pollAnalysis(projectId, result.id);
   }
 
   private async pollAnalysis(
@@ -90,10 +161,26 @@ export class VibeUnivClient {
     for (let i = 0; i < MAX_POLL_ATTEMPTS; i++) {
       await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
 
-      const result = await this.request<AnalysisResult>(
+      const raw = await this.request<RawAnalysisPollResponse>(
         "GET",
         `/projects/${projectId}/analyze/${jobId}`
       );
+
+      const result: AnalysisResult = {
+        id: raw.job_id,
+        projectId,
+        status: raw.status as AnalysisResult["status"],
+        errorMessage: raw.error_message ?? undefined,
+        techStack: raw.tech_stacks.map((t) => ({
+          name: t.technology_name,
+          category: t.category,
+          version: t.version ?? undefined,
+          confidence: t.confidence_score,
+        })),
+        startedAt: raw.started_at ?? undefined,
+        completedAt: raw.completed_at ?? undefined,
+        createdAt: raw.started_at ?? new Date().toISOString(),
+      };
 
       if (result.status === "completed" || result.status === "failed") {
         return result;
@@ -108,23 +195,61 @@ export class VibeUnivClient {
   }
 
   async getLearningPath(projectId: string): Promise<LearningPath> {
-    return this.request<LearningPath>(
+    const raw = await this.request<RawLearningPathResponse>(
       "GET",
       `/projects/${projectId}/learning`
     );
+
+    return {
+      id: raw.id,
+      projectId,
+      title: raw.title,
+      description: raw.description ?? undefined,
+      difficulty: raw.difficulty,
+      totalModules: raw.total_modules,
+      status: raw.status,
+      createdAt: raw.created_at,
+      modules: raw.modules.map((m) => ({
+        id: m.id,
+        title: m.title,
+        description: m.description ?? "",
+        topics: m.topics ?? [],
+        order: m.module_order,
+        estimatedMinutes: m.estimated_minutes ?? undefined,
+        status: m.status,
+      })),
+    };
   }
 
-  async logSession(projectId: string, data: SessionLog): Promise<void> {
-    await this.request<void>("POST", `/projects/${projectId}/sessions`, data);
+  async logSession(projectId: string, data: SessionLog): Promise<string> {
+    const raw = await this.request<RawSessionResponse>(
+      "POST",
+      `/projects/${projectId}/sessions`,
+      {
+        summary: data.summary,
+        files_changed: data.filesChanged,
+      }
+    );
+    return raw.session_id;
   }
 
-  async askTutor(projectId: string, question: string): Promise<string> {
-    const result = await this.request<{ answer: string }>(
+  async askTutor(
+    projectId: string,
+    question: string,
+    conversationId?: string
+  ): Promise<TutorResponse> {
+    const raw = await this.request<RawTutorResponse>(
       "POST",
       `/projects/${projectId}/tutor`,
-      { question }
+      {
+        question,
+        conversation_id: conversationId,
+      }
     );
-    return result.answer;
+    return {
+      answer: raw.answer,
+      conversationId: raw.conversation_id,
+    };
   }
 
   async submitEducationalAnalysis(projectId: string, analysisData: Record<string, unknown>): Promise<void> {
