@@ -41,12 +41,12 @@ export async function updateSession(request: NextRequest) {
 
   const authPages = ["/login", "/signup"];
   const isAuthPage = authPages.includes(request.nextUrl.pathname);
-  const isLandingPage = request.nextUrl.pathname === "/";
 
   // Only call getUser() when the result actually matters:
   // - protected pages (need auth check)
-  // - auth/landing pages (redirect logged-in users)
-  const needsAuthCheck = isProtectedPath || isAuthPage || isLandingPage;
+  // - auth pages (redirect logged-in users away from login/signup)
+  // Note: landing page (/) is accessible to logged-in users (no redirect)
+  const needsAuthCheck = isProtectedPath || isAuthPage;
 
   if (!needsAuthCheck) {
     return supabaseResponse;
@@ -77,7 +77,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && (isAuthPage || isLandingPage)) {
+  if (user && isAuthPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
