@@ -13,7 +13,7 @@ import { registerAskTutor } from "./tools/ask-tutor.js";
 import { registerSubmitAnalysis } from "./tools/submit-analysis.js";
 
 async function main(): Promise<void> {
-  console.error("[vibeuniv] Starting VibeUniv MCP Server v0.1.0...");
+  console.error("[vibeuniv] Starting VibeUniv MCP Server v0.1.1...");
 
   const config = loadConfig();
   const client = new VibeUnivClient(config.apiKey, config.apiUrl);
