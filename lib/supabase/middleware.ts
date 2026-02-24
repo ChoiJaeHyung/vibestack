@@ -53,8 +53,11 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Quick bail: if no Supabase auth cookies exist, user is definitely not logged in
+  // Note: Supabase SSR may chunk large tokens (e.g. Google OAuth) into
+  // sb-xxx-auth-token.0, sb-xxx-auth-token.1, etc. Use includes() to match both
+  // single and chunked cookie names.
   const hasAuthCookie = request.cookies.getAll().some(
-    (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token"),
+    (c) => c.name.startsWith("sb-") && c.name.includes("-auth-token"),
   );
 
   if (!hasAuthCookie) {
