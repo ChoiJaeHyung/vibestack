@@ -278,6 +278,16 @@ export default function GuidePage() {
   }
 }`}
               </CodeBlock>
+
+              <InfoBox>
+                설정 파일을 직접 수정하기 어렵다면, 사용 중인 AI 코딩 도구에게
+                그대로 요청하면 됩니다. 예를 들어 Claude Code에서{" "}
+                <strong>&quot;MCP 서버 설정에 vibeuniv 추가해줘&quot;</strong>
+                라고 말하거나, Cursor에서{" "}
+                <strong>&quot;mcp.json에 아래 설정 추가해줘&quot;</strong>
+                라고 하면 AI가 알아서 설정 파일을 찾아 추가해 줍니다.
+                위의 JSON 설정 코드를 함께 붙여넣으면 더 정확해요!
+              </InfoBox>
             </StepSection>
 
             {/* Step 5 */}
