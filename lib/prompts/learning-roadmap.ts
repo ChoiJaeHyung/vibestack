@@ -30,7 +30,7 @@ const CONTENT_JSON_SCHEMA = `[
     "content": {
       "sections": [
         {
-          "type": "explanation | code_example | quiz_question | challenge",
+          "type": "explanation | code_example | quiz_question | challenge | reflection",
           "title": "string (section heading)",
           "body": "string (markdown content — reference the student's actual code)",
           "code": "string (code snippet, if applicable, otherwise omit)",
@@ -210,18 +210,21 @@ For each module listed above, generate detailed content sections. Follow these r
    - \`code_example\` — An ACTUAL code snippet copied FROM the student's project files above (must include \`code\` field). Include the file path in the title (e.g., "app/api/auth/route.ts 살펴보기"). In the body, explain what each important line does with Korean comments.
    - \`quiz_question\` — Multiple choice question based on the student's actual code (must include \`quiz_options\` and \`quiz_answer\` fields). For example: "\`app/layout.tsx\`에서 \`<html lang='ko'>\`를 사용하는 이유는 무엇일까요?"
    - \`challenge\` — A small, concrete coding challenge the student can try on their own project. Be specific about which file to modify and what to add. For example: "\`app/api/v1/projects/route.ts\`에 새로운 쿼리 파라미터를 추가해서 프로젝트를 상태별로 필터링하는 기능을 만들어 보세요."
-3. **Each module MUST have at least 2 sections.**
-4. **Quiz questions** should have exactly 4 options with one correct answer (0-indexed).
-5. **For ${level} level:**
+   - \`reflection\` — A short "생각해보기" prompt (1-3 sentences) asking the student to pause and think. No quiz_options needed. For example: "만약 이 미들웨어가 없다면 어떤 문제가 생길까요? 한번 상상해 보세요."
+3. **Each module MUST have 5-8 sections.** Keep individual sections SHORT — explanations should be 1-3 short paragraphs max. Use bullet points over long paragraphs.
+4. **Interleave interactive sections:** After every 1-2 explanation/code_example sections, insert a quiz_question or reflection section. Never have more than 2 explanation sections in a row.
+5. **Micro-learning tone:** Use short sentences. Start sections with a question or hook ("왜 이렇게 할까요?", "이 코드를 보면..."). Prefer bullet points over prose. Each section should feel like a quick card, not a lecture.
+6. **Quiz questions** should have exactly 4 options with one correct answer (0-indexed).
+7. **For ${level} level:**
 ${buildLevelGuidance(level)}
-6. **For \`project_walkthrough\` modules:** Walk through one of the student's actual files from top to bottom. Start with the imports (각 라이브러리가 무슨 역할인지), then the main logic (핵심 로직 설명), then the exports (다른 파일에서 어떻게 사용되는지). Explain how this file connects to the rest of the project. Use the actual code from the source files above — do NOT paraphrase or abbreviate.
-7. **For \`code_example\` sections:** Use ACTUAL code snippets FROM the student's files, not invented examples. Include the file path and add Korean comments explaining what each important line does. For example:
+8. **For \`project_walkthrough\` modules:** Walk through one of the student's actual files from top to bottom. Start with the imports (각 라이브러리가 무슨 역할인지), then the main logic (핵심 로직 설명), then the exports (다른 파일에서 어떻게 사용되는지). Explain how this file connects to the rest of the project. Use the actual code from the source files above — do NOT paraphrase or abbreviate.
+9. **For \`code_example\` sections:** Use ACTUAL code snippets FROM the student's files, not invented examples. Include the file path and add Korean comments explaining what each important line does. For example:
    \`\`\`
    // app/api/auth/route.ts에서 가져온 코드
    const supabase = createClient()  // Supabase 클라이언트 생성
    const { data } = await supabase.auth.getUser()  // 현재 로그인한 사용자 정보 가져오기
    \`\`\`
-8. **For \`challenge\` sections:** Give a small, concrete task the student can try on their own project. Specify the exact file to modify, what to add or change, and what the expected result should be. Make challenges relevant to the student's actual codebase.
+10. **For \`challenge\` sections:** Give a small, concrete task the student can try on their own project. Specify the exact file to modify, what to add or change, and what the expected result should be. Make challenges relevant to the student's actual codebase.
 
 ## Important Rules
 
@@ -252,7 +255,7 @@ const ROADMAP_JSON_SCHEMA = `{
       "content": {
         "sections": [
           {
-            "type": "explanation | code_example | quiz_question | challenge",
+            "type": "explanation | code_example | quiz_question | challenge | reflection",
             "title": "string (section heading)",
             "body": "string (markdown content)",
             "code": "string (code snippet, if applicable, otherwise omit)",

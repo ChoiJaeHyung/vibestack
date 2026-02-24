@@ -12,6 +12,9 @@ import {
   Code,
   HelpCircle,
   FolderOpen,
+  ChevronLeft,
+  ChevronRight,
+  Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 // Card components available but not currently used
@@ -88,6 +91,22 @@ const MODULE_TYPE_CONFIG: Record<
     className:
       "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
   },
+};
+
+// ─── Section Type Config (for step navigation badges) ───────────────
+
+const SECTION_TYPE_CONFIG: Record<
+  string,
+  {
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+  }
+> = {
+  explanation: { icon: BookOpen, label: "설명" },
+  code_example: { icon: Code, label: "코드 예시" },
+  quiz_question: { icon: HelpCircle, label: "퀴즈" },
+  challenge: { icon: Target, label: "챌린지" },
+  reflection: { icon: BookOpen, label: "생각해보기" },
 };
 
 // ─── Quiz Section Component ─────────────────────────────────────────
@@ -256,6 +275,8 @@ export function ModuleContent({
   );
   const startTimeRef = useRef<number>(Date.now());
   const [showChat, setShowChat] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const totalSteps = sections.length;
 
   const typeConfig = moduleType ? MODULE_TYPE_CONFIG[moduleType] : null;
   const TypeIcon = typeConfig?.icon ?? BookOpen;
@@ -266,6 +287,21 @@ export function ModuleContent({
       updateLearningProgress(moduleId, "in_progress");
     }
   }, [moduleId, progress?.status]);
+
+  // Keyboard navigation: ← → arrow keys
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key === "ArrowLeft" && currentStep > 0) {
+        setCurrentStep((prev) => prev - 1);
+      } else if (e.key === "ArrowRight" && currentStep < totalSteps - 1) {
+        setCurrentStep((prev) => prev + 1);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentStep, totalSteps]);
 
   const handleComplete = useCallback(async () => {
     setCompleting(true);
@@ -334,10 +370,38 @@ export function ModuleContent({
         )}
       </div>
 
-      {/* Content sections */}
-      <div className="space-y-8">
+      {/* Progress bar + step counter */}
+      <div className="space-y-2">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+          <div
+            className="h-1.5 rounded-full bg-zinc-900 transition-all duration-300 dark:bg-white"
+            style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
+          />
+        </div>
+        <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+          {(() => {
+            const currentSection = sections[currentStep];
+            const sectionConfig = currentSection
+              ? SECTION_TYPE_CONFIG[currentSection.type]
+              : null;
+            const SectionIcon = sectionConfig?.icon ?? BookOpen;
+            return (
+              <span className="flex items-center gap-1">
+                <SectionIcon className="h-3 w-3" />
+                {sectionConfig?.label ?? "설명"}
+              </span>
+            );
+          })()}
+          <span>
+            {currentStep + 1} / {totalSteps}
+          </span>
+        </div>
+      </div>
+
+      {/* Step cards: hidden/block toggle for state preservation */}
+      <div>
         {sections.map((section, idx) => (
-          <div key={idx}>
+          <div key={idx} className={idx === currentStep ? "block" : "hidden"}>
             {section.title && (
               <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                 {section.title}
@@ -350,7 +414,6 @@ export function ModuleContent({
               <ChallengeSection section={section} />
             ) : (
               <div className="space-y-4">
-                {/* Explanation / Code example markdown body */}
                 <div className="prose prose-sm prose-zinc max-w-none dark:prose-invert">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
@@ -359,7 +422,6 @@ export function ModuleContent({
                     {section.body}
                   </ReactMarkdown>
                 </div>
-                {/* Separate code block if provided */}
                 {section.code && (
                   <div className="overflow-x-auto rounded-lg">
                     <ReactMarkdown
@@ -376,31 +438,46 @@ export function ModuleContent({
         ))}
       </div>
 
-      {/* Bottom bar */}
+      {/* Bottom navigation */}
       <div className="flex items-center justify-between border-t border-zinc-200 pt-6 dark:border-zinc-800">
-        <div className="flex gap-2">
-          {!isCompleted && (
-            <Button
-              onClick={handleComplete}
-              disabled={completing}
-            >
-              {completing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  저장 중...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  완료
-                </>
-              )}
-            </Button>
-          )}
-          <Button
-            variant={isCompleted ? "primary" : "secondary"}
-            onClick={handleNext}
-          >
+        <Button
+          variant="ghost"
+          onClick={() => setCurrentStep((prev) => prev - 1)}
+          disabled={currentStep === 0}
+        >
+          <ChevronLeft className="mr-1 h-4 w-4" />
+          이전
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowChat(!showChat)}
+        >
+          {showChat ? "채팅 닫기" : "AI 튜터"}
+        </Button>
+
+        {currentStep < totalSteps - 1 ? (
+          <Button onClick={() => setCurrentStep((prev) => prev + 1)}>
+            다음
+            <ChevronRight className="ml-1 h-4 w-4" />
+          </Button>
+        ) : !isCompleted ? (
+          <Button onClick={handleComplete} disabled={completing}>
+            {completing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                저장 중...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                완료
+              </>
+            )}
+          </Button>
+        ) : (
+          <Button onClick={handleNext}>
             {nextModuleId ? (
               <>
                 다음 모듈
@@ -410,14 +487,7 @@ export function ModuleContent({
               "학습 경로로 돌아가기"
             )}
           </Button>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowChat(!showChat)}
-        >
-          {showChat ? "채팅 닫기" : "AI 튜터"}
-        </Button>
+        )}
       </div>
 
       {/* AI Tutor Chat Panel */}
