@@ -16,10 +16,13 @@ export function registerAskTutor(server: McpServer, client: VibeUnivClient): voi
     async ({ project_id, question }) => {
       try {
         console.error(`[vibeuniv] Asking tutor for project ${project_id}...`);
-        const answer = await client.askTutor(project_id, question);
+        const result = await client.askTutor(project_id, question);
+
+        let output = result.answer;
+        output += `\n\n(conversation_id: ${result.conversationId})`;
 
         return {
-          content: [{ type: "text" as const, text: answer }],
+          content: [{ type: "text" as const, text: output }],
         };
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);

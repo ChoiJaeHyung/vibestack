@@ -4,44 +4,42 @@ import { authenticateApiKey, isAuthResult } from "@/server/middleware/api-auth";
 import { createServiceClient } from "@/lib/supabase/service";
 import { executeTutorChat } from "@/server/actions/tutor-chat";
 
-interface ChatRequestBody {
-  project_id: string;
-  message: string;
+interface TutorRequestBody {
+  question: string;
   conversation_id?: string;
-  learning_path_id?: string;
 }
 
-interface ChatResponseData {
+interface TutorResponse {
+  answer: string;
   conversation_id: string;
-  response: string;
-  tokens_used: number;
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const authResult = await authenticateApiKey(request);
 
   if (!isAuthResult(authResult)) {
     return authResult;
   }
 
+  const { id: projectId } = await params;
+
   try {
-    const body = (await request.json()) as ChatRequestBody;
+    const body = (await request.json()) as TutorRequestBody;
 
-    if (!body.project_id) {
-      return errorResponse("project_id is required", 400);
-    }
-
-    if (!body.message || body.message.trim().length === 0) {
-      return errorResponse("message is required", 400);
+    if (!body.question || body.question.trim().length === 0) {
+      return errorResponse("question is required", 400);
     }
 
     const supabase = createServiceClient();
 
-    // Verify project belongs to user
+    // Verify project ownership
     const { data: project, error: projectError } = await supabase
       .from("projects")
       .select("id")
-      .eq("id", body.project_id)
+      .eq("id", projectId)
       .eq("user_id", authResult.userId)
       .single();
 
@@ -51,16 +49,14 @@ export async function POST(request: NextRequest) {
 
     const result = await executeTutorChat({
       userId: authResult.userId,
-      projectId: body.project_id,
-      message: body.message,
+      projectId,
+      message: body.question,
       conversationId: body.conversation_id,
-      learningPathId: body.learning_path_id,
     });
 
-    return successResponse<ChatResponseData>({
+    return successResponse<TutorResponse>({
+      answer: result.response,
       conversation_id: result.conversationId,
-      response: result.response,
-      tokens_used: result.tokensUsed,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";

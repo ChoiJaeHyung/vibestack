@@ -23,8 +23,11 @@ export interface AnalysisResult {
   id: string;
   projectId: string;
   status: "pending" | "processing" | "completed" | "failed";
+  errorMessage?: string;
   techStack?: TechStackItem[];
   summary?: string;
+  startedAt?: string;
+  completedAt?: string;
   createdAt: string;
 }
 
@@ -38,6 +41,11 @@ export interface TechStackItem {
 export interface LearningPath {
   id: string;
   projectId: string;
+  title: string;
+  description?: string;
+  difficulty: string;
+  totalModules: number;
+  status: string;
   modules: LearningModule[];
   createdAt: string;
 }
@@ -48,11 +56,18 @@ export interface LearningModule {
   description: string;
   topics: string[];
   order: number;
+  estimatedMinutes?: number;
+  status: string;
 }
 
 export interface SessionLog {
   summary: string;
   filesChanged?: string[];
+}
+
+export interface TutorResponse {
+  answer: string;
+  conversationId: string;
 }
 
 export interface ApiResponse<T> {

@@ -17,8 +17,12 @@ export function registerGetLearning(server: McpServer, client: VibeUnivClient): 
         console.error(`[vibeuniv] Fetching learning path for project ${project_id}...`);
         const learningPath = await client.getLearningPath(project_id);
 
-        let output = `Learning Path for Project ${project_id}\n`;
+        let output = `Learning Path: ${learningPath.title}\n`;
+        output += `Difficulty: ${learningPath.difficulty}\n`;
         output += `Learning Path ID: ${learningPath.id}\n`;
+        if (learningPath.description) {
+          output += `${learningPath.description}\n`;
+        }
         output += `Created: ${learningPath.createdAt}\n\n`;
 
         if (learningPath.modules.length === 0) {
