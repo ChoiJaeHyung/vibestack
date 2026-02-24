@@ -30,7 +30,7 @@ export class VibeUnivClient {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.apiKey}`,
       "Content-Type": "application/json",
-      "User-Agent": "vibeuniv-mcp-server/0.1.0",
+      "User-Agent": "vibeuniv-mcp-server/0.1.1",
     };
 
     const response = await fetch(url, {
