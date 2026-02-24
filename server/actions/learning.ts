@@ -748,14 +748,23 @@ export async function generateModuleContent(
     const message =
       error instanceof Error ? error.message : "An unexpected error occurred";
 
-    // Try to set error status
+    // Try to set error status while preserving _meta
     try {
       const serviceClient = createServiceClient();
+      const { data: currentModule } = await serviceClient
+        .from("learning_modules")
+        .select("content")
+        .eq("id", moduleId)
+        .single();
+
+      const currentContent = currentModule?.content as unknown as ModuleContentWithMeta | null;
+
       await serviceClient
         .from("learning_modules")
         .update({
           content: {
             sections: [],
+            _meta: currentContent?._meta,
             _status: "error",
             _error: message,
           } as unknown as Json,
