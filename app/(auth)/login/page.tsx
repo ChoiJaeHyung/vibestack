@@ -32,8 +32,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/dashboard");
-    router.refresh();
+    router.replace("/dashboard");
   };
 
   const handleOAuthLogin = async (provider: "google" | "github") => {
