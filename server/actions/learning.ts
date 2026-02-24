@@ -9,10 +9,14 @@ import {
   buildStructurePrompt,
   buildContentBatchPrompt,
 } from "@/lib/prompts/learning-roadmap";
-import { buildProjectDigest } from "@/lib/learning/project-digest";
+import {
+  buildProjectDigest,
+  getEducationalAnalysis,
+} from "@/lib/learning/project-digest";
 import { buildTutorPrompt } from "@/lib/prompts/tutor-chat";
 import { decryptContent } from "@/lib/utils/content-encryption";
 import type { Database, Json } from "@/types/database";
+import type { EducationalAnalysis } from "@/types/educational-analysis";
 
 // ─── Type Aliases ────────────────────────────────────────────────────
 
@@ -338,6 +342,9 @@ export async function generateLearningPath(
     // Build project digest for personalized content
     const digest = await buildProjectDigest(projectId);
 
+    // Fetch educational analysis (if available from MCP sync)
+    const educationalAnalysis = await getEducationalAnalysis(projectId);
+
     // ─── Phase 1: Generate roadmap structure ──────────────────────────
     const structurePrompt = buildStructurePrompt(
       techStacks.map((t) => ({
@@ -349,6 +356,7 @@ export async function generateLearningPath(
       })),
       digest.raw,
       difficulty,
+      educationalAnalysis ?? undefined,
     );
 
     const structureResult = await provider.chat({
@@ -431,6 +439,7 @@ export async function generateLearningPath(
         })),
         relevantCode,
         difficulty,
+        educationalAnalysis ?? undefined,
       );
 
       const contentResult = await provider.chat({
