@@ -12,6 +12,8 @@ import {
   X,
   LogOut,
   Shield,
+  Home,
+  BookOpen,
   GraduationCap as SidebarLogo,
 } from "lucide-react";
 import type { UserRole } from "@/types/database";
@@ -120,6 +122,24 @@ export function Sidebar({ userEmail, userRole }: SidebarProps) {
               </Link>
             </>
           )}
+
+          <div className="my-3 border-t border-zinc-200 dark:border-zinc-800" />
+          <Link
+            href="/"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+          >
+            <Home className="h-5 w-5" />
+            홈페이지
+          </Link>
+          <Link
+            href="/guide"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+          >
+            <BookOpen className="h-5 w-5" />
+            가이드
+          </Link>
         </nav>
 
         {/* User profile */}
