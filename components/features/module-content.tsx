@@ -281,8 +281,11 @@ export function ModuleContent({
 
   // On-demand content generation state
   const [localSections, setLocalSections] = useState<ContentSection[]>(sections);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(
+    !!(needsGeneration && sections.length === 0),
+  );
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const [currentStep, setCurrentStep] = useState(0);
   const totalSteps = localSections.length;
@@ -299,6 +302,18 @@ export function ModuleContent({
 
   // On-demand content generation
   const [pollCount, setPollCount] = useState(0);
+
+  // Elapsed time counter for generation loading UX
+  useEffect(() => {
+    if (!isGenerating || localSections.length > 0) {
+      setElapsedSeconds(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setElapsedSeconds((s) => s + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isGenerating, localSections.length]);
 
   useEffect(() => {
     if (!needsGeneration || localSections.length > 0 || isGenerating || generationError) return;
@@ -441,15 +456,24 @@ export function ModuleContent({
 
       {/* On-demand content generation states */}
       {isGenerating && localSections.length === 0 && (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 py-12 dark:border-zinc-800 dark:bg-zinc-900/50">
+        <div className="flex flex-col items-center gap-4 rounded-lg border border-zinc-200 bg-zinc-50 py-12 dark:border-zinc-800 dark:bg-zinc-900/50">
           <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
           <div className="text-center">
             <p className="font-medium text-zinc-700 dark:text-zinc-300">
               학습 콘텐츠를 생성하고 있습니다...
             </p>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              AI가 프로젝트 코드를 분석하여 맞춤 콘텐츠를 만들고 있어요
+              {elapsedSeconds < 10
+                ? "프로젝트 코드를 분석하고 있어요"
+                : elapsedSeconds < 25
+                  ? "AI가 맞춤 콘텐츠를 작성하고 있어요"
+                  : "거의 다 됐어요, 조금만 기다려 주세요"}
             </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-zinc-400 dark:text-zinc-500">
+            <span>{elapsedSeconds}초 경과</span>
+            <span>·</span>
+            <span>보통 30~60초 소요</span>
           </div>
         </div>
       )}
