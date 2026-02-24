@@ -1,5 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { decryptContent } from "@/lib/utils/content-encryption";
+import type { EducationalAnalysis } from "@/types/educational-analysis";
 
 const MAX_CONTENT_LINES = 200;
 
@@ -184,4 +185,24 @@ export async function buildProjectDigest(
     criticalFiles,
     raw: sections.join("\n\n"),
   };
+}
+
+/**
+ * Fetch educational analysis from DB if available.
+ * Returns null if no analysis exists for this project.
+ */
+export async function getEducationalAnalysis(
+  projectId: string,
+): Promise<EducationalAnalysis | null> {
+  const supabase = createServiceClient();
+
+  const { data } = await supabase
+    .from("educational_analyses")
+    .select("analysis_data")
+    .eq("project_id", projectId)
+    .single();
+
+  if (!data?.analysis_data) return null;
+
+  return data.analysis_data as unknown as EducationalAnalysis;
 }

@@ -126,4 +126,12 @@ export class VibeStackClient {
     );
     return result.answer;
   }
+
+  async submitEducationalAnalysis(projectId: string, analysisData: Record<string, unknown>): Promise<void> {
+    await this.request<void>(
+      "POST",
+      `/projects/${projectId}/educational-analysis`,
+      { analysis_data: analysisData }
+    );
+  }
 }

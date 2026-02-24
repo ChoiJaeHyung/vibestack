@@ -42,6 +42,8 @@ const CONTENT_JSON_SCHEMA = `[
   }
 ]`;
 
+import type { EducationalAnalysis } from "@/types/educational-analysis";
+
 interface TechStackInput {
   technology_name: string;
   category: string;
@@ -83,6 +85,153 @@ function buildLevelGuidance(level: string): string {
    - Cover edge cases, internals, and optimization strategies`;
 }
 
+// ─── Educational Analysis Context Builder ─────────────────────────────
+
+function formatStructureContext(
+  analysis: EducationalAnalysis,
+  level: string,
+): string {
+  const sections: string[] = [];
+
+  // Project Overview
+  const ov = analysis.project_overview;
+  sections.push(`## Project Overview (AI 분석 결과)
+
+- **앱 설명:** ${ov.one_liner}
+- **앱 유형:** ${ov.app_type}
+- **대상 사용자:** ${ov.target_users}
+- **핵심 기능:** ${ov.core_features.join(", ")}`);
+
+  // User Flows
+  if (analysis.user_flows.length > 0) {
+    const flowLines = analysis.user_flows.map((f) => {
+      const steps = f.steps
+        .map((s) => `    - ${s.description} (${s.file}:${s.line_range})`)
+        .join("\n");
+      return `- **${f.name}** (${f.difficulty})\n  트리거: ${f.trigger}\n${steps}`;
+    });
+    sections.push(`## User Flows\n\n${flowLines.join("\n\n")}`);
+  }
+
+  // File Difficulty Map
+  if (analysis.file_analysis.length > 0) {
+    const fileLines = analysis.file_analysis
+      .sort((a, b) => a.complexity - b.complexity)
+      .map(
+        (f) =>
+          `- \`${f.path}\` — ${f.role} (복잡도: ${f.complexity}/5, ${f.difficulty})`,
+      );
+    sections.push(`## File Difficulty Map\n\n${fileLines.join("\n")}`);
+  }
+
+  // Learning Priorities for level
+  const priorities = analysis.learning_priorities;
+  const lp =
+    level === "beginner"
+      ? priorities.beginner
+      : level === "intermediate"
+        ? priorities.intermediate
+        : priorities.advanced;
+
+  const priorityLines = [
+    `- **시작:** ${lp.start_with.join(", ")}`,
+    `- **집중:** ${lp.focus_on.join(", ")}`,
+  ];
+  if ("skip_for_now" in lp) {
+    priorityLines.push(
+      `- **나중에:** ${(lp as typeof priorities.beginner).skip_for_now.join(", ")}`,
+    );
+  }
+  if ("deep_dive" in lp) {
+    priorityLines.push(
+      `- **심화:** ${(lp as typeof priorities.intermediate).deep_dive.join(", ")}`,
+    );
+  }
+  if ("challenge_topics" in lp) {
+    priorityLines.push(
+      `- **도전:** ${(lp as typeof priorities.advanced).challenge_topics.join(", ")}`,
+    );
+  }
+  sections.push(
+    `## Learning Priorities for ${level}\n\n${priorityLines.join("\n")}`,
+  );
+
+  // Repeated Patterns
+  if (analysis.repeated_patterns.length > 0) {
+    const patternLines = analysis.repeated_patterns.map(
+      (p) =>
+        `- **${p.name}**: ${p.description} (${p.occurrences.length}회 발견) — ${p.teaching_value}`,
+    );
+    sections.push(`## Repeated Patterns\n\n${patternLines.join("\n")}`);
+  }
+
+  return sections.join("\n\n");
+}
+
+function formatContentContext(
+  analysis: EducationalAnalysis,
+  level: string,
+  relevantPaths: string[],
+): string {
+  const sections: string[] = [];
+
+  // Per-file educational metadata (only for relevant files)
+  const relevantSet = new Set(relevantPaths);
+  const relevantFiles = analysis.file_analysis.filter((f) =>
+    relevantSet.has(f.path),
+  );
+
+  if (relevantFiles.length > 0) {
+    const fileLines = relevantFiles.map(
+      (f) =>
+        `### ${f.path}
+- **역할:** ${f.role}
+- **핵심 개념:** ${f.key_concepts.join(", ")}
+- **선행 지식:** ${f.prerequisites.join(", ")}
+- **주의점(gotchas):** ${f.gotchas.join("; ")}
+- **강사 노트:** ${f.teaching_notes}`,
+    );
+    sections.push(
+      `## Educational Metadata (파일별 교육 정보)\n\n${fileLines.join("\n\n")}`,
+    );
+  }
+
+  // Code quality observations
+  const cq = analysis.code_quality;
+  if (cq.good_practices.length > 0 || cq.improvement_areas.length > 0) {
+    const lines: string[] = [];
+    if (cq.good_practices.length > 0) {
+      lines.push("### Good Practices (교육 포인트)");
+      for (const gp of cq.good_practices) {
+        lines.push(`- ${gp.description} → **교육:** ${gp.concept}`);
+      }
+    }
+    if (cq.improvement_areas.length > 0) {
+      lines.push("\n### Teaching Opportunities");
+      for (const ia of cq.improvement_areas) {
+        lines.push(
+          `- [${ia.severity}] ${ia.description} → **교육:** ${ia.teaching_opportunity}`,
+        );
+      }
+    }
+    sections.push(
+      `## Code Quality Observations\n\n${lines.join("\n")}`,
+    );
+  }
+
+  // Tech Stack Metaphors (for beginner level)
+  if (level === "beginner" && analysis.project_overview.tech_stack_metaphors.length > 0) {
+    const metaphorLines = analysis.project_overview.tech_stack_metaphors.map(
+      (m) => `- **${m.tech_name}** → ${m.metaphor}`,
+    );
+    sections.push(
+      `## Tech Stack Metaphors (비유)\n\n${metaphorLines.join("\n")}`,
+    );
+  }
+
+  return sections.join("\n\n");
+}
+
 /**
  * Phase 1 — Structure prompt.
  * Input: tech stacks + project digest.
@@ -92,9 +241,18 @@ export function buildStructurePrompt(
   techStacks: TechStackInput[],
   projectDigest: string,
   userLevel?: "beginner" | "intermediate" | "advanced",
+  educationalAnalysis?: EducationalAnalysis,
 ): string {
   const level = userLevel ?? "beginner";
   const techListSection = buildTechListSection(techStacks);
+
+  const educationalContext = educationalAnalysis
+    ? `\n\n${formatStructureContext(educationalAnalysis, level)}\n`
+    : "";
+
+  const educationalInstruction = educationalAnalysis
+    ? `\n11. **Use the Project Overview, User Flows, and Learning Priorities above** to create a more targeted and personalized roadmap. Prioritize the files and concepts marked in the Learning Priorities section. Reference the File Difficulty Map to set appropriate estimated_minutes for each module.`
+    : "";
 
   return `You are an expert programming instructor creating a personalized learning roadmap structure for a "vibe coder."
 
@@ -113,7 +271,7 @@ ${techListSection}
 ## Project Digest
 
 ${projectDigest}
-
+${educationalContext}
 ## Instructions
 
 Write ALL output in Korean (한국어). Module titles, descriptions, and learning_objectives should all be in Korean.
@@ -134,7 +292,7 @@ ${buildLevelGuidance(level)}
 7. **relevant_files** — List specific file paths from the project that are relevant to this module. Use actual paths from the project digest above.
 8. **learning_objectives** — List 2-4 specific things the student will learn in this module.
 9. **Organize modules by layer** — Help the student understand the frontend/backend boundary. For web apps, organize modules to cover: routing/pages (프론트엔드), API endpoints (백엔드), database access patterns (데이터베이스), authentication flow (인증), and shared utilities (공통 유틸리티).
-10. **For \`project_walkthrough\` modules** — Ensure relevant_files contains the specific file(s) the walkthrough will cover. Each project_walkthrough module should focus on one file or one tightly related group of files.
+10. **For \`project_walkthrough\` modules** — Ensure relevant_files contains the specific file(s) the walkthrough will cover. Each project_walkthrough module should focus on one file or one tightly related group of files.${educationalInstruction}
 
 ## Important Rules
 
@@ -164,6 +322,7 @@ export function buildContentBatchPrompt(
   }>,
   relevantCode: Array<{ path: string; content: string }>,
   userLevel?: "beginner" | "intermediate" | "advanced",
+  educationalAnalysis?: EducationalAnalysis,
 ): string {
   const level = userLevel ?? "beginner";
 
@@ -197,7 +356,7 @@ ${modulesSection}
 ## Student's Actual Source Code
 
 ${codeSection}
-
+${educationalAnalysis ? `\n${formatContentContext(educationalAnalysis, level, relevantCode.map((f) => f.path))}\n` : ""}
 ## Instructions
 
 Write ALL content in Korean (한국어). Module titles, descriptions, explanations, quiz questions, quiz options, and challenges should all be in Korean. Technical terms (e.g., "middleware", "API route") can stay in English but explanations must be in Korean.
@@ -224,7 +383,8 @@ ${buildLevelGuidance(level)}
    const supabase = createClient()  // Supabase 클라이언트 생성
    const { data } = await supabase.auth.getUser()  // 현재 로그인한 사용자 정보 가져오기
    \`\`\`
-10. **For \`challenge\` sections:** Give a small, concrete task the student can try on their own project. Specify the exact file to modify, what to add or change, and what the expected result should be. Make challenges relevant to the student's actual codebase.
+10. **For \`challenge\` sections:** Give a small, concrete task the student can try on their own project. Specify the exact file to modify, what to add or change, and what the expected result should be. Make challenges relevant to the student's actual codebase.${educationalAnalysis ? `
+11. **Use the Educational Metadata above** to enrich your content. Reference gotchas as quiz questions, use teaching_notes for explanation sections, and leverage code quality observations as practical learning points. For beginner level, use the Tech Stack Metaphors to make concepts accessible.` : ""}
 
 ## Important Rules
 

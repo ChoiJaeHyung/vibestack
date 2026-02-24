@@ -640,6 +640,36 @@ export interface Database {
         };
         Relationships: [];
       };
+      educational_analyses: {
+        Row: {
+          id: string;
+          project_id: string;
+          user_id: string;
+          analysis_data: Json;
+          analysis_version: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          user_id: string;
+          analysis_data: Json;
+          analysis_version?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          user_id?: string;
+          analysis_data?: Json;
+          analysis_version?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

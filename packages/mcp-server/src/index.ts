@@ -10,6 +10,7 @@ import { registerAnalyze } from "./tools/analyze.js";
 import { registerGetLearning } from "./tools/get-learning.js";
 import { registerLogSession } from "./tools/log-session.js";
 import { registerAskTutor } from "./tools/ask-tutor.js";
+import { registerSubmitAnalysis } from "./tools/submit-analysis.js";
 
 async function main(): Promise<void> {
   console.error("[vibestack] Starting VibeStack MCP Server v0.1.0...");
@@ -28,8 +29,9 @@ async function main(): Promise<void> {
   registerGetLearning(server, client);
   registerLogSession(server, client);
   registerAskTutor(server, client);
+  registerSubmitAnalysis(server, client);
 
-  console.error("[vibestack] 6 tools registered");
+  console.error("[vibestack] 7 tools registered");
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
