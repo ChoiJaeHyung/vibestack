@@ -30,12 +30,14 @@ function matchRateLimitPrefix(pathname: string): string | null {
   return null;
 }
 
+// Public pages that never need auth checks (skip Supabase round-trip)
+const PUBLIC_PATHS = ["/callback", "/guide", "/robots.txt", "/sitemap.xml", "/icon.png"];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for auth callback — PKCE code verifier must not be
-  // consumed by the session refresh that runs in updateSession().
-  if (pathname === "/callback") {
+  // Skip Supabase session check for public/static paths
+  if (PUBLIC_PATHS.includes(pathname)) {
     return NextResponse.next();
   }
 
