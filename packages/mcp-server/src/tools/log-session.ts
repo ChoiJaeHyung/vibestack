@@ -1,9 +1,9 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { VibeStackClient } from "../lib/api-client.js";
+import { VibeUnivClient } from "../lib/api-client.js";
 
 export const logSessionSchema = {
-  project_id: z.string().describe("The VibeStack project ID"),
+  project_id: z.string().describe("The VibeUniv project ID"),
   summary: z.string().describe("Summary of today's coding session"),
   files_changed: z
     .array(z.string())
@@ -11,10 +11,10 @@ export const logSessionSchema = {
     .describe("List of files changed during the session"),
 };
 
-export function registerLogSession(server: McpServer, client: VibeStackClient): void {
+export function registerLogSession(server: McpServer, client: VibeUnivClient): void {
   server.tool(
-    "vibestack_log_session",
-    "Log today's coding session summary to VibeStack",
+    "vibeuniv_log_session",
+    "Log today's coding session summary to VibeUniv",
     logSessionSchema,
     { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     async ({ project_id, summary, files_changed }) => {

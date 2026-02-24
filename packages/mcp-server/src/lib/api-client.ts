@@ -11,7 +11,7 @@ import type {
 const POLL_INTERVAL_MS = 3000;
 const MAX_POLL_ATTEMPTS = 60;
 
-export class VibeStackClient {
+export class VibeUnivClient {
   private apiKey: string;
   private baseUrl: string;
 
@@ -30,7 +30,7 @@ export class VibeStackClient {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.apiKey}`,
       "Content-Type": "application/json",
-      "User-Agent": "vibestack-mcp-server/0.1.0",
+      "User-Agent": "vibeuniv-mcp-server/0.1.0",
     };
 
     const response = await fetch(url, {
@@ -100,7 +100,7 @@ export class VibeStackClient {
       }
 
       console.error(
-        `[vibestack] Analysis in progress... (attempt ${i + 1}/${MAX_POLL_ATTEMPTS})`
+        `[vibeuniv] Analysis in progress... (attempt ${i + 1}/${MAX_POLL_ATTEMPTS})`
       );
     }
 

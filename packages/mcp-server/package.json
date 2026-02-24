@@ -1,10 +1,10 @@
 {
-  "name": "@vibestack/mcp-server",
+  "name": "@vibeuniv/mcp-server",
   "version": "0.1.0",
-  "description": "VibeStack MCP Server - Sync your vibe-coded projects for tech stack analysis and learning",
+  "description": "VibeUniv MCP Server - Sync your vibe-coded projects for tech stack analysis and learning",
   "type": "module",
   "bin": {
-    "vibestack-mcp": "./dist/index.js"
+    "vibeuniv-mcp": "dist/index.js"
   },
   "main": "./dist/index.js",
   "scripts": {
@@ -16,7 +16,7 @@
   ],
   "keywords": [
     "mcp",
-    "vibestack",
+    "vibeuniv",
     "vibe-coding",
     "tech-stack",
     "learning"
