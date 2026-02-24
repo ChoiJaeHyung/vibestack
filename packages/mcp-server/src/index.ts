@@ -3,7 +3,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loadConfig } from "./lib/config.js";
-import { VibeStackClient } from "./lib/api-client.js";
+import { VibeUnivClient } from "./lib/api-client.js";
 import { registerSyncProject } from "./tools/sync-project.js";
 import { registerUploadFiles } from "./tools/upload-files.js";
 import { registerAnalyze } from "./tools/analyze.js";
@@ -13,13 +13,13 @@ import { registerAskTutor } from "./tools/ask-tutor.js";
 import { registerSubmitAnalysis } from "./tools/submit-analysis.js";
 
 async function main(): Promise<void> {
-  console.error("[vibestack] Starting VibeStack MCP Server v0.1.0...");
+  console.error("[vibeuniv] Starting VibeUniv MCP Server v0.1.0...");
 
   const config = loadConfig();
-  const client = new VibeStackClient(config.apiKey, config.apiUrl);
+  const client = new VibeUnivClient(config.apiKey, config.apiUrl);
 
   const server = new McpServer({
-    name: "vibestack-mcp-server",
+    name: "vibeuniv-mcp-server",
     version: "0.1.0",
   });
 
@@ -31,15 +31,15 @@ async function main(): Promise<void> {
   registerAskTutor(server, client);
   registerSubmitAnalysis(server, client);
 
-  console.error("[vibestack] 7 tools registered");
+  console.error("[vibeuniv] 7 tools registered");
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  console.error("[vibestack] MCP Server running on stdio");
+  console.error("[vibeuniv] MCP Server running on stdio");
 }
 
 main().catch((error) => {
-  console.error("[vibestack] Fatal error:", error);
+  console.error("[vibeuniv] Fatal error:", error);
   process.exit(1);
 });

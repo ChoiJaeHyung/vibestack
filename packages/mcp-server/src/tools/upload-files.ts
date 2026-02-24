@@ -3,20 +3,20 @@ import { readFile, stat } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { resolve, relative, basename } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { VibeStackClient } from "../lib/api-client.js";
+import { VibeUnivClient } from "../lib/api-client.js";
 import type { ProjectFile } from "../types.js";
 
 const MAX_FILE_SIZE = 50 * 1024; // 50KB
 
 export const uploadFilesSchema = {
-  project_id: z.string().describe("The VibeStack project ID"),
+  project_id: z.string().describe("The VibeUniv project ID"),
   file_paths: z.array(z.string()).describe("Array of file paths to upload (relative or absolute)"),
 };
 
-export function registerUploadFiles(server: McpServer, client: VibeStackClient): void {
+export function registerUploadFiles(server: McpServer, client: VibeUnivClient): void {
   server.tool(
-    "vibestack_upload_files",
-    "Upload specific project files to VibeStack for detailed analysis",
+    "vibeuniv_upload_files",
+    "Upload specific project files to VibeUniv for detailed analysis",
     uploadFilesSchema,
     { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     async ({ project_id, file_paths }) => {

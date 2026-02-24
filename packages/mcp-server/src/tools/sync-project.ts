@@ -1,17 +1,17 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { scanProjectFiles } from "../lib/file-scanner.js";
-import { VibeStackClient } from "../lib/api-client.js";
+import { VibeUnivClient } from "../lib/api-client.js";
 
 export const syncProjectSchema = {
   project_name: z.string().optional().describe("Name for the project (defaults to directory name)"),
   description: z.string().optional().describe("Short description of the project"),
 };
 
-export function registerSyncProject(server: McpServer, client: VibeStackClient): void {
+export function registerSyncProject(server: McpServer, client: VibeUnivClient): void {
   server.tool(
-    "vibestack_sync_project",
-    "Sync current project's tech stack information to VibeStack platform for analysis and learning",
+    "vibeuniv_sync_project",
+    "Sync current project's tech stack information to VibeUniv platform for analysis and learning",
     syncProjectSchema,
     { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     async ({ project_name, description }) => {
@@ -19,7 +19,7 @@ export function registerSyncProject(server: McpServer, client: VibeStackClient):
         const cwd = process.cwd();
         const defaultName = cwd.split("/").pop() || "unnamed-project";
 
-        console.error(`[vibestack] Scanning project files in ${cwd}...`);
+        console.error(`[vibeuniv] Scanning project files in ${cwd}...`);
         const files = await scanProjectFiles(cwd);
 
         if (files.length === 0) {
@@ -34,13 +34,13 @@ export function registerSyncProject(server: McpServer, client: VibeStackClient):
           };
         }
 
-        console.error(`[vibestack] Creating/updating project...`);
+        console.error(`[vibeuniv] Creating/updating project...`);
         const project = await client.createProject({
           name: project_name || defaultName,
           description,
         });
 
-        console.error(`[vibestack] Uploading ${files.length} files...`);
+        console.error(`[vibeuniv] Uploading ${files.length} files...`);
         await client.uploadFiles(project.id, files);
 
         const fileList = files.map((f) => `  - ${f.relativePath} (${f.size} bytes)`).join("\n");
@@ -123,7 +123,7 @@ export function registerSyncProject(server: McpServer, client: VibeStackClient):
                 "3. `vibeuniv_submit_analysis` 도구를 호출하여 결과를 전송해 주세요",
                 `4. 전송 시 project_id는 "${project.id}"를 사용해 주세요`,
                 "",
-                "분석이 완료되면 `vibestack_analyze`로 기술 스택 분석을 진행할 수 있습니다.",
+                "분석이 완료되면 `vibeuniv_analyze`로 기술 스택 분석을 진행할 수 있습니다.",
               ].join("\n"),
             },
           ],

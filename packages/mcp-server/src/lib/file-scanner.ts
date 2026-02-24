@@ -357,13 +357,13 @@ export async function scanProjectFiles(
       });
     } catch {
       console.error(
-        `[vibestack] Warning: Could not read file ${relativePath}`
+        `[vibeuniv] Warning: Could not read file ${relativePath}`
       );
     }
   }
 
   console.error(
-    `[vibestack] Scanned ${foundFiles.length} files (${rootMatches.length} config + ${limitedSource.length} source) in ${rootDir}`
+    `[vibeuniv] Scanned ${foundFiles.length} files (${rootMatches.length} config + ${limitedSource.length} source) in ${rootDir}`
   );
   return foundFiles;
 }

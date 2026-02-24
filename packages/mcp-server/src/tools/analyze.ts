@@ -1,20 +1,20 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { VibeStackClient } from "../lib/api-client.js";
+import { VibeUnivClient } from "../lib/api-client.js";
 
 export const analyzeSchema = {
-  project_id: z.string().describe("The VibeStack project ID to analyze"),
+  project_id: z.string().describe("The VibeUniv project ID to analyze"),
 };
 
-export function registerAnalyze(server: McpServer, client: VibeStackClient): void {
+export function registerAnalyze(server: McpServer, client: VibeUnivClient): void {
   server.tool(
-    "vibestack_analyze",
+    "vibeuniv_analyze",
     "Trigger AI analysis of the project's tech stack and get results",
     analyzeSchema,
     { readOnlyHint: true, openWorldHint: true },
     async ({ project_id }) => {
       try {
-        console.error(`[vibestack] Triggering analysis for project ${project_id}...`);
+        console.error(`[vibeuniv] Triggering analysis for project ${project_id}...`);
         const result = await client.triggerAnalysis(project_id);
 
         if (result.status === "failed") {
@@ -55,7 +55,7 @@ export function registerAnalyze(server: McpServer, client: VibeStackClient): voi
             }
           }
 
-          output += "\nNext step: Use vibestack_get_learning to get personalized learning recommendations.";
+          output += "\nNext step: Use vibeuniv_get_learning to get personalized learning recommendations.";
         }
 
         return {

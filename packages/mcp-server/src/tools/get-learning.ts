@@ -1,20 +1,20 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { VibeStackClient } from "../lib/api-client.js";
+import { VibeUnivClient } from "../lib/api-client.js";
 
 export const getLearningSchema = {
-  project_id: z.string().describe("The VibeStack project ID"),
+  project_id: z.string().describe("The VibeUniv project ID"),
 };
 
-export function registerGetLearning(server: McpServer, client: VibeStackClient): void {
+export function registerGetLearning(server: McpServer, client: VibeUnivClient): void {
   server.tool(
-    "vibestack_get_learning",
+    "vibeuniv_get_learning",
     "Get personalized learning recommendations based on the project's tech stack",
     getLearningSchema,
     { readOnlyHint: true, openWorldHint: true },
     async ({ project_id }) => {
       try {
-        console.error(`[vibestack] Fetching learning path for project ${project_id}...`);
+        console.error(`[vibeuniv] Fetching learning path for project ${project_id}...`);
         const learningPath = await client.getLearningPath(project_id);
 
         let output = `Learning Path for Project ${project_id}\n`;
@@ -23,7 +23,7 @@ export function registerGetLearning(server: McpServer, client: VibeStackClient):
 
         if (learningPath.modules.length === 0) {
           output +=
-            "No learning modules available yet. Run vibestack_analyze first to generate recommendations.";
+            "No learning modules available yet. Run vibeuniv_analyze first to generate recommendations.";
         } else {
           output += `${learningPath.modules.length} Learning Module(s):\n`;
 
@@ -35,7 +35,7 @@ export function registerGetLearning(server: McpServer, client: VibeStackClient):
             }
           }
 
-          output += "\nUse vibestack_ask_tutor to ask questions about any of these topics.";
+          output += "\nUse vibeuniv_ask_tutor to ask questions about any of these topics.";
         }
 
         return {

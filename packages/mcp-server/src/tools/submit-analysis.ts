@@ -1,9 +1,9 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { VibeStackClient } from "../lib/api-client.js";
+import { VibeUnivClient } from "../lib/api-client.js";
 
 export const submitAnalysisSchema = {
-  project_id: z.string().describe("The VibeStack project ID"),
+  project_id: z.string().describe("The VibeUniv project ID"),
   analysis: z
     .object({})
     .passthrough()
@@ -12,7 +12,7 @@ export const submitAnalysisSchema = {
     ),
 };
 
-export function registerSubmitAnalysis(server: McpServer, client: VibeStackClient): void {
+export function registerSubmitAnalysis(server: McpServer, client: VibeUnivClient): void {
   server.tool(
     "vibeuniv_submit_analysis",
     "Submit educational analysis of the project for personalized learning curriculum generation",
@@ -20,7 +20,7 @@ export function registerSubmitAnalysis(server: McpServer, client: VibeStackClien
     { readOnlyHint: false, openWorldHint: true },
     async ({ project_id, analysis }) => {
       try {
-        console.error(`[vibestack] Submitting educational analysis for project ${project_id}...`);
+        console.error(`[vibeuniv] Submitting educational analysis for project ${project_id}...`);
         await client.submitEducationalAnalysis(project_id, analysis as Record<string, unknown>);
 
         return {
