@@ -298,11 +298,12 @@ export function ModuleContent({
   }, [moduleId, progress?.status]);
 
   // On-demand content generation
+  const [pollCount, setPollCount] = useState(0);
+
   useEffect(() => {
-    if (!needsGeneration || localSections.length > 0 || isGenerating) return;
+    if (!needsGeneration || localSections.length > 0 || isGenerating || generationError) return;
 
     let cancelled = false;
-    let timeoutId: ReturnType<typeof setTimeout>;
 
     async function generate() {
       setIsGenerating(true);
@@ -315,9 +316,10 @@ export function ModuleContent({
 
         if (result.generating) {
           // Another request is already generating — poll after 5s
-          timeoutId = setTimeout(() => {
+          setTimeout(() => {
             if (!cancelled) {
-              setIsGenerating(false); // triggers re-run
+              setIsGenerating(false);
+              setPollCount((c) => c + 1);
             }
           }, 5000);
           return;
@@ -334,10 +336,10 @@ export function ModuleContent({
         if (!cancelled) {
           setGenerationError("콘텐츠 생성 중 오류가 발생했습니다.");
         }
-      } finally {
-        if (!cancelled) {
-          setIsGenerating(false);
-        }
+      }
+
+      if (!cancelled) {
+        setIsGenerating(false);
       }
     }
 
@@ -345,9 +347,8 @@ export function ModuleContent({
 
     return () => {
       cancelled = true;
-      clearTimeout(timeoutId);
     };
-  }, [needsGeneration, localSections.length, isGenerating, moduleId]);
+  }, [needsGeneration, localSections.length, isGenerating, generationError, moduleId, pollCount]);
 
   // Keyboard navigation: ← → arrow keys
   useEffect(() => {
@@ -391,6 +392,7 @@ export function ModuleContent({
     setGenerationError(null);
     setIsGenerating(false);
     setLocalSections([]);
+    setPollCount(0);
   }, []);
 
   function handleNext() {
