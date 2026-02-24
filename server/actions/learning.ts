@@ -211,6 +211,29 @@ interface ContentBatchItem {
   };
 }
 
+// On-demand module content generation types
+interface ModuleContentMeta {
+  tech_name: string;
+  relevant_files: string[];
+  learning_objectives: string[];
+}
+
+interface ModuleContentWithMeta {
+  sections: ContentSection[];
+  _meta?: ModuleContentMeta;
+  _status?: "generating" | "error" | "ready";
+  _generating_since?: string;
+  _generated_at?: string;
+  _error?: string;
+}
+
+interface GenerateModuleContentResult {
+  success: boolean;
+  data?: { sections: ContentSection[] };
+  generating?: boolean;
+  error?: string;
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────
 
 const VALID_MODULE_TYPES = new Set<ModuleType>([
@@ -364,8 +387,8 @@ export async function generateLearningPath(
       maxTokens: 16384,
     });
 
-    let totalInputTokens = structureResult.input_tokens;
-    let totalOutputTokens = structureResult.output_tokens;
+    const totalInputTokens = structureResult.input_tokens;
+    const totalOutputTokens = structureResult.output_tokens;
 
     let structure: StructureResponse;
     try {
@@ -385,109 +408,6 @@ export async function generateLearningPath(
         success: false,
         error: "Failed to parse learning roadmap structure from LLM response",
       };
-    }
-
-    // ─── Phase 2: Generate content in batches by tech_name ────────────
-    // Group modules by tech_name for batch processing
-    const techBatches = new Map<string, StructureModuleResponse[]>();
-    for (const mod of structure.modules) {
-      const key = mod.tech_name.toLowerCase();
-      const batch = techBatches.get(key) ?? [];
-      batch.push(mod);
-      techBatches.set(key, batch);
-    }
-
-    // Build content map: module_title -> content
-    // Uses both exact and normalized title matching, plus index-based fallback.
-    const contentMap = new Map<
-      string,
-      ContentBatchItem["content"]
-    >();
-    // Normalized title -> content for fuzzy matching
-    const normalizedContentMap = new Map<
-      string,
-      ContentBatchItem["content"]
-    >();
-    // Per-batch index fallback: structureModuleTitle -> content
-    const indexFallbackMap = new Map<
-      string,
-      ContentBatchItem["content"]
-    >();
-
-    for (const [, batchModules] of techBatches) {
-      // Collect relevant code from digest for this batch
-      const relevantPaths = new Set<string>();
-      for (const mod of batchModules) {
-        for (const fp of mod.relevant_files ?? []) {
-          relevantPaths.add(fp);
-        }
-      }
-
-      const relevantCode = digest.criticalFiles.filter((f) =>
-        relevantPaths.has(f.path),
-      );
-
-      const techName = batchModules[0].tech_name;
-
-      const contentPrompt = buildContentBatchPrompt(
-        techName,
-        batchModules.map((m) => ({
-          title: m.title,
-          description: m.description,
-          module_type: m.module_type,
-          learning_objectives: m.learning_objectives ?? [],
-        })),
-        relevantCode,
-        difficulty,
-        educationalAnalysis ?? undefined,
-      );
-
-      const contentResult = await provider.chat({
-        messages: [{ role: "user", content: contentPrompt }],
-        maxTokens: 16384,
-      });
-
-      totalInputTokens += contentResult.input_tokens;
-      totalOutputTokens += contentResult.output_tokens;
-
-      let batchContent: ContentBatchItem[];
-      try {
-        batchContent = extractContentArray(contentResult.content);
-      } catch (batchParseError) {
-        console.error(
-          `[learning] Phase 2 parse error for tech "${techName}":`,
-          batchParseError instanceof Error ? batchParseError.message : batchParseError,
-        );
-        console.error(
-          "[learning] Raw Phase 2 response (first 500 chars):",
-          contentResult.content.slice(0, 500),
-        );
-        batchContent = [];
-      }
-
-      // Store by exact title and normalized title
-      for (const item of batchContent) {
-        contentMap.set(item.module_title.trim(), item.content);
-        normalizedContentMap.set(normalizeTitle(item.module_title), item.content);
-      }
-
-      // Index-based fallback: match Phase 2 items to Phase 1 modules by position
-      // This handles cases where titles differ but the order is preserved
-      if (batchContent.length === batchModules.length) {
-        for (let i = 0; i < batchModules.length; i++) {
-          indexFallbackMap.set(batchModules[i].title, batchContent[i].content);
-        }
-      } else if (batchContent.length > 0) {
-        // Partial match: assign what we can by index
-        const limit = Math.min(batchContent.length, batchModules.length);
-        for (let i = 0; i < limit; i++) {
-          indexFallbackMap.set(batchModules[i].title, batchContent[i].content);
-        }
-      }
-
-      console.log(
-        `[learning] Phase 2 batch "${techName}": expected ${batchModules.length} modules, got ${batchContent.length} items`,
-      );
     }
 
     // ─── Persist to database ──────────────────────────────────────────
@@ -531,7 +451,6 @@ export async function generateLearningPath(
       techNameToId.set(tech.technology_name.toLowerCase(), tech.id);
     }
 
-    // Create learning_modules records with Phase 2 content
     const moduleInserts: LearningModuleInsert[] = structure.modules.map(
       (mod, index) => {
         const moduleType = VALID_MODULE_TYPES.has(
@@ -543,19 +462,15 @@ export async function generateLearningPath(
         const techStackId =
           techNameToId.get(mod.tech_name.toLowerCase()) ?? null;
 
-        // Look up content from Phase 2 batch results
-        // 1. Exact match → 2. Normalized match → 3. Index fallback → 4. Empty
-        const content = contentMap.get(mod.title)
-          ?? contentMap.get(mod.title.trim())
-          ?? normalizedContentMap.get(normalizeTitle(mod.title))
-          ?? indexFallbackMap.get(mod.title)
-          ?? { sections: [] };
-
-        if (!content.sections || content.sections.length === 0) {
-          console.warn(
-            `[learning] No content matched for module "${mod.title}" (tech: ${mod.tech_name})`,
-          );
-        }
+        // Store _meta for on-demand content generation later
+        const content = {
+          sections: [],
+          _meta: {
+            tech_name: mod.tech_name,
+            relevant_files: mod.relevant_files ?? [],
+            learning_objectives: mod.learning_objectives ?? [],
+          },
+        };
 
         return {
           learning_path_id: learningPath.id,
@@ -605,6 +520,251 @@ export async function generateLearningPath(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "An unexpected error occurred";
+    return { success: false, error: message };
+  }
+}
+
+export async function generateModuleContent(
+  moduleId: string,
+): Promise<GenerateModuleContentResult> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    // Fetch the module
+    const { data: moduleData, error: moduleError } = await supabase
+      .from("learning_modules")
+      .select(
+        "id, title, description, module_type, content, learning_path_id",
+      )
+      .eq("id", moduleId)
+      .single();
+
+    if (moduleError || !moduleData) {
+      return { success: false, error: "Module not found" };
+    }
+
+    // Verify user owns the learning path
+    const { data: pathData, error: pathError } = await supabase
+      .from("learning_paths")
+      .select("id, project_id, difficulty")
+      .eq("id", moduleData.learning_path_id)
+      .eq("user_id", user.id)
+      .single();
+
+    if (pathError || !pathData) {
+      return { success: false, error: "Learning path not found" };
+    }
+
+    const content = moduleData.content as unknown as ModuleContentWithMeta;
+
+    // If content already exists, return immediately
+    if (content.sections && content.sections.length > 0) {
+      return { success: true, data: { sections: content.sections } };
+    }
+
+    // If currently generating and not stale (< 120s), tell client to wait
+    if (content._status === "generating" && content._generating_since) {
+      const elapsed =
+        Date.now() - new Date(content._generating_since).getTime();
+      if (elapsed < 120_000) {
+        return { success: true, generating: true };
+      }
+      // Otherwise stale — re-generate
+    }
+
+    // Check _meta exists
+    if (!content._meta) {
+      return {
+        success: false,
+        error:
+          "이 모듈에는 메타데이터가 없습니다. 로드맵을 다시 생성해 주세요.",
+      };
+    }
+
+    // Set optimistic lock: _status = "generating"
+    const serviceClient = createServiceClient();
+    await serviceClient
+      .from("learning_modules")
+      .update({
+        content: {
+          ...content,
+          _status: "generating",
+          _generating_since: new Date().toISOString(),
+        } as unknown as Json,
+      })
+      .eq("id", moduleId);
+
+    // Check usage limit
+    const usageCheck = await checkUsageLimit(user.id, "learning");
+    if (!usageCheck.allowed) {
+      // Revert status
+      await serviceClient
+        .from("learning_modules")
+        .update({
+          content: {
+            ...content,
+            _status: "error",
+            _error: usageCheck.upgrade_message ?? "Usage limit reached",
+          } as unknown as Json,
+        })
+        .eq("id", moduleId);
+      return {
+        success: false,
+        error: usageCheck.upgrade_message ?? "Usage limit reached",
+      };
+    }
+
+    // Get LLM key
+    const llmKeyData = await getDefaultLlmKeyForUser(user.id);
+    if (!llmKeyData) {
+      await serviceClient
+        .from("learning_modules")
+        .update({
+          content: {
+            ...content,
+            _status: "error",
+            _error: "No LLM API key configured",
+          } as unknown as Json,
+        })
+        .eq("id", moduleId);
+      return {
+        success: false,
+        error:
+          "No LLM API key configured. Please add an API key in settings.",
+      };
+    }
+
+    const provider = createLLMProvider(llmKeyData.provider, llmKeyData.apiKey);
+    const meta = content._meta;
+
+    // Build project digest and educational analysis
+    const digest = await buildProjectDigest(pathData.project_id);
+    const educationalAnalysis = await getEducationalAnalysis(
+      pathData.project_id,
+    );
+
+    // Collect relevant code from digest
+    const relevantCode = digest.criticalFiles.filter((f) =>
+      meta.relevant_files.includes(f.path),
+    );
+
+    const difficulty = (pathData.difficulty ?? "beginner") as
+      | "beginner"
+      | "intermediate"
+      | "advanced";
+
+    // Build prompt for a single module
+    const contentPrompt = buildContentBatchPrompt(
+      meta.tech_name,
+      [
+        {
+          title: moduleData.title,
+          description: moduleData.description ?? "",
+          module_type: moduleData.module_type ?? "concept",
+          learning_objectives: meta.learning_objectives,
+        },
+      ],
+      relevantCode,
+      difficulty,
+      educationalAnalysis ?? undefined,
+    );
+
+    const llmResult = await provider.chat({
+      messages: [{ role: "user", content: contentPrompt }],
+      maxTokens: 16384,
+    });
+
+    let batchContent: ContentBatchItem[];
+    try {
+      batchContent = extractContentArray(llmResult.content);
+    } catch (parseError) {
+      console.error(
+        `[learning] On-demand content parse error for module "${moduleData.title}":`,
+        parseError instanceof Error ? parseError.message : parseError,
+      );
+      await serviceClient
+        .from("learning_modules")
+        .update({
+          content: {
+            sections: [],
+            _meta: meta,
+            _status: "error",
+            _error: "콘텐츠 생성 결과를 파싱하지 못했습니다.",
+          } as unknown as Json,
+        })
+        .eq("id", moduleId);
+      return {
+        success: false,
+        error: "콘텐츠 생성 결과를 파싱하지 못했습니다. 다시 시도해 주세요.",
+      };
+    }
+
+    // Extract sections from the first (and only) batch item
+    const generatedSections =
+      batchContent.length > 0 && batchContent[0].content?.sections
+        ? batchContent[0].content.sections
+        : [];
+
+    // Save to DB
+    await serviceClient
+      .from("learning_modules")
+      .update({
+        content: {
+          sections: generatedSections,
+          _meta: meta,
+          _status: "ready",
+          _generated_at: new Date().toISOString(),
+        } as unknown as Json,
+      })
+      .eq("id", moduleId);
+
+    // Track token usage
+    const jobInsert: AnalysisJobInsert = {
+      project_id: pathData.project_id,
+      user_id: user.id,
+      job_type: "learning_generation",
+      status: "completed",
+      llm_provider: provider.providerName,
+      llm_model: provider.modelName,
+      input_tokens: llmResult.input_tokens,
+      output_tokens: llmResult.output_tokens,
+      started_at: new Date().toISOString(),
+      completed_at: new Date().toISOString(),
+    };
+
+    await serviceClient.from("analysis_jobs").insert(jobInsert);
+
+    return { success: true, data: { sections: generatedSections } };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "An unexpected error occurred";
+
+    // Try to set error status
+    try {
+      const serviceClient = createServiceClient();
+      await serviceClient
+        .from("learning_modules")
+        .update({
+          content: {
+            sections: [],
+            _status: "error",
+            _error: message,
+          } as unknown as Json,
+        })
+        .eq("id", moduleId);
+    } catch {
+      // Ignore cleanup errors
+    }
+
     return { success: false, error: message };
   }
 }

@@ -79,6 +79,7 @@ export default async function ModuleDetailPage({ params }: PageProps) {
         learningPathId={pathId}
         projectId={projectId}
         nextModuleId={nextModule?.id ?? null}
+        needsGeneration={!mod.content.sections || mod.content.sections.length === 0}
       />
     </div>
   );
