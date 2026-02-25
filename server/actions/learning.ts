@@ -296,6 +296,49 @@ function normalizeTitle(title: string): string {
 
 // ─── Server Actions ──────────────────────────────────────────────────
 
+/**
+ * Load only the specific files needed for a module's content generation.
+ * Much cheaper than buildProjectDigest which loads ALL files.
+ */
+async function loadRelevantFiles(
+  projectId: string,
+  filePaths: string[],
+): Promise<Array<{ path: string; content: string }>> {
+  if (filePaths.length === 0) return [];
+
+  const serviceClient = createServiceClient();
+  const { data: files } = await serviceClient
+    .from("project_files")
+    .select("file_path, file_name, raw_content")
+    .eq("project_id", projectId)
+    .in("file_path", filePaths);
+
+  if (!files || files.length === 0) {
+    // Fallback: try matching by file_name (some records may not have file_path)
+    const { data: filesByName } = await serviceClient
+      .from("project_files")
+      .select("file_path, file_name, raw_content")
+      .eq("project_id", projectId)
+      .in("file_name", filePaths);
+
+    if (!filesByName || filesByName.length === 0) return [];
+
+    return filesByName
+      .filter((f) => f.raw_content)
+      .map((f) => ({
+        path: f.file_path ?? f.file_name,
+        content: decryptContent(f.raw_content!),
+      }));
+  }
+
+  return files
+    .filter((f) => f.raw_content)
+    .map((f) => ({
+      path: f.file_path ?? f.file_name,
+      content: decryptContent(f.raw_content!),
+    }));
+}
+
 export async function generateLearningPath(
   projectId: string,
   difficulty?: Difficulty,
@@ -349,8 +392,13 @@ export async function generateLearningPath(
       };
     }
 
-    // Get user's default LLM key
-    const llmKeyData = await getDefaultLlmKeyForUser(user.id);
+    // Run remaining pre-LLM queries in parallel
+    const [llmKeyData, digest, educationalAnalysis] = await Promise.all([
+      getDefaultLlmKeyForUser(user.id),
+      buildProjectDigest(projectId),
+      getEducationalAnalysis(projectId),
+    ]);
+
     if (!llmKeyData) {
       return {
         success: false,
@@ -359,14 +407,7 @@ export async function generateLearningPath(
       };
     }
 
-    // Create LLM provider
     const provider = createLLMProvider(llmKeyData.provider, llmKeyData.apiKey);
-
-    // Build project digest for personalized content
-    const digest = await buildProjectDigest(projectId);
-
-    // Fetch educational analysis (if available from MCP sync)
-    const educationalAnalysis = await getEducationalAnalysis(projectId);
 
     // ─── Phase 1: Generate roadmap structure ──────────────────────────
     const structurePrompt = buildStructurePrompt(
@@ -603,8 +644,19 @@ export async function generateModuleContent(
       })
       .eq("id", moduleId);
 
-    // Check usage limit
-    const usageCheck = await checkUsageLimit(user.id, "learning");
+    const meta = content._meta;
+
+    // Run all pre-LLM queries in parallel
+    // Use loadRelevantFiles instead of buildProjectDigest to only fetch
+    // the specific files referenced in _meta.relevant_files (much cheaper)
+    const [usageCheck, llmKeyData, relevantFiles, educationalAnalysis] =
+      await Promise.all([
+        checkUsageLimit(user.id, "learning"),
+        getDefaultLlmKeyForUser(user.id),
+        loadRelevantFiles(pathData.project_id, meta.relevant_files),
+        getEducationalAnalysis(pathData.project_id),
+      ]);
+
     if (!usageCheck.allowed) {
       // Revert status
       await serviceClient
@@ -623,8 +675,6 @@ export async function generateModuleContent(
       };
     }
 
-    // Get LLM key
-    const llmKeyData = await getDefaultLlmKeyForUser(user.id);
     if (!llmKeyData) {
       await serviceClient
         .from("learning_modules")
@@ -644,18 +694,8 @@ export async function generateModuleContent(
     }
 
     const provider = createLLMProvider(llmKeyData.provider, llmKeyData.apiKey);
-    const meta = content._meta;
 
-    // Build project digest and educational analysis
-    const digest = await buildProjectDigest(pathData.project_id);
-    const educationalAnalysis = await getEducationalAnalysis(
-      pathData.project_id,
-    );
-
-    // Collect relevant code from digest
-    const relevantCode = digest.criticalFiles.filter((f) =>
-      meta.relevant_files.includes(f.path),
-    );
+    const relevantCode = relevantFiles;
 
     const difficulty = (pathData.difficulty ?? "beginner") as
       | "beginner"
