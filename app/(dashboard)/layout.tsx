@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/ui/sidebar";
 import { AnnouncementBanner } from "@/components/features/announcement-banner";
+import { AuthStateListener } from "@/components/features/auth-state-listener";
 import { isCurrentUserBanned } from "@/lib/utils/ban-check";
 import type { UserRole } from "@/types/database";
 
@@ -51,6 +52,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen">
+      <AuthStateListener />
       <Sidebar userEmail={userEmail} userRole={userRole} />
       <main className="lg:pl-64">
         <div className="mx-auto max-w-5xl px-6 py-8 pt-16 lg:pt-8">

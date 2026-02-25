@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { successResponse, errorResponse } from "@/lib/utils/api-response";
 import { authenticateApiKey, isAuthResult } from "@/server/middleware/api-auth";
 import { createServiceClient } from "@/lib/supabase/service";
+import { checkUsageLimit } from "@/lib/utils/usage-limits";
 import type { Database } from "@/types/database";
 import type { ProjectCreateRequest, ProjectResponse } from "@/types/api";
 
@@ -50,6 +51,11 @@ export async function POST(request: NextRequest) {
       }
 
       return successResponse<ProjectResponse>(updated);
+    }
+
+    const limitCheck = await checkUsageLimit(authResult.userId, "analysis");
+    if (!limitCheck.allowed) {
+      return errorResponse(limitCheck.upgrade_message ?? "Usage limit exceeded", 403);
     }
 
     const { data, error } = await supabase

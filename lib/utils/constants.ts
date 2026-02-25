@@ -1,4 +1,4 @@
-export const APP_NAME = "VibeStack";
+export const APP_NAME = "VibeUniv";
 export const APP_VERSION = "1.0.0";
 export const APP_DESCRIPTION =
   "AI로 만든 프로젝트의 기술 스택을 이해하고 학습하는 플랫폼";

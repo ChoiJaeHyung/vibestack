@@ -2,7 +2,10 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCurrentPlan } from "@/server/actions/billing";
+import { getUsageData } from "@/server/actions/usage";
+import type { UsageData } from "@/server/actions/usage";
 import { BillingManager } from "@/components/features/billing-manager";
+import { UsageProgress } from "@/components/features/usage-progress";
 
 interface BillingPageProps {
   searchParams: Promise<{ success?: string; canceled?: string }>;
@@ -12,6 +15,16 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const params = await searchParams;
   const planResult = await getCurrentPlan();
   const currentPlan = planResult.data?.plan_type ?? "free";
+
+  let usageData: UsageData | null = null;
+  try {
+    const usageResult = await getUsageData();
+    if (usageResult.success && usageResult.data) {
+      usageData = usageResult.data;
+    }
+  } catch {
+    // usage 데이터 로드 실패 시 섹션을 숨김
+  }
 
   return (
     <div className="space-y-6">
@@ -88,6 +101,35 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           )}
         </div>
       </div>
+
+      {/* Usage Stats */}
+      {usageData && (
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
+          <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+            사용량 현황
+          </h2>
+          <div className="space-y-4">
+            <UsageProgress
+              label="프로젝트"
+              used={usageData.projects.used}
+              limit={usageData.projects.limit}
+              showUpgradeHint={usageData.planType === "free"}
+            />
+            <UsageProgress
+              label="학습 로드맵 (이번 달)"
+              used={usageData.learningPaths.used}
+              limit={usageData.learningPaths.limit}
+              showUpgradeHint={usageData.planType === "free"}
+            />
+            <UsageProgress
+              label="AI 대화 (이번 달)"
+              used={usageData.aiChats.used}
+              limit={usageData.aiChats.limit}
+              showUpgradeHint={usageData.planType === "free"}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Plan Comparison & Billing Manager */}
       <BillingManager currentPlan={currentPlan} />

@@ -38,6 +38,7 @@ interface DashboardStats {
   recentProjects: RecentProject[];
   techDistribution: TechDistributionItem[];
   currentLearning: CurrentLearning | null;
+  userEmail: string;
 }
 
 interface DashboardStatsResult {
@@ -68,183 +69,176 @@ export async function getDashboardStats(): Promise<DashboardStatsResult> {
       return { success: false, error: "Not authenticated" };
     }
 
-    // 1. Total projects count
-    const { count: totalProjects } = await supabase
-      .from("projects")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id);
+    const startOfMonth = getStartOfMonth();
 
-    // 2. Recent projects (last 5)
-    const { data: recentProjectsData } = await supabase
-      .from("projects")
-      .select("id, name, status, source_platform, tech_summary, updated_at")
-      .eq("user_id", user.id)
-      .order("updated_at", { ascending: false })
-      .limit(5);
-
-    // 3. Unique technologies (count distinct categories)
-    const { data: techData } = await supabase
-      .from("tech_stacks")
-      .select("id, category, project_id")
-      .in(
-        "project_id",
-        (recentProjectsData ?? []).map((p) => p.id),
-      );
-
-    // If there are no recent projects, query all user projects for tech stats
-    let allTechData = techData;
-    if (!allTechData || allTechData.length === 0) {
-      const { data: allProjectIds } = await supabase
+    // ── Phase 1: Independent queries (only need user.id) ──────────
+    const [
+      { count: totalProjects },
+      { data: recentProjectsData },
+      { data: learningPaths },
+      { count: monthlyChats },
+    ] = await Promise.all([
+      supabase
         .from("projects")
-        .select("id")
-        .eq("user_id", user.id);
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id),
+      supabase
+        .from("projects")
+        .select("id, name, status, source_platform, tech_summary, updated_at")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(5),
+      supabase
+        .from("learning_paths")
+        .select("id, title, total_modules")
+        .eq("user_id", user.id)
+        .eq("status", "active"),
+      supabase
+        .from("ai_conversations")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", startOfMonth),
+    ]);
 
-      if (allProjectIds && allProjectIds.length > 0) {
-        const { data: allTech } = await supabase
-          .from("tech_stacks")
-          .select("id, category, project_id")
-          .in(
-            "project_id",
-            allProjectIds.map((p) => p.id),
-          );
-        allTechData = allTech;
+    // ── Phase 2: Queries depending on Phase 1 results ─────────────
+    const recentProjectIds = (recentProjectsData ?? []).map((p) => p.id);
+    const hasLearningPaths = learningPaths && learningPaths.length > 0;
+    const pathIds = hasLearningPaths ? learningPaths.map((lp) => lp.id) : [];
+
+    const [techResult, moduleResult, inProgressResult] = await Promise.all([
+      recentProjectIds.length > 0
+        ? supabase
+            .from("tech_stacks")
+            .select("id, category, project_id")
+            .in("project_id", recentProjectIds)
+        : Promise.resolve({ data: null } as { data: null }),
+      hasLearningPaths
+        ? supabase
+            .from("learning_modules")
+            .select("id")
+            .in("learning_path_id", pathIds)
+        : Promise.resolve({ data: null } as { data: null }),
+      hasLearningPaths
+        ? supabase
+            .from("learning_progress")
+            .select("module_id")
+            .eq("user_id", user.id)
+            .eq("status", "in_progress")
+            .limit(1)
+        : Promise.resolve({ data: null } as { data: null }),
+    ]);
+
+    // ── Tech data with fallback ───────────────────────────────────
+    let allTechData = techResult.data;
+    if (!allTechData || allTechData.length === 0) {
+      if ((totalProjects ?? 0) > 0) {
+        const { data: allProjectIds } = await supabase
+          .from("projects")
+          .select("id")
+          .eq("user_id", user.id);
+
+        if (allProjectIds && allProjectIds.length > 0) {
+          const { data: allTech } = await supabase
+            .from("tech_stacks")
+            .select("id, category, project_id")
+            .in(
+              "project_id",
+              allProjectIds.map((p) => p.id),
+            );
+          allTechData = allTech;
+        }
       }
     }
 
     const uniqueTechNames = new Set((allTechData ?? []).map((t) => t.id));
     const uniqueTechnologies = uniqueTechNames.size;
 
-    // 4. Tech distribution by category
     const categoryCountMap = new Map<string, number>();
     for (const tech of allTechData ?? []) {
       const current = categoryCountMap.get(tech.category) ?? 0;
       categoryCountMap.set(tech.category, current + 1);
     }
-
     const techDistribution: TechDistributionItem[] = Array.from(
       categoryCountMap.entries(),
     ).map(([category, count]) => ({ category, count }));
 
-    // 5. Learning progress
-    const { data: learningPaths } = await supabase
-      .from("learning_paths")
-      .select("id, total_modules")
-      .eq("user_id", user.id)
-      .eq("status", "active");
+    // ── Phase 3: Learning stats + current learning ────────────────
+    const moduleIds = (moduleResult.data ?? []).map(
+      (m: { id: string }) => m.id,
+    );
+    const totalModules = hasLearningPaths
+      ? learningPaths.reduce((sum, lp) => sum + lp.total_modules, 0)
+      : 0;
 
-    let totalModules = 0;
-    let completedModules = 0;
+    const inProgressModules = inProgressResult.data as
+      | { module_id: string }[]
+      | null;
 
-    if (learningPaths && learningPaths.length > 0) {
-      totalModules = learningPaths.reduce((sum, lp) => sum + lp.total_modules, 0);
+    // Determine which module to show as "current learning"
+    const currentLearningPromise =
+      inProgressModules && inProgressModules.length > 0
+        ? supabase
+            .from("learning_modules")
+            .select("id, title, learning_path_id")
+            .eq("id", inProgressModules[0].module_id)
+            .limit(1)
+        : hasLearningPaths
+          ? supabase
+              .from("learning_modules")
+              .select("id, title, learning_path_id")
+              .eq("learning_path_id", learningPaths[0].id)
+              .order("module_order", { ascending: true })
+              .limit(1)
+          : Promise.resolve({ data: null } as { data: null });
 
-      const pathIds = learningPaths.map((lp) => lp.id);
+    const [completedResult, currentModuleResult] = await Promise.all([
+      moduleIds.length > 0
+        ? supabase
+            .from("learning_progress")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .in("module_id", moduleIds)
+            .eq("status", "completed")
+        : Promise.resolve({ count: 0 } as { count: number }),
+      currentLearningPromise,
+    ]);
 
-      // Get all module IDs for these paths
-      const { data: modules } = await supabase
-        .from("learning_modules")
-        .select("id")
-        .in("learning_path_id", pathIds);
-
-      if (modules && modules.length > 0) {
-        const moduleIds = modules.map((m) => m.id);
-
-        const { count: completedCount } = await supabase
-          .from("learning_progress")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .in("module_id", moduleIds)
-          .eq("status", "completed");
-
-        completedModules = completedCount ?? 0;
-      }
-    }
-
+    const completedModules = completedResult.count ?? 0;
     const learningPercentage =
-      totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
+      totalModules > 0
+        ? Math.round((completedModules / totalModules) * 100)
+        : 0;
 
-    // 6. Monthly chat count
-    const startOfMonth = getStartOfMonth();
-    const { count: monthlyChats } = await supabase
-      .from("ai_conversations")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .gte("created_at", startOfMonth);
-
-    // 7. Current learning (first in_progress module, or first not_started)
+    // Resolve current learning from module + in-memory path data
     let currentLearning: CurrentLearning | null = null;
-
-    if (learningPaths && learningPaths.length > 0) {
-      // Check for in_progress modules first
-      const { data: inProgressModules } = await supabase
-        .from("learning_progress")
-        .select("module_id")
-        .eq("user_id", user.id)
-        .eq("status", "in_progress")
-        .limit(1);
-
-      if (inProgressModules && inProgressModules.length > 0) {
-        const { data: moduleDetail } = await supabase
-          .from("learning_modules")
-          .select("id, title, learning_path_id")
-          .eq("id", inProgressModules[0].module_id)
-          .single();
-
-        if (moduleDetail) {
-          const { data: pathDetail } = await supabase
-            .from("learning_paths")
-            .select("id, title")
-            .eq("id", moduleDetail.learning_path_id)
-            .single();
-
-          if (pathDetail) {
-            currentLearning = {
-              moduleId: moduleDetail.id,
-              moduleTitle: moduleDetail.title,
-              pathId: pathDetail.id,
-              pathTitle: pathDetail.title,
-            };
-          }
-        }
-      }
-
-      // If no in_progress, find first module without progress
-      if (!currentLearning) {
-        const activePath = learningPaths[0];
-        const { data: firstModule } = await supabase
-          .from("learning_modules")
-          .select("id, title")
-          .eq("learning_path_id", activePath.id)
-          .order("module_order", { ascending: true })
-          .limit(1);
-
-        if (firstModule && firstModule.length > 0) {
-          const { data: pathDetail } = await supabase
-            .from("learning_paths")
-            .select("id, title")
-            .eq("id", activePath.id)
-            .single();
-
-          if (pathDetail) {
-            currentLearning = {
-              moduleId: firstModule[0].id,
-              moduleTitle: firstModule[0].title,
-              pathId: pathDetail.id,
-              pathTitle: pathDetail.title,
-            };
-          }
-        }
+    const currentModuleData = currentModuleResult.data as
+      | { id: string; title: string; learning_path_id: string }[]
+      | null;
+    const currentModule = currentModuleData?.[0];
+    if (currentModule) {
+      const path = (learningPaths ?? []).find(
+        (lp) => lp.id === currentModule.learning_path_id,
+      );
+      if (path) {
+        currentLearning = {
+          moduleId: currentModule.id,
+          moduleTitle: currentModule.title,
+          pathId: path.id,
+          pathTitle: path.title,
+        };
       }
     }
 
-    const recentProjects: RecentProject[] = (recentProjectsData ?? []).map((p) => ({
-      id: p.id,
-      name: p.name,
-      status: p.status,
-      source_platform: p.source_platform,
-      tech_summary: p.tech_summary,
-      updated_at: p.updated_at,
-    }));
+    const recentProjects: RecentProject[] = (recentProjectsData ?? []).map(
+      (p) => ({
+        id: p.id,
+        name: p.name,
+        status: p.status,
+        source_platform: p.source_platform,
+        tech_summary: p.tech_summary,
+        updated_at: p.updated_at,
+      }),
+    );
 
     return {
       success: true,
@@ -260,6 +254,7 @@ export async function getDashboardStats(): Promise<DashboardStatsResult> {
         recentProjects,
         techDistribution,
         currentLearning,
+        userEmail: user.email ?? "User",
       },
     };
   } catch {

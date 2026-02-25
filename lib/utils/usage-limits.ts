@@ -10,10 +10,23 @@ interface UsageLimitResult {
   upgrade_message?: string;
 }
 
-const DEFAULT_FREE_TIER_LIMITS: Record<UsageAction, number> = {
+export interface UsageWarning {
+  level: "none" | "warning" | "critical" | "exceeded";
+  used: number;
+  limit: number;
+  percentage: number;
+}
+
+export const FREE_LIMITS = {
   analysis: 3,
   learning: 1,
   chat: 20,
+} as const;
+
+const DEFAULT_FREE_TIER_LIMITS: Record<UsageAction, number> = {
+  analysis: FREE_LIMITS.analysis,
+  learning: FREE_LIMITS.learning,
+  chat: FREE_LIMITS.chat,
 };
 
 const UPGRADE_MESSAGES: Record<UsageAction, string> = {
@@ -37,40 +50,63 @@ async function getFreeTierLimits(): Promise<Record<UsageAction, number>> {
   return DEFAULT_FREE_TIER_LIMITS;
 }
 
+interface UserUsageInfo {
+  planType: string;
+  used: number;
+  limit: number;
+}
+
+async function getUserUsageInfo(
+  userId: string,
+  action: UsageAction,
+): Promise<UserUsageInfo | null> {
+  const supabase = createServiceClient();
+
+  const { data: user, error: userError } = await supabase
+    .from("users")
+    .select("plan_type")
+    .eq("id", userId)
+    .single();
+
+  if (userError || !user) {
+    return null;
+  }
+
+  const isPaid = user.plan_type === "pro" || user.plan_type === "team";
+
+  if (isPaid) {
+    return { planType: user.plan_type, used: 0, limit: Infinity };
+  }
+
+  const limits = await getFreeTierLimits();
+  const limit = limits[action];
+  const used = await getCurrentUsageCount(supabase, userId, action);
+
+  return { planType: user.plan_type, used, limit };
+}
+
 export async function checkUsageLimit(
   userId: string,
   action: UsageAction,
 ): Promise<UsageLimitResult> {
   try {
-    const supabase = createServiceClient();
+    const info = await getUserUsageInfo(userId, action);
 
-    // Fetch user's plan type
-    const { data: user, error: userError } = await supabase
-      .from("users")
-      .select("plan_type")
-      .eq("id", userId)
-      .single();
-
-    if (userError || !user) {
+    if (!info) {
       return { allowed: false, upgrade_message: "User not found" };
     }
 
-    // Pro and team users always have unlimited access
-    if (user.plan_type === "pro" || user.plan_type === "team") {
+    if (info.limit === Infinity) {
       return { allowed: true };
     }
 
-    // Free tier — check limits based on action
-    const limits = await getFreeTierLimits();
-    const limit = limits[action];
-    const currentCount = await getCurrentUsageCount(supabase, userId, action);
-    const remaining = Math.max(0, limit - currentCount);
+    const remaining = Math.max(0, info.limit - info.used);
 
     if (remaining <= 0) {
       return {
         allowed: false,
         remaining: 0,
-        limit,
+        limit: info.limit,
         upgrade_message: UPGRADE_MESSAGES[action],
       };
     }
@@ -78,10 +114,40 @@ export async function checkUsageLimit(
     return {
       allowed: true,
       remaining,
-      limit,
+      limit: info.limit,
     };
   } catch {
     return { allowed: false, upgrade_message: "Failed to check usage limits" };
+  }
+}
+
+export async function getUsageWarning(
+  type: "analysis" | "learning" | "chat",
+  userId: string,
+): Promise<UsageWarning> {
+  try {
+    const info = await getUserUsageInfo(userId, type);
+
+    if (!info || info.limit === Infinity) {
+      return { level: "none", used: info?.used ?? 0, limit: Infinity, percentage: 0 };
+    }
+
+    const percentage = info.limit > 0 ? Math.round((info.used / info.limit) * 100) : 0;
+
+    let level: UsageWarning["level"];
+    if (percentage >= 100) {
+      level = "exceeded";
+    } else if (percentage >= 90) {
+      level = "critical";
+    } else if (percentage >= 80) {
+      level = "warning";
+    } else {
+      level = "none";
+    }
+
+    return { level, used: info.used, limit: info.limit, percentage };
+  } catch {
+    return { level: "none", used: 0, limit: Infinity, percentage: 0 };
   }
 }
 

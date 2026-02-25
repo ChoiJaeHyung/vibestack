@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -14,6 +15,9 @@ import {
   Shield,
   Home,
   BookOpen,
+  Sun,
+  Moon,
+  Monitor,
   GraduationCap as SidebarLogo,
 } from "lucide-react";
 import type { UserRole } from "@/types/database";
@@ -32,7 +36,13 @@ const navItems = [
 
 export function Sidebar({ userEmail, userRole }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
   const pathname = usePathname();
+
+  // Hydration mismatch 방지: next-themes의 theme 값은 클라이언트에서만 확정됨
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMounted(true), []);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -141,6 +151,50 @@ export function Sidebar({ userEmail, userRole }: SidebarProps) {
             가이드
           </Link>
         </nav>
+
+        {/* Theme toggle */}
+        {mounted && (
+          <div className="border-t border-zinc-200 px-3 py-3 dark:border-zinc-800">
+            <div className="flex items-center rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800">
+              <button
+                type="button"
+                onClick={() => setTheme("light")}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                  theme === "light"
+                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
+                    : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                }`}
+              >
+                <Sun className="h-3.5 w-3.5" />
+                Light
+              </button>
+              <button
+                type="button"
+                onClick={() => setTheme("dark")}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                  theme === "dark"
+                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
+                    : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                }`}
+              >
+                <Moon className="h-3.5 w-3.5" />
+                Dark
+              </button>
+              <button
+                type="button"
+                onClick={() => setTheme("system")}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                  theme === "system"
+                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
+                    : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                }`}
+              >
+                <Monitor className="h-3.5 w-3.5" />
+                Auto
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* User profile */}
         <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">

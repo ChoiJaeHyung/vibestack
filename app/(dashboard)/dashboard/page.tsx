@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/features/project-card";
@@ -13,24 +12,25 @@ import {
   BookOpen,
 } from "lucide-react";
 import { getDashboardStats } from "@/server/actions/dashboard";
+import { getUsageData, type UsageData } from "@/server/actions/usage";
+import { DashboardUpgradeBanner } from "@/components/features/dashboard-upgrade-banner";
+import { UsageProgress } from "@/components/features/usage-progress";
 
 export default async function DashboardPage() {
-  let userEmail = "User";
+  const [result, usageResult] = await Promise.all([
+    getDashboardStats(),
+    getUsageData().catch((): { success: false; data?: undefined } => ({
+      success: false,
+    })),
+  ]);
 
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      userEmail = user.email ?? "User";
-    }
-  } catch {
-    // Supabase not configured
-  }
-
-  const result = await getDashboardStats();
   const stats = result.data;
+  const userEmail = stats?.userEmail ?? "User";
+
+  let usageData: UsageData | null = null;
+  if (usageResult.success && usageResult.data) {
+    usageData = usageResult.data;
+  }
 
   return (
     <div className="space-y-8">
@@ -43,6 +43,11 @@ export default async function DashboardPage() {
           안녕하세요, {userEmail}님!
         </p>
       </div>
+
+      {/* Upgrade Banner */}
+      {usageData && (
+        <DashboardUpgradeBanner planType={usageData.planType} />
+      )}
 
       {/* 4 Summary Stat Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -68,6 +73,37 @@ export default async function DashboardPage() {
           value={String(stats?.monthlyChats ?? 0)}
         />
       </div>
+
+      {/* Usage */}
+      {usageData && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+            사용량
+          </h2>
+          <Card>
+            <CardContent className="space-y-4">
+              <UsageProgress
+                label="프로젝트"
+                used={usageData.projects.used}
+                limit={usageData.projects.limit}
+                showUpgradeHint={usageData.planType === "free"}
+              />
+              <UsageProgress
+                label="학습 로드맵 (이번 달)"
+                used={usageData.learningPaths.used}
+                limit={usageData.learningPaths.limit}
+                showUpgradeHint={usageData.planType === "free"}
+              />
+              <UsageProgress
+                label="AI 대화 (이번 달)"
+                used={usageData.aiChats.used}
+                limit={usageData.aiChats.limit}
+                showUpgradeHint={usageData.planType === "free"}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Recent Projects */}
       {stats && stats.recentProjects.length > 0 ? (
@@ -164,7 +200,7 @@ export default async function DashboardPage() {
                     {stats.currentLearning.moduleTitle}
                   </h3>
                   <Link
-                    href={`/learning/${stats.currentLearning.pathId}/modules/${stats.currentLearning.moduleId}`}
+                    href={`/learning/${stats.currentLearning.pathId}/${stats.currentLearning.moduleId}`}
                   >
                     <Button variant="primary" size="sm" className="mt-3">
                       이어서 학습하기
