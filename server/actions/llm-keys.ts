@@ -276,42 +276,26 @@ export async function getDefaultLlmKeyForUser(
   try {
     const supabase = createServiceClient();
 
-    // First try to find the user's default key
-    const { data: defaultKey } = await supabase
-      .from("user_llm_keys")
-      .select("provider, encrypted_key")
-      .eq("user_id", userId)
-      .eq("is_default", true)
-      .eq("is_valid", true)
-      .single();
-
-    if (defaultKey) {
-      const apiKey = decrypt(defaultKey.encrypted_key);
-      return {
-        provider: defaultKey.provider as LlmProvider,
-        apiKey,
-      };
-    }
-
-    // If no default, try to find any valid key
-    const { data: anyKey } = await supabase
+    // Single query: order by is_default DESC so default key comes first, then by created_at
+    const { data, error } = await supabase
       .from("user_llm_keys")
       .select("provider, encrypted_key")
       .eq("user_id", userId)
       .eq("is_valid", true)
+      .order("is_default", { ascending: false })
       .order("created_at", { ascending: true })
       .limit(1)
       .single();
 
-    if (anyKey) {
-      const apiKey = decrypt(anyKey.encrypted_key);
-      return {
-        provider: anyKey.provider as LlmProvider,
-        apiKey,
-      };
+    if (error || !data) {
+      return null;
     }
 
-    return null;
+    const apiKey = decrypt(data.encrypted_key);
+    return {
+      provider: data.provider as LlmProvider,
+      apiKey,
+    };
   } catch {
     return null;
   }
