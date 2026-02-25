@@ -47,29 +47,45 @@ export default async function LearningPage() {
         paths = data as unknown as LearningPathRow[];
       }
 
-      // For each path, get completed module count
+      // Batch query: get all modules + completed progress at once (was N+1)
       if (paths.length > 0) {
+        const pathIds = paths.map((p) => p.id);
+
+        // Single query for all modules across all paths
+        const { data: allModules } = await supabase
+          .from("learning_modules")
+          .select("id, learning_path_id")
+          .in("learning_path_id", pathIds);
+
         const completedByPath = new Map<string, number>();
-
         for (const path of paths) {
-          // Get all module IDs for this path
-          const { data: modules } = await supabase
-            .from("learning_modules")
-            .select("id")
-            .eq("learning_path_id", path.id);
+          completedByPath.set(path.id, 0);
+        }
 
-          if (modules && modules.length > 0) {
-            const moduleIds = modules.map((m) => m.id);
-            const { data: completed } = await supabase
-              .from("learning_progress")
-              .select("id")
-              .eq("user_id", user.id)
-              .in("module_id", moduleIds)
-              .eq("status", "completed");
+        if (allModules && allModules.length > 0) {
+          // Build module→path lookup
+          const moduleToPath = new Map<string, string>();
+          for (const m of allModules) {
+            moduleToPath.set(m.id, m.learning_path_id);
+          }
 
-            completedByPath.set(path.id, completed?.length ?? 0);
-          } else {
-            completedByPath.set(path.id, 0);
+          // Single query for all completed progress
+          const allModuleIds = allModules.map((m) => m.id);
+          const { data: completed } = await supabase
+            .from("learning_progress")
+            .select("module_id")
+            .eq("user_id", user.id)
+            .in("module_id", allModuleIds)
+            .eq("status", "completed");
+
+          if (completed) {
+            for (const row of completed) {
+              const pathId = moduleToPath.get(row.module_id);
+              if (pathId) {
+                const current = completedByPath.get(pathId) ?? 0;
+                completedByPath.set(pathId, current + 1);
+              }
+            }
           }
         }
 
