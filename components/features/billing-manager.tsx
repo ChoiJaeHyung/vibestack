@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2, ExternalLink, CreditCard, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createCheckoutSession, createPortalSession } from "@/server/actions/billing";
+import { invalidateCache } from "@/lib/hooks/use-cached-fetch";
 
 interface BillingManagerProps {
   currentPlan: string;
@@ -21,6 +22,7 @@ export function BillingManager({ currentPlan }: BillingManagerProps) {
     try {
       const result = await createCheckoutSession(plan);
       if (result.success && result.url) {
+        invalidateCache();
         window.location.href = result.url;
       } else {
         setError(result.error ?? "결제 세션을 생성할 수 없습니다.");
@@ -48,6 +50,7 @@ export function BillingManager({ currentPlan }: BillingManagerProps) {
     try {
       const result = await createPortalSession();
       if (result.success && result.url) {
+        invalidateCache();
         window.location.href = result.url;
       } else {
         setError(result.error ?? "구독 관리 포털을 열 수 없습니다.");

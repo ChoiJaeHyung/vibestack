@@ -1,6 +1,7 @@
 "use server";
 
 import Stripe from "stripe";
+import { getAuthUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -40,13 +41,9 @@ export async function createCheckoutSession(
   plan: "pro" | "team",
 ): Promise<CheckoutSessionResult> {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getAuthUser();
 
-    if (authError || !user) {
+    if (!user) {
       return { success: false, error: "Not authenticated" };
     }
 
@@ -131,13 +128,9 @@ export async function createCheckoutSession(
 
 export async function createPortalSession(): Promise<PortalSessionResult> {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getAuthUser();
 
-    if (authError || !user) {
+    if (!user) {
       return { success: false, error: "Not authenticated" };
     }
 
@@ -187,16 +180,13 @@ export async function createPortalSession(): Promise<PortalSessionResult> {
 
 export async function getCurrentPlan(): Promise<CurrentPlanResult> {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getAuthUser();
 
-    if (authError || !user) {
+    if (!user) {
       return { success: false, error: "Not authenticated" };
     }
 
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("users")
       .select("plan_type, plan_expires_at")

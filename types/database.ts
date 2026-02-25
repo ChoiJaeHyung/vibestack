@@ -673,6 +673,10 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      get_dashboard_data: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
       is_admin: {
         Args: Record<string, never>;
         Returns: boolean;

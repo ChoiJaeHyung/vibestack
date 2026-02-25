@@ -24,6 +24,7 @@ import {
   getProjectDetail,
 } from "@/server/actions/projects";
 import type { ProjectDetailData } from "@/server/actions/projects";
+import { invalidateCache } from "@/lib/hooks/use-cached-fetch";
 
 interface TechStackItem {
   id: string;
@@ -166,6 +167,8 @@ export function ProjectAnalysis({
         stopPolling();
         // Refresh full data when analysis completes
         if (result.status === "analyzed") {
+          invalidateCache("/api/dashboard");
+          invalidateCache("/api/projects");
           await refreshProjectData();
         }
       }
