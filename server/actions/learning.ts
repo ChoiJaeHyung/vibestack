@@ -37,6 +37,7 @@ interface GenerateLearningPathResult {
     learning_path_id: string;
     title: string;
     total_modules: number;
+    first_module_id: string | null;
   };
   error?: string;
 }
@@ -526,9 +527,11 @@ export async function generateLearningPath(
       },
     );
 
-    const { error: modulesError } = await serviceClient
+    const { data: insertedModules, error: modulesError } = await serviceClient
       .from("learning_modules")
-      .insert(moduleInserts);
+      .insert(moduleInserts)
+      .select("id, module_order")
+      .order("module_order", { ascending: true });
 
     if (modulesError) {
       return { success: false, error: "Failed to create learning modules" };
@@ -550,12 +553,22 @@ export async function generateLearningPath(
 
     await serviceClient.from("analysis_jobs").insert(jobInsert);
 
+    const firstModuleId = insertedModules?.[0]?.id ?? null;
+
+    // Fire-and-forget: pre-generate first module content
+    if (firstModuleId) {
+      _generateContentForModule(firstModuleId, user.id).catch(() => {
+        // Errors handled inside _generateContentForModule
+      });
+    }
+
     return {
       success: true,
       data: {
         learning_path_id: learningPath.id,
         title: structure.title,
         total_modules: structure.modules.length,
+        first_module_id: firstModuleId,
       },
     };
   } catch (error) {
@@ -631,159 +644,10 @@ export async function generateModuleContent(
       };
     }
 
-    // Set optimistic lock: _status = "generating"
-    const serviceClient = createServiceClient();
-    await serviceClient
-      .from("learning_modules")
-      .update({
-        content: {
-          ...content,
-          _status: "generating",
-          _generating_since: new Date().toISOString(),
-        } as unknown as Json,
-      })
-      .eq("id", moduleId);
-
-    const meta = content._meta;
-
-    // Run all pre-LLM queries in parallel
-    // Use loadRelevantFiles instead of buildProjectDigest to only fetch
-    // the specific files referenced in _meta.relevant_files (much cheaper)
-    const [usageCheck, llmKeyData, relevantFiles, educationalAnalysis] =
-      await Promise.all([
-        checkUsageLimit(user.id, "learning"),
-        getDefaultLlmKeyForUser(user.id),
-        loadRelevantFiles(pathData.project_id, meta.relevant_files),
-        getEducationalAnalysis(pathData.project_id),
-      ]);
-
-    if (!usageCheck.allowed) {
-      // Revert status
-      await serviceClient
-        .from("learning_modules")
-        .update({
-          content: {
-            ...content,
-            _status: "error",
-            _error: usageCheck.upgrade_message ?? "Usage limit reached",
-          } as unknown as Json,
-        })
-        .eq("id", moduleId);
-      return {
-        success: false,
-        error: usageCheck.upgrade_message ?? "Usage limit reached",
-      };
-    }
-
-    if (!llmKeyData) {
-      await serviceClient
-        .from("learning_modules")
-        .update({
-          content: {
-            ...content,
-            _status: "error",
-            _error: "No LLM API key configured",
-          } as unknown as Json,
-        })
-        .eq("id", moduleId);
-      return {
-        success: false,
-        error:
-          "No LLM API key configured. Please add an API key in settings.",
-      };
-    }
-
-    const provider = createLLMProvider(llmKeyData.provider, llmKeyData.apiKey);
-
-    const relevantCode = relevantFiles;
-
-    const difficulty = (pathData.difficulty ?? "beginner") as
-      | "beginner"
-      | "intermediate"
-      | "advanced";
-
-    // Build prompt for a single module
-    const contentPrompt = buildContentBatchPrompt(
-      meta.tech_name,
-      [
-        {
-          title: moduleData.title,
-          description: moduleData.description ?? "",
-          module_type: moduleData.module_type ?? "concept",
-          learning_objectives: meta.learning_objectives,
-        },
-      ],
-      relevantCode,
-      difficulty,
-      educationalAnalysis ?? undefined,
-    );
-
-    const llmResult = await provider.chat({
-      messages: [{ role: "user", content: contentPrompt }],
-      maxTokens: 16384,
-    });
-
-    let batchContent: ContentBatchItem[];
-    try {
-      batchContent = extractContentArray(llmResult.content);
-    } catch (parseError) {
-      console.error(
-        `[learning] On-demand content parse error for module "${moduleData.title}":`,
-        parseError instanceof Error ? parseError.message : parseError,
-      );
-      await serviceClient
-        .from("learning_modules")
-        .update({
-          content: {
-            sections: [],
-            _meta: meta,
-            _status: "error",
-            _error: "콘텐츠 생성 결과를 파싱하지 못했습니다.",
-          } as unknown as Json,
-        })
-        .eq("id", moduleId);
-      return {
-        success: false,
-        error: "콘텐츠 생성 결과를 파싱하지 못했습니다. 다시 시도해 주세요.",
-      };
-    }
-
-    // Extract sections from the first (and only) batch item
-    const generatedSections =
-      batchContent.length > 0 && batchContent[0].content?.sections
-        ? batchContent[0].content.sections
-        : [];
-
-    // Save to DB
-    await serviceClient
-      .from("learning_modules")
-      .update({
-        content: {
-          sections: generatedSections,
-          _meta: meta,
-          _status: "ready",
-          _generated_at: new Date().toISOString(),
-        } as unknown as Json,
-      })
-      .eq("id", moduleId);
-
-    // Track token usage
-    const jobInsert: AnalysisJobInsert = {
-      project_id: pathData.project_id,
-      user_id: user.id,
-      job_type: "learning_generation",
-      status: "completed",
-      llm_provider: provider.providerName,
-      llm_model: provider.modelName,
-      input_tokens: llmResult.input_tokens,
-      output_tokens: llmResult.output_tokens,
-      started_at: new Date().toISOString(),
-      completed_at: new Date().toISOString(),
-    };
-
-    await serviceClient.from("analysis_jobs").insert(jobInsert);
-
-    return { success: true, data: { sections: generatedSections } };
+    // Delegate to shared internal generator
+    // Delegate to shared internal generator
+    const result = await _generateContentForModule(moduleId, user.id);
+    return result;
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "An unexpected error occurred";
@@ -816,6 +680,223 @@ export async function generateModuleContent(
 
     return { success: false, error: message };
   }
+}
+
+/**
+ * Internal: generate module content. Used by both generateModuleContent()
+ * (on-demand, with auth) and prefetch (fire-and-forget, without auth).
+ * Uses serviceClient so no auth context is required.
+ */
+async function _generateContentForModule(
+  moduleId: string,
+  userId: string,
+): Promise<GenerateModuleContentResult> {
+  const serviceClient = createServiceClient();
+
+  // Fetch the module
+  const { data: moduleData, error: moduleError } = await serviceClient
+    .from("learning_modules")
+    .select(
+      "id, title, description, module_type, content, learning_path_id",
+    )
+    .eq("id", moduleId)
+    .single();
+
+  if (moduleError || !moduleData) {
+    return { success: false, error: "Module not found" };
+  }
+
+  const content = moduleData.content as unknown as ModuleContentWithMeta;
+
+  // If content already exists, skip
+  if (content.sections && content.sections.length > 0) {
+    return { success: true, data: { sections: content.sections } };
+  }
+
+  // If currently generating and not stale (< 120s), skip
+  if (content._status === "generating" && content._generating_since) {
+    const elapsed =
+      Date.now() - new Date(content._generating_since).getTime();
+    if (elapsed < 120_000) {
+      return { success: true, generating: true };
+    }
+  }
+
+  if (!content._meta) {
+    return { success: false, error: "Module has no metadata" };
+  }
+
+  // Set optimistic lock: _status = "generating"
+  // Set optimistic lock: _status = "generating"
+  await serviceClient
+    .from("learning_modules")
+    .update({
+      content: {
+        ...content,
+        _status: "generating",
+        _generating_since: new Date().toISOString(),
+      } as unknown as Json,
+    })
+    .eq("id", moduleId);
+
+  const meta = content._meta;
+
+  // Fetch learning path info
+  const { data: pathData } = await serviceClient
+    .from("learning_paths")
+    .select("id, project_id, difficulty")
+    .eq("id", moduleData.learning_path_id)
+    .single();
+
+  if (!pathData) {
+    await serviceClient
+      .from("learning_modules")
+      .update({
+        content: {
+          ...content,
+          _status: "error",
+          _error: "Learning path not found",
+        } as unknown as Json,
+      })
+      .eq("id", moduleId);
+    return { success: false, error: "Learning path not found" };
+  }
+
+  // Run all pre-LLM queries in parallel
+  const [usageCheck, llmKeyData, relevantFiles, educationalAnalysis] =
+    await Promise.all([
+      checkUsageLimit(userId, "learning"),
+      getDefaultLlmKeyForUser(userId),
+      loadRelevantFiles(pathData.project_id, meta.relevant_files),
+      getEducationalAnalysis(pathData.project_id),
+    ]);
+
+  if (!usageCheck.allowed) {
+    await serviceClient
+      .from("learning_modules")
+      .update({
+        content: {
+          ...content,
+          _status: "error",
+          _error: usageCheck.upgrade_message ?? "Usage limit reached",
+        } as unknown as Json,
+      })
+      .eq("id", moduleId);
+    return {
+      success: false,
+      error: usageCheck.upgrade_message ?? "Usage limit reached",
+    };
+  }
+
+  if (!llmKeyData) {
+    await serviceClient
+      .from("learning_modules")
+      .update({
+        content: {
+          ...content,
+          _status: "error",
+          _error: "No LLM API key configured",
+        } as unknown as Json,
+      })
+      .eq("id", moduleId);
+    return {
+      success: false,
+      error:
+        "No LLM API key configured. Please add an API key in settings.",
+    };
+  }
+
+  const provider = createLLMProvider(llmKeyData.provider, llmKeyData.apiKey);
+
+  const relevantCode = relevantFiles;
+
+  const difficulty = (pathData.difficulty ?? "beginner") as
+    | "beginner"
+    | "intermediate"
+    | "advanced";
+
+  // Build prompt for a single module
+  const contentPrompt = buildContentBatchPrompt(
+    meta.tech_name,
+    [
+      {
+        title: moduleData.title,
+        description: moduleData.description ?? "",
+        module_type: moduleData.module_type ?? "concept",
+        learning_objectives: meta.learning_objectives,
+      },
+    ],
+    relevantCode,
+    difficulty,
+    educationalAnalysis ?? undefined,
+  );
+
+  const llmResult = await provider.chat({
+    messages: [{ role: "user", content: contentPrompt }],
+    maxTokens: 16384,
+  });
+
+  let batchContent: ContentBatchItem[];
+  try {
+    batchContent = extractContentArray(llmResult.content);
+  } catch (parseError) {
+    console.error(
+      `[learning] Content parse error for module "${moduleData.title}":`,
+      parseError instanceof Error ? parseError.message : parseError,
+    );
+    await serviceClient
+      .from("learning_modules")
+      .update({
+        content: {
+          sections: [],
+          _meta: meta,
+          _status: "error",
+          _error: "콘텐츠 생성 결과를 파싱하지 못했습니다.",
+        } as unknown as Json,
+      })
+      .eq("id", moduleId);
+    return {
+      success: false,
+      error: "콘텐츠 생성 결과를 파싱하지 못했습니다. 다시 시도해 주세요.",
+    };
+  }
+
+  // Extract sections from the first (and only) batch item
+  const generatedSections =
+    batchContent.length > 0 && batchContent[0].content?.sections
+      ? batchContent[0].content.sections
+      : [];
+
+  // Save to DB
+  await serviceClient
+    .from("learning_modules")
+    .update({
+      content: {
+        sections: generatedSections,
+        _meta: meta,
+        _status: "ready",
+        _generated_at: new Date().toISOString(),
+      } as unknown as Json,
+    })
+    .eq("id", moduleId);
+
+  // Track token usage
+  const jobInsert: AnalysisJobInsert = {
+    project_id: pathData.project_id,
+    user_id: userId,
+    job_type: "learning_generation",
+    status: "completed",
+    llm_provider: provider.providerName,
+    llm_model: provider.modelName,
+    input_tokens: llmResult.input_tokens,
+    output_tokens: llmResult.output_tokens,
+    started_at: new Date().toISOString(),
+    completed_at: new Date().toISOString(),
+  };
+
+  await serviceClient.from("analysis_jobs").insert(jobInsert);
+
+  return { success: true, data: { sections: generatedSections } };
 }
 
 export async function getLearningPaths(

@@ -32,6 +32,7 @@ interface GenerateResult {
   learning_path_id: string;
   title: string;
   total_modules: number;
+  first_module_id: string | null;
 }
 
 const DIFFICULTY_OPTIONS: Array<{
@@ -144,7 +145,13 @@ export function LearningGenerator() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Link href={`/learning/${result.learning_path_id}`}>
+              <Link
+                href={
+                  result.first_module_id
+                    ? `/learning/${result.learning_path_id}/${result.first_module_id}`
+                    : `/learning/${result.learning_path_id}`
+                }
+              >
                 <Button>
                   <GraduationCap className="mr-2 h-4 w-4" />
                   학습 시작
