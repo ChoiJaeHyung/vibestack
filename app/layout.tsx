@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://vibeuniv.com"),
   title: {
     default: "VibeUniv - AI로 만든 프로젝트, 이제 이해하기",
     template: "%s | VibeUniv",
@@ -47,6 +48,11 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  verification: {
+    other: {
+      "naver-site-verification": ["e5cfa55974fbafcb8750304a2fc2abb9f2a44241"],
+    },
+  },
 };
 
 export default function RootLayout({
@@ -59,6 +65,20 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "VibeUniv",
+              url: "https://vibeuniv.com",
+              logo: "https://vibeuniv.com/icon.png",
+              description:
+                "바이브 코딩으로 만든 프로젝트의 기술 스택을 AI가 분석하고 맞춤 학습 로드맵을 제공합니다",
+            }),
+          }}
+        />
         {children}
       </body>
     </html>

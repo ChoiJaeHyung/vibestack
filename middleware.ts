@@ -31,7 +31,7 @@ function matchRateLimitPrefix(pathname: string): string | null {
 }
 
 // Public pages that never need auth checks (skip Supabase round-trip)
-const PUBLIC_PATHS = ["/callback", "/guide", "/robots.txt", "/sitemap.xml", "/icon.png"];
+const PUBLIC_PATHS = ["/callback", "/guide", "/robots.txt", "/sitemap.xml", "/icon.png", "/apple-icon.png", "/manifest.webmanifest"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
