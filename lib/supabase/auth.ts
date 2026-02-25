@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/types/database";
 
@@ -17,6 +18,16 @@ export interface UserProfile {
 }
 
 export const getAuthUser = cache(async (): Promise<AuthUser | null> => {
+  // Fast path: read verified user from middleware-injected headers (~0ms)
+  const h = await headers();
+  const userId = h.get("x-user-id");
+  const userEmail = h.get("x-user-email");
+
+  if (userId) {
+    return { id: userId, email: userEmail ?? "" };
+  }
+
+  // Slow path: call Supabase Auth API (~500ms network round-trip)
   const supabase = await createClient();
   const {
     data: { user },

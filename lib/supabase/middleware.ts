@@ -2,8 +2,14 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
+  // SECURITY: Strip client-sent auth-forwarding headers to prevent spoofing.
+  // Only this middleware sets these headers after a verified getUser() call.
+  const forwardHeaders = new Headers(request.headers);
+  forwardHeaders.delete("x-user-id");
+  forwardHeaders.delete("x-user-email");
+
   let supabaseResponse = NextResponse.next({
-    request,
+    request: { headers: forwardHeaders },
   });
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -24,7 +30,7 @@ export async function updateSession(request: NextRequest) {
           request.cookies.set(name, value),
         );
         supabaseResponse = NextResponse.next({
-          request,
+          request: { headers: forwardHeaders },
         });
         cookiesToSet.forEach(({ name, value, options }) =>
           supabaseResponse.cookies.set(name, value, options),
@@ -84,6 +90,20 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
+  }
+
+  // Forward verified user info to server components via request headers.
+  // This eliminates the duplicate getUser() call in layout (~500ms savings).
+  if (user) {
+    forwardHeaders.set("x-user-id", user.id);
+    forwardHeaders.set("x-user-email", user.email || "");
+    const cookies = supabaseResponse.cookies.getAll();
+    supabaseResponse = NextResponse.next({
+      request: { headers: forwardHeaders },
+    });
+    cookies.forEach(({ name, value, ...options }) => {
+      supabaseResponse.cookies.set(name, value, options);
+    });
   }
 
   return supabaseResponse;
