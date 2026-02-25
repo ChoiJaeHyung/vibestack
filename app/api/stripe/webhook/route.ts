@@ -156,7 +156,30 @@ export async function POST(request: NextRequest) {
           "invoice:",
           invoice.id,
         );
-        // Future: send email notification to user
+
+        const { data: failedUser } = await serviceClient
+          .from("users")
+          .select("id, email")
+          .eq("stripe_customer_id", customerId)
+          .single();
+
+        if (failedUser) {
+          console.warn(
+            "[stripe-webhook] Payment failed for user:",
+            failedUser.id,
+            failedUser.email,
+            "invoice:",
+            invoice.id,
+          );
+          // TODO: Send email notification to user about payment failure
+          // TODO: Consider adding a payment_failed_at column to the users table
+        } else {
+          console.error(
+            "[stripe-webhook] invoice.payment_failed: user not found for customer",
+            customerId,
+          );
+        }
+
         break;
       }
 

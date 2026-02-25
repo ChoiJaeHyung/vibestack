@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-import { updateLearningProgress, generateModuleContent } from "@/server/actions/learning";
+import { updateLearningProgress, generateModuleContent, prefetchNextModuleContent } from "@/server/actions/learning";
 import { TutorChat } from "@/components/features/tutor-chat";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -63,97 +63,32 @@ const MODULE_TYPE_CONFIG: Record<
   {
     icon: React.ComponentType<{ className?: string }>;
     label: string;
-    className: string;
   }
 > = {
-  concept: {
-    icon: BookOpen,
-    label: "Concept",
-    className:
-      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-  },
-  practical: {
-    icon: Code,
-    label: "Practical",
-    className:
-      "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
-  },
-  quiz: {
-    icon: HelpCircle,
-    label: "Quiz",
-    className:
-      "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
-  },
-  project_walkthrough: {
-    icon: FolderOpen,
-    label: "Walkthrough",
-    className:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
-  },
+  concept: { icon: BookOpen, label: "Concept" },
+  practical: { icon: Code, label: "Practical" },
+  quiz: { icon: HelpCircle, label: "Quiz" },
+  project_walkthrough: { icon: FolderOpen, label: "Walkthrough" },
 };
 
-// ─── Section Card Styles (color-coded by type) ──────────────────────
+// ─── Section Config (Notion-style) ──────────────────────────────────
 
-const SECTION_CARD_STYLES: Record<
+const SECTION_CONFIG: Record<
   string,
   {
-    border: string;
-    bg: string;
     icon: React.ComponentType<{ className?: string }>;
-    iconColor: string;
     label: string;
-    labelColor: string;
-    dot: string;
+    callout?: boolean;
   }
 > = {
-  explanation: {
-    border: "border-l-4 border-l-blue-400 dark:border-l-blue-500",
-    bg: "bg-blue-50/60 dark:bg-blue-950/20",
-    icon: BookOpen,
-    iconColor: "text-blue-500",
-    label: "설명",
-    labelColor: "text-blue-600 dark:text-blue-400",
-    dot: "bg-blue-400 dark:bg-blue-500",
-  },
-  code_example: {
-    border: "border-l-4 border-l-emerald-400 dark:border-l-emerald-500",
-    bg: "bg-emerald-50/60 dark:bg-emerald-950/20",
-    icon: Code,
-    iconColor: "text-emerald-500",
-    label: "코드 예시",
-    labelColor: "text-emerald-600 dark:text-emerald-400",
-    dot: "bg-emerald-400 dark:bg-emerald-500",
-  },
-  quiz_question: {
-    border: "border-l-4 border-l-amber-400 dark:border-l-amber-500",
-    bg: "bg-amber-50/60 dark:bg-amber-950/20",
-    icon: HelpCircle,
-    iconColor: "text-amber-500",
-    label: "퀴즈",
-    labelColor: "text-amber-600 dark:text-amber-400",
-    dot: "bg-amber-400 dark:bg-amber-500",
-  },
-  challenge: {
-    border: "border-l-4 border-l-purple-400 dark:border-l-purple-500",
-    bg: "bg-purple-50/60 dark:bg-purple-950/20",
-    icon: Target,
-    iconColor: "text-purple-500",
-    label: "챌린지",
-    labelColor: "text-purple-600 dark:text-purple-400",
-    dot: "bg-purple-400 dark:bg-purple-500",
-  },
-  reflection: {
-    border: "border-l-4 border-l-violet-400 dark:border-l-violet-500",
-    bg: "bg-violet-50/60 dark:bg-violet-950/20",
-    icon: BookOpen,
-    iconColor: "text-violet-500",
-    label: "생각해보기",
-    labelColor: "text-violet-600 dark:text-violet-400",
-    dot: "bg-violet-400 dark:bg-violet-500",
-  },
+  explanation: { icon: BookOpen, label: "설명" },
+  code_example: { icon: Code, label: "코드 예시" },
+  quiz_question: { icon: HelpCircle, label: "퀴즈", callout: true },
+  challenge: { icon: Target, label: "챌린지", callout: true },
+  reflection: { icon: BookOpen, label: "생각해보기", callout: true },
 };
 
-const DEFAULT_SECTION_STYLE = SECTION_CARD_STYLES.explanation;
+const DEFAULT_SECTION_CONFIG = SECTION_CONFIG.explanation;
 
 // ─── Quiz Section Component ─────────────────────────────────────────
 
@@ -331,14 +266,12 @@ export function ModuleContent({
 
   // On-demand content generation state
   const [localSections, setLocalSections] = useState<ContentSection[]>(sections ?? []);
-  const [isGenerating, setIsGenerating] = useState(
-    !!(needsGeneration && (!sections || sections.length === 0)),
-  );
+  const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
-  // Section refs for scroll-to navigation
-  const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // Whether the module visually needs a loading state (before useEffect fires)
+  const showGeneratingUI = needsGeneration && (!sections || sections.length === 0);
 
   const typeConfig = moduleType ? MODULE_TYPE_CONFIG[moduleType] : null;
   const TypeIcon = typeConfig?.icon ?? BookOpen;
@@ -352,10 +285,11 @@ export function ModuleContent({
 
   // On-demand content generation
   const [pollCount, setPollCount] = useState(0);
+  const generationInFlightRef = useRef(false);
 
   // Elapsed time counter for generation loading UX
   useEffect(() => {
-    if (!isGenerating || localSections.length > 0) {
+    if ((!isGenerating && !showGeneratingUI) || localSections.length > 0) {
       setElapsedSeconds(0);
       return;
     }
@@ -363,12 +297,14 @@ export function ModuleContent({
       setElapsedSeconds((s) => s + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [isGenerating, localSections.length]);
+  }, [isGenerating, showGeneratingUI, localSections.length]);
 
   useEffect(() => {
-    if (!needsGeneration || localSections.length > 0 || isGenerating || generationError) return;
+    if (!needsGeneration || localSections.length > 0 || generationError) return;
+    if (generationInFlightRef.current) return;
 
     let cancelled = false;
+    generationInFlightRef.current = true;
 
     async function generate() {
       setIsGenerating(true);
@@ -382,6 +318,7 @@ export function ModuleContent({
         if (result.generating) {
           setTimeout(() => {
             if (!cancelled) {
+              generationInFlightRef.current = false;
               setIsGenerating(false);
               setPollCount((c) => c + 1);
             }
@@ -403,6 +340,7 @@ export function ModuleContent({
       }
 
       if (!cancelled) {
+        generationInFlightRef.current = false;
         setIsGenerating(false);
       }
     }
@@ -411,8 +349,15 @@ export function ModuleContent({
 
     return () => {
       cancelled = true;
+      generationInFlightRef.current = false;
     };
-  }, [needsGeneration, localSections.length, isGenerating, generationError, moduleId, pollCount]);
+  }, [needsGeneration, localSections.length, generationError, moduleId, pollCount]);
+
+  // Prefetch next module content when current module's content is loaded
+  useEffect(() => {
+    if (!nextModuleId || localSections.length === 0) return;
+    prefetchNextModuleContent(moduleId).catch(() => {});
+  }, [nextModuleId, localSections.length, moduleId]);
 
   const handleComplete = useCallback(async () => {
     setCompleting(true);
@@ -452,13 +397,6 @@ export function ModuleContent({
     }
   }
 
-  function scrollToSection(idx: number) {
-    sectionRefs.current[idx]?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }
-
   function renderSectionContent(section: ContentSection) {
     if (section.type === "quiz_question") {
       return <QuizSection section={section} />;
@@ -496,9 +434,8 @@ export function ModuleContent({
       <div>
         <div className="flex items-center gap-2">
           {typeConfig && (
-            <span
-              className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${typeConfig.className}`}
-            >
+            <span className="flex items-center gap-1 rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+
               <TypeIcon className="h-3 w-3" />
               {typeConfig.label}
             </span>
@@ -527,7 +464,7 @@ export function ModuleContent({
       </div>
 
       {/* On-demand content generation states */}
-      {isGenerating && localSections.length === 0 && (
+      {(isGenerating || showGeneratingUI) && localSections.length === 0 && !generationError && (
         <div className="flex flex-col items-center gap-4 rounded-lg border border-zinc-200 bg-zinc-50 py-12 dark:border-zinc-800 dark:bg-zinc-900/50">
           <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
           <div className="text-center">
@@ -573,7 +510,7 @@ export function ModuleContent({
       )}
 
       {/* Empty state: no sections, not generating, no error */}
-      {localSections.length === 0 && !isGenerating && !generationError && (
+      {localSections.length === 0 && !isGenerating && !showGeneratingUI && !generationError && (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 py-12 dark:border-zinc-800 dark:bg-zinc-900/50">
           <BookOpen className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -583,59 +520,49 @@ export function ModuleContent({
       )}
 
       {localSections.length > 0 && (
-        <>
-          {/* Section dot indicators */}
-          <div className="flex flex-wrap gap-1.5">
-            {localSections.map((s, i) => {
-              const style = SECTION_CARD_STYLES[s.type] ?? DEFAULT_SECTION_STYLE;
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => scrollToSection(i)}
-                  title={`${style.label}: ${s.title || `섹션 ${i + 1}`}`}
-                  className={`h-2.5 w-2.5 rounded-full transition-transform hover:scale-125 ${style.dot}`}
-                />
-              );
-            })}
-          </div>
+        <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+          {localSections.map((section, idx) => {
+            const config = SECTION_CONFIG[section.type] ?? DEFAULT_SECTION_CONFIG;
+            const SectionIcon = config.icon;
 
-          {/* All sections — scroll view */}
-          <div className="space-y-5">
-            {localSections.map((section, idx) => {
-              const style = SECTION_CARD_STYLES[section.type] ?? DEFAULT_SECTION_STYLE;
-              const SectionIcon = style.icon;
-
-              return (
-                <div
-                  key={idx}
-                  ref={(el) => { sectionRefs.current[idx] = el; }}
-                  className={`scroll-mt-4 rounded-xl ${style.border} ${style.bg} p-5 md:p-6`}
-                >
-                  {/* Section type header */}
-                  <div className="mb-4 flex items-center gap-2">
-                    <SectionIcon className={`h-4 w-4 ${style.iconColor}`} />
-                    <span
-                      className={`text-xs font-semibold uppercase tracking-wide ${style.labelColor}`}
-                    >
-                      {style.label}
-                    </span>
-                  </div>
-
-                  {/* Section title */}
-                  {section.title && (
-                    <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                      {section.title}
-                    </h2>
-                  )}
-
-                  {/* Section content */}
-                  {renderSectionContent(section)}
+            const sectionInner = (
+              <>
+                {/* Section type label */}
+                <div className="mb-3 flex items-center gap-1.5">
+                  <SectionIcon className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
+                  <span className="text-[11px] font-medium uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+                    {config.label}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-        </>
+
+                {/* Section title */}
+                {section.title && (
+                  <h2 className="mb-2 text-[17px] font-semibold text-zinc-900 dark:text-zinc-100">
+                    {section.title}
+                  </h2>
+                )}
+
+                {/* Section content */}
+                {renderSectionContent(section)}
+              </>
+            );
+
+            return (
+              <div
+                key={idx}
+                className="py-8 first:pt-0 last:pb-0"
+              >
+                {config.callout ? (
+                  <div className="rounded-lg border border-zinc-200/70 bg-zinc-50 p-5 dark:border-zinc-700/50 dark:bg-zinc-800/50">
+                    {sectionInner}
+                  </div>
+                ) : (
+                  sectionInner
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
 
       {/* AI Tutor Chat Panel */}

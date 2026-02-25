@@ -726,20 +726,97 @@ async function _generateContentForModule(
     return { success: false, error: "Module has no metadata" };
   }
 
-  // Set optimistic lock: _status = "generating"
-  // Set optimistic lock: _status = "generating"
-  await serviceClient
-    .from("learning_modules")
-    .update({
-      content: {
-        ...content,
-        _status: "generating",
-        _generating_since: new Date().toISOString(),
-      } as unknown as Json,
-    })
-    .eq("id", moduleId);
-
   const meta = content._meta;
+
+  // ── Batch: find sibling modules with same tech_name needing content ──
+  const { data: siblingModules } = await serviceClient
+    .from("learning_modules")
+    .select("id, title, description, module_type, content, module_order")
+    .eq("learning_path_id", moduleData.learning_path_id)
+    .neq("id", moduleId)
+    .order("module_order", { ascending: true });
+
+  const batchCandidates = (siblingModules ?? []).filter((m) => {
+    const c = m.content as unknown as ModuleContentWithMeta;
+    if (!c._meta || c._meta.tech_name !== meta.tech_name) return false;
+    if (c.sections && c.sections.length > 0) return false;
+    if (c._status === "generating" && c._generating_since) {
+      const elapsed =
+        Date.now() - new Date(c._generating_since).getTime();
+      if (elapsed < 120_000) return false;
+    }
+    return true;
+  });
+
+  // Up to 2 additional modules (3 total with the requested one)
+  const additionalModules = batchCandidates.slice(0, 2);
+
+  interface BatchModule {
+    id: string;
+    title: string;
+    description: string;
+    module_type: string;
+    meta: ModuleContentMeta;
+    content: ModuleContentWithMeta;
+  }
+
+  const batchModules: BatchModule[] = [
+    {
+      id: moduleData.id,
+      title: moduleData.title,
+      description: moduleData.description ?? "",
+      module_type: moduleData.module_type ?? "concept",
+      meta,
+      content,
+    },
+    ...additionalModules.map((m) => {
+      const c = m.content as unknown as ModuleContentWithMeta;
+      return {
+        id: m.id,
+        title: m.title,
+        description: m.description ?? "",
+        module_type: m.module_type ?? "concept",
+        meta: c._meta!,
+        content: c,
+      };
+    }),
+  ];
+
+  // Set optimistic lock on ALL batch modules
+  const generatingSince = new Date().toISOString();
+  await Promise.all(
+    batchModules.map((m) =>
+      serviceClient
+        .from("learning_modules")
+        .update({
+          content: {
+            ...m.content,
+            _status: "generating",
+            _generating_since: generatingSince,
+          } as unknown as Json,
+        })
+        .eq("id", m.id),
+    ),
+  );
+
+  // Helper to set error on all batch modules
+  async function setBatchError(errorMsg: string) {
+    await Promise.all(
+      batchModules.map((m) =>
+        serviceClient
+          .from("learning_modules")
+          .update({
+            content: {
+              sections: [],
+              _meta: m.meta,
+              _status: "error",
+              _error: errorMsg,
+            } as unknown as Json,
+          })
+          .eq("id", m.id),
+      ),
+    );
+  }
 
   // Fetch learning path info
   const { data: pathData } = await serviceClient
@@ -749,56 +826,27 @@ async function _generateContentForModule(
     .single();
 
   if (!pathData) {
-    await serviceClient
-      .from("learning_modules")
-      .update({
-        content: {
-          ...content,
-          _status: "error",
-          _error: "Learning path not found",
-        } as unknown as Json,
-      })
-      .eq("id", moduleId);
+    await setBatchError("Learning path not found");
     return { success: false, error: "Learning path not found" };
   }
 
+  // Merge relevant_files from all batch modules, deduplicate
+  const allRelevantFiles = [
+    ...new Set(batchModules.flatMap((m) => m.meta.relevant_files)),
+  ];
+
   // Run all pre-LLM queries in parallel
-  const [usageCheck, llmKeyData, relevantFiles, educationalAnalysis] =
+  // Note: usage limit is checked in generateLearningPath (path creation),
+  // not here — module content generation is part of an existing path.
+  const [llmKeyData, relevantFiles, educationalAnalysis] =
     await Promise.all([
-      checkUsageLimit(userId, "learning"),
       getDefaultLlmKeyForUser(userId),
-      loadRelevantFiles(pathData.project_id, meta.relevant_files),
+      loadRelevantFiles(pathData.project_id, allRelevantFiles),
       getEducationalAnalysis(pathData.project_id),
     ]);
 
-  if (!usageCheck.allowed) {
-    await serviceClient
-      .from("learning_modules")
-      .update({
-        content: {
-          ...content,
-          _status: "error",
-          _error: usageCheck.upgrade_message ?? "Usage limit reached",
-        } as unknown as Json,
-      })
-      .eq("id", moduleId);
-    return {
-      success: false,
-      error: usageCheck.upgrade_message ?? "Usage limit reached",
-    };
-  }
-
   if (!llmKeyData) {
-    await serviceClient
-      .from("learning_modules")
-      .update({
-        content: {
-          ...content,
-          _status: "error",
-          _error: "No LLM API key configured",
-        } as unknown as Json,
-      })
-      .eq("id", moduleId);
+    await setBatchError("No LLM API key configured");
     return {
       success: false,
       error:
@@ -808,32 +856,28 @@ async function _generateContentForModule(
 
   const provider = createLLMProvider(llmKeyData.provider, llmKeyData.apiKey);
 
-  const relevantCode = relevantFiles;
-
   const difficulty = (pathData.difficulty ?? "beginner") as
     | "beginner"
     | "intermediate"
     | "advanced";
 
-  // Build prompt for a single module
+  // Build prompt for batch modules
   const contentPrompt = buildContentBatchPrompt(
     meta.tech_name,
-    [
-      {
-        title: moduleData.title,
-        description: moduleData.description ?? "",
-        module_type: moduleData.module_type ?? "concept",
-        learning_objectives: meta.learning_objectives,
-      },
-    ],
-    relevantCode,
+    batchModules.map((m) => ({
+      title: m.title,
+      description: m.description,
+      module_type: m.module_type,
+      learning_objectives: m.meta.learning_objectives,
+    })),
+    relevantFiles,
     difficulty,
     educationalAnalysis ?? undefined,
   );
 
   const llmResult = await provider.chat({
     messages: [{ role: "user", content: contentPrompt }],
-    maxTokens: 16384,
+    maxTokens: Math.min(batchModules.length * 16384, 16384),
   });
 
   let batchContent: ContentBatchItem[];
@@ -841,44 +885,60 @@ async function _generateContentForModule(
     batchContent = extractContentArray(llmResult.content);
   } catch (parseError) {
     console.error(
-      `[learning] Content parse error for module "${moduleData.title}":`,
+      `[learning] Content parse error for batch (${batchModules.map((m) => m.title).join(", ")}):`,
       parseError instanceof Error ? parseError.message : parseError,
     );
-    await serviceClient
-      .from("learning_modules")
-      .update({
-        content: {
-          sections: [],
-          _meta: meta,
-          _status: "error",
-          _error: "콘텐츠 생성 결과를 파싱하지 못했습니다.",
-        } as unknown as Json,
-      })
-      .eq("id", moduleId);
+    await setBatchError("콘텐츠 생성 결과를 파싱하지 못했습니다.");
     return {
       success: false,
       error: "콘텐츠 생성 결과를 파싱하지 못했습니다. 다시 시도해 주세요.",
     };
   }
 
-  // Extract sections from the first (and only) batch item
-  const generatedSections =
-    batchContent.length > 0 && batchContent[0].content?.sections
-      ? batchContent[0].content.sections
-      : [];
+  // Match batch content to modules by normalized title
+  const now = new Date().toISOString();
+  let requestedModuleSections: ContentSection[] = [];
 
-  // Save to DB
-  await serviceClient
-    .from("learning_modules")
-    .update({
-      content: {
-        sections: generatedSections,
-        _meta: meta,
-        _status: "ready",
-        _generated_at: new Date().toISOString(),
-      } as unknown as Json,
-    })
-    .eq("id", moduleId);
+  const contentMap = new Map<string, ContentBatchItem>();
+  for (const item of batchContent) {
+    contentMap.set(normalizeTitle(item.module_title), item);
+  }
+
+  await Promise.all(
+    batchModules.map(async (m) => {
+      const matched = contentMap.get(normalizeTitle(m.title));
+      const sections = matched?.content?.sections ?? [];
+
+      if (m.id === moduleId) {
+        requestedModuleSections = sections;
+      }
+
+      if (sections.length > 0) {
+        await serviceClient
+          .from("learning_modules")
+          .update({
+            content: {
+              sections,
+              _meta: m.meta,
+              _status: "ready",
+              _generated_at: now,
+            } as unknown as Json,
+          })
+          .eq("id", m.id);
+      } else {
+        // No match — reset status so it can be retried individually
+        await serviceClient
+          .from("learning_modules")
+          .update({
+            content: {
+              sections: [],
+              _meta: m.meta,
+            } as unknown as Json,
+          })
+          .eq("id", m.id);
+      }
+    }),
+  );
 
   // Track token usage
   const jobInsert: AnalysisJobInsert = {
@@ -890,13 +950,69 @@ async function _generateContentForModule(
     llm_model: provider.modelName,
     input_tokens: llmResult.input_tokens,
     output_tokens: llmResult.output_tokens,
-    started_at: new Date().toISOString(),
-    completed_at: new Date().toISOString(),
+    started_at: now,
+    completed_at: now,
   };
 
   await serviceClient.from("analysis_jobs").insert(jobInsert);
 
-  return { success: true, data: { sections: generatedSections } };
+  return { success: true, data: { sections: requestedModuleSections } };
+}
+
+/**
+ * Prefetch the next module's content in the background.
+ * Called from the client after the current module finishes loading.
+ * Triggers batch generation, so sibling modules with the same tech_name
+ * are also generated in a single LLM call.
+ */
+export async function prefetchNextModuleContent(
+  currentModuleId: string,
+): Promise<void> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) return;
+
+    const serviceClient = createServiceClient();
+
+    // Get current module's path and order
+    const { data: currentModule } = await serviceClient
+      .from("learning_modules")
+      .select("learning_path_id, module_order")
+      .eq("id", currentModuleId)
+      .single();
+
+    if (!currentModule) return;
+
+    // Find the next module by order
+    const { data: nextModule } = await serviceClient
+      .from("learning_modules")
+      .select("id, content")
+      .eq("learning_path_id", currentModule.learning_path_id)
+      .eq("module_order", currentModule.module_order + 1)
+      .single();
+
+    if (!nextModule) return;
+
+    const nextContent = nextModule.content as unknown as ModuleContentWithMeta;
+
+    // Skip if already has content or is currently generating
+    if (nextContent.sections && nextContent.sections.length > 0) return;
+    if (nextContent._status === "generating" && nextContent._generating_since) {
+      const elapsed =
+        Date.now() - new Date(nextContent._generating_since).getTime();
+      if (elapsed < 120_000) return;
+    }
+
+    // Fire-and-forget: batch generation will also cover sibling modules
+    _generateContentForModule(nextModule.id, user.id).catch(() => {});
+  } catch {
+    // Silently ignore prefetch errors
+  }
 }
 
 export async function getLearningPaths(

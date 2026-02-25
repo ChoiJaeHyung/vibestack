@@ -3,12 +3,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Brain, Send, Loader2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UpgradeModal } from "@/components/features/upgrade-modal";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   sendTutorMessage,
   getChatHistory,
 } from "@/server/actions/learning";
+import type { UsageData } from "@/server/actions/usage";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -34,6 +36,9 @@ export function TutorChat({
     initialConversationId,
   );
   const [error, setError] = useState<string | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [remainingChats, setRemainingChats] = useState<number | null>(null);
+  const [isUnlimited, setIsUnlimited] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -70,6 +75,27 @@ export function TutorChat({
     loadHistory();
   }, [initialConversationId]);
 
+  // Fetch usage data on mount
+  useEffect(() => {
+    async function fetchUsage() {
+      try {
+        const res = await fetch("/api/usage");
+        const json = await res.json();
+        if (json.success && json.data) {
+          const data = json.data as UsageData;
+          if (data.aiChats.limit === null) {
+            setIsUnlimited(true);
+          } else {
+            setRemainingChats(Math.max(data.aiChats.limit - data.aiChats.used, 0));
+          }
+        }
+      } catch {
+        // Ignore fetch errors
+      }
+    }
+    fetchUsage();
+  }, []);
+
   // Auto-resize textarea
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -102,8 +128,16 @@ export function TutorChat({
           ...prev,
           { role: "assistant", content: result.data!.response },
         ]);
+        // Update remaining count after successful send
+        if (remainingChats !== null) {
+          setRemainingChats((prev) => (prev !== null ? Math.max(prev - 1, 0) : null));
+        }
       } else {
-        setError(result.error ?? "메시지 전송에 실패했습니다");
+        const errMsg = result.error ?? "메시지 전송에 실패했습니다";
+        if (errMsg.toLowerCase().includes("limit") || errMsg.includes("한도")) {
+          setShowUpgradeModal(true);
+        }
+        setError(errMsg);
       }
     } catch {
       setError("알 수 없는 오류가 발생했습니다");
@@ -209,6 +243,11 @@ export function TutorChat({
 
       {/* Input */}
       <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
+        {!isUnlimited && remainingChats !== null && (
+          <p className="mb-1.5 text-xs text-zinc-400 dark:text-zinc-500">
+            남은 대화: {remainingChats}회
+          </p>
+        )}
         <div className="flex items-end gap-2">
           <textarea
             ref={textareaRef}
@@ -233,6 +272,12 @@ export function TutorChat({
           </Button>
         </div>
       </div>
+
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="chat"
+      />
     </div>
   );
 }

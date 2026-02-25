@@ -10,8 +10,28 @@ import {
   MessageCircle,
   ChevronDown,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  let userEmail: string | null = null;
+  let userPlanType: string | null = null;
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    userEmail = user?.email ?? null;
+    if (user) {
+      const { data: userData } = await supabase
+        .from("users")
+        .select("plan_type")
+        .eq("id", user.id)
+        .single();
+      userPlanType = userData?.plan_type ?? "free";
+    }
+  } catch {
+    // auth 실패 시 비로그인 상태로 처리
+  }
   return (
     <div className="flex min-h-screen flex-col bg-white dark:bg-zinc-950">
       {/* Header */}
@@ -56,18 +76,29 @@ export default function LandingPage() {
             </Link>
           </nav>
           <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/signup"
-              className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-            >
-              Get Started
-            </Link>
+            {userEmail ? (
+              <Link
+                href="/dashboard"
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+              >
+                대시보드
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/signup"
+                  className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -90,24 +121,47 @@ export default function LandingPage() {
               </span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">
-              AI 코딩 도구로 앱을 만들었나요? 프로젝트를 연결하면 AI가 기술
-              스택을 분석하고, 딱 필요한 것만 알려드려요
+              AI 코딩 도구로 앱을 만들었나요?
+              <br />
+              프로젝트를 연결하면 AI가 기술 스택을 분석하고, 딱 필요한 것만
+              알려드려요
             </p>
             <div className="mt-10 flex justify-center gap-4">
-              <Link
-                href="/signup"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-zinc-900 px-6 text-base font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-              >
-                5분만에 시작하기
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/guide"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-6 text-base font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
-              >
-                가이드 보기
-                <BookOpen className="h-4 w-4" />
-              </Link>
+              {userEmail ? (
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-zinc-900 px-6 text-base font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                  >
+                    대시보드로 이동
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href="/guide"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-6 text-base font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  >
+                    가이드 보기
+                    <BookOpen className="h-4 w-4" />
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/signup"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-zinc-900 px-6 text-base font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                  >
+                    5분만에 시작하기
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href="/guide"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-6 text-base font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  >
+                    가이드 보기
+                    <BookOpen className="h-4 w-4" />
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </section>
@@ -206,6 +260,7 @@ export default function LandingPage() {
               {/* Free */}
               <PricingCard
                 name="Free"
+                planKey="free"
                 price="$0"
                 features={[
                   "프로젝트 3개",
@@ -215,11 +270,14 @@ export default function LandingPage() {
                 ]}
                 ctaLabel="무료로 시작하기"
                 ctaHref="/signup"
+                isLoggedIn={!!userEmail}
+                userPlanType={userPlanType}
               />
 
               {/* Pro */}
               <PricingCard
                 name="Pro"
+                planKey="pro"
                 price="$19"
                 isPopular
                 features={[
@@ -231,11 +289,14 @@ export default function LandingPage() {
                 ]}
                 ctaLabel="Pro 시작하기"
                 ctaHref="/signup"
+                isLoggedIn={!!userEmail}
+                userPlanType={userPlanType}
               />
 
               {/* Team */}
               <PricingCard
                 name="Team"
+                planKey="team"
                 price="$49"
                 features={[
                   "Pro 전체 기능",
@@ -245,6 +306,8 @@ export default function LandingPage() {
                 ]}
                 ctaLabel="Team 시작하기"
                 ctaHref="/signup"
+                isLoggedIn={!!userEmail}
+                userPlanType={userPlanType}
               />
             </div>
           </div>
@@ -559,21 +622,52 @@ function FeatureCard({
   );
 }
 
+const PLAN_RANK: Record<string, number> = { free: 0, pro: 1, team: 2 };
+
 function PricingCard({
   name,
+  planKey,
   price,
   features,
   ctaLabel,
   ctaHref,
   isPopular,
+  isLoggedIn,
+  userPlanType,
 }: {
   name: string;
+  planKey: string;
   price: string;
   features: string[];
   ctaLabel: string;
   ctaHref: string;
   isPopular?: boolean;
+  isLoggedIn?: boolean;
+  userPlanType?: string | null;
 }) {
+  const isCurrentPlan = isLoggedIn && userPlanType === planKey;
+  const userRank = PLAN_RANK[userPlanType ?? "free"] ?? 0;
+  const cardRank = PLAN_RANK[planKey] ?? 0;
+  const isUpgrade = isLoggedIn && cardRank > userRank;
+
+  let resolvedLabel = ctaLabel;
+  let resolvedHref = ctaHref;
+  let disabled = false;
+
+  if (isLoggedIn) {
+    if (isCurrentPlan) {
+      resolvedLabel = "현재 플랜";
+      resolvedHref = "/settings/billing";
+      disabled = true;
+    } else if (isUpgrade) {
+      resolvedLabel = "업그레이드";
+      resolvedHref = "/settings/billing";
+    } else {
+      resolvedLabel = ctaLabel;
+      resolvedHref = "/settings/billing";
+    }
+  }
+
   return (
     <div
       className={`relative rounded-xl border p-8 ${
@@ -623,16 +717,24 @@ function PricingCard({
           </li>
         ))}
       </ul>
-      <Link
-        href={ctaHref}
-        className={`mt-8 flex h-10 w-full items-center justify-center rounded-lg text-sm font-medium transition-colors ${
-          isPopular
-            ? "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-            : "border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
-        }`}
-      >
-        {ctaLabel}
-      </Link>
+      {disabled ? (
+        <span
+          className="mt-8 flex h-10 w-full cursor-not-allowed items-center justify-center rounded-lg border border-zinc-300 text-sm font-medium text-zinc-400 dark:border-zinc-700 dark:text-zinc-500"
+        >
+          {resolvedLabel}
+        </span>
+      ) : (
+        <Link
+          href={resolvedHref}
+          className={`mt-8 flex h-10 w-full items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+            isPopular
+              ? "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+              : "border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
+          }`}
+        >
+          {resolvedLabel}
+        </Link>
+      )}
     </div>
   );
 }

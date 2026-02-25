@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
         {
           price_data: {
             currency: "usd",
-            product_data: { name: `VibeStack ${plan} Plan` },
+            product_data: { name: `VibeUniv ${plan} Plan` },
             unit_amount: PLAN_PRICES[plan].monthly,
             recurring: { interval: "month" },
           },

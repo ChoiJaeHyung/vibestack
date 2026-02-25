@@ -17,8 +17,10 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { UpgradeModal } from "@/components/features/upgrade-modal";
 import { generateLearningPath } from "@/server/actions/learning";
 import { createClient } from "@/lib/supabase/client";
+import type { UsageData } from "@/server/actions/usage";
 
 type Difficulty = "beginner" | "intermediate" | "advanced";
 
@@ -65,6 +67,9 @@ export function LearningGenerator() {
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GenerateResult | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [remainingPaths, setRemainingPaths] = useState<number | null>(null);
+  const [isUnlimited, setIsUnlimited] = useState(false);
 
   const loadProjects = useCallback(async () => {
     setLoadingProjects(true);
@@ -100,6 +105,29 @@ export function LearningGenerator() {
     loadProjects();
   }, [loadProjects]);
 
+  // Fetch usage data on mount
+  useEffect(() => {
+    async function fetchUsage() {
+      try {
+        const res = await fetch("/api/usage");
+        const json = await res.json();
+        if (json.success && json.data) {
+          const data = json.data as UsageData;
+          if (data.learningPaths.limit === null) {
+            setIsUnlimited(true);
+          } else {
+            setRemainingPaths(
+              Math.max(data.learningPaths.limit - data.learningPaths.used, 0),
+            );
+          }
+        }
+      } catch {
+        // Ignore fetch errors
+      }
+    }
+    fetchUsage();
+  }, []);
+
   async function handleGenerate() {
     if (!selectedProjectId) {
       setError("프로젝트를 선택해주세요");
@@ -118,8 +146,16 @@ export function LearningGenerator() {
 
       if (response.success && response.data) {
         setResult(response.data);
+        // Update remaining count after successful generation
+        if (remainingPaths !== null) {
+          setRemainingPaths((prev) => (prev !== null ? Math.max(prev - 1, 0) : null));
+        }
       } else {
-        setError(response.error ?? "로드맵 생성에 실패했습니다");
+        const errMsg = response.error ?? "로드맵 생성에 실패했습니다";
+        if (errMsg.toLowerCase().includes("limit") || errMsg.includes("한도")) {
+          setShowUpgradeModal(true);
+        }
+        setError(errMsg);
       }
     } catch {
       setError("로드맵 생성 중 오류가 발생했습니다. 다시 시도해 주세요.");
@@ -267,6 +303,13 @@ export function LearningGenerator() {
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         )}
 
+        {/* Usage hint */}
+        {!isUnlimited && remainingPaths !== null && (
+          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+            남은 로드맵 생성: {remainingPaths}회
+          </p>
+        )}
+
         {/* Generate button */}
         <Button
           onClick={handleGenerate}
@@ -286,6 +329,12 @@ export function LearningGenerator() {
           )}
         </Button>
       </CardContent>
+
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="learning"
+      />
     </Card>
   );
 }
