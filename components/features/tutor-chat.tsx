@@ -10,6 +10,7 @@ import {
   sendTutorMessage,
   getChatHistory,
 } from "@/server/actions/learning";
+import { invalidateCache } from "@/lib/hooks/use-cached-fetch";
 import type { UsageData } from "@/server/actions/usage";
 
 interface ChatMessage {
@@ -123,6 +124,10 @@ export function TutorChat({
       );
 
       if (result.success && result.data) {
+        // Invalidate dashboard cache when a new conversation is created
+        if (!conversationId) {
+          invalidateCache("/api/dashboard");
+        }
         setConversationId(result.data.conversation_id);
         setMessages((prev) => [
           ...prev,

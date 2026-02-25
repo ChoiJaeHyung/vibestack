@@ -1,5 +1,6 @@
 "use server";
 
+import { getAuthUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
 // ─── Response Types ──────────────────────────────────────────────────
@@ -34,16 +35,13 @@ function getStartOfMonth(): string {
 
 export async function getUsageData(): Promise<UsageDataResult> {
   try {
-    const supabase = await createClient();
+    const user = await getAuthUser();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!user) {
       return { success: false, error: "Not authenticated" };
     }
+
+    const supabase = await createClient();
 
     const startOfMonth = getStartOfMonth();
 

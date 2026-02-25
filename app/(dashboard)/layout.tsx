@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser, getUserProfile } from "@/lib/supabase/auth";
 import { Sidebar } from "@/components/ui/sidebar";
 import { AnnouncementBanner } from "@/components/features/announcement-banner";
 import { AuthStateListener } from "@/components/features/auth-state-listener";
@@ -14,27 +14,19 @@ export default async function DashboardLayout({
   let userRole: UserRole = "user";
 
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const authUser = await getAuthUser();
 
-    if (!user) {
+    if (!authUser) {
       redirect("/login");
     }
 
-    userEmail = user.email;
+    userEmail = authUser.email;
 
-    // Single query for role + ban check (was 3 round-trips: role, ban getUser, ban query)
-    const { data: userData } = await supabase
-      .from("users")
-      .select("role, is_banned")
-      .eq("id", user.id)
-      .single();
+    const profile = await getUserProfile();
 
-    userRole = (userData?.role as UserRole) ?? "user";
+    userRole = profile?.role ?? "user";
 
-    if (userData?.is_banned) {
+    if (profile?.isBanned) {
       redirect("/login?error=banned");
     }
   } catch {

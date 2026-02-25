@@ -20,6 +20,7 @@ import {
 import { UpgradeModal } from "@/components/features/upgrade-modal";
 import { generateLearningPath } from "@/server/actions/learning";
 import { createClient } from "@/lib/supabase/client";
+import { invalidateCache } from "@/lib/hooks/use-cached-fetch";
 import type { UsageData } from "@/server/actions/usage";
 
 type Difficulty = "beginner" | "intermediate" | "advanced";
@@ -146,6 +147,8 @@ export function LearningGenerator() {
 
       if (response.success && response.data) {
         setResult(response.data);
+        invalidateCache("/api/dashboard");
+        invalidateCache("/api/learning");
         // Update remaining count after successful generation
         if (remainingPaths !== null) {
           setRemainingPaths((prev) => (prev !== null ? Math.max(prev - 1, 0) : null));

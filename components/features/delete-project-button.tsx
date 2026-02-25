@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deleteProject } from "@/server/actions/projects";
+import { invalidateCache } from "@/lib/hooks/use-cached-fetch";
 
 interface DeleteProjectButtonProps {
   projectId: string;
@@ -27,6 +28,8 @@ export function DeleteProjectButton({ projectId }: DeleteProjectButtonProps) {
       const result = await deleteProject(projectId);
 
       if (result.success) {
+        invalidateCache("/api/dashboard");
+        invalidateCache("/api/projects");
         router.push("/projects");
       } else {
         alert(result.error ?? "삭제에 실패했습니다.");
