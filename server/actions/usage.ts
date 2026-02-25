@@ -45,41 +45,44 @@ export async function getUsageData(): Promise<UsageDataResult> {
       return { success: false, error: "Not authenticated" };
     }
 
-    // Fetch plan type
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("plan_type")
-      .eq("id", user.id)
-      .single();
+    const startOfMonth = getStartOfMonth();
 
-    if (userError || !userData) {
+    // Parallelize all 4 queries (was 4 sequential round-trips)
+    const [userResult, projectResult, learningPathResult, aiChatResult] =
+      await Promise.all([
+        supabase
+          .from("users")
+          .select("plan_type")
+          .eq("id", user.id)
+          .single(),
+        supabase
+          .from("projects")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id),
+        supabase
+          .from("learning_paths")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .gte("created_at", startOfMonth),
+        supabase
+          .from("ai_conversations")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .gte("created_at", startOfMonth),
+      ]);
+
+    if (userResult.error || !userResult.data) {
       return { success: false, error: "User not found" };
     }
 
-    const planType = (userData.plan_type ?? "free") as "free" | "pro" | "team";
+    const planType = (userResult.data.plan_type ?? "free") as
+      | "free"
+      | "pro"
+      | "team";
     const isFree = planType === "free";
-
-    const startOfMonth = getStartOfMonth();
-
-    // Count projects
-    const { count: projectCount } = await supabase
-      .from("projects")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id);
-
-    // Count learning paths this month
-    const { count: learningPathCount } = await supabase
-      .from("learning_paths")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .gte("created_at", startOfMonth);
-
-    // Count AI conversations this month
-    const { count: aiChatCount } = await supabase
-      .from("ai_conversations")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .gte("created_at", startOfMonth);
+    const projectCount = projectResult.count;
+    const learningPathCount = learningPathResult.count;
+    const aiChatCount = aiChatResult.count;
 
     return {
       success: true,
