@@ -12,14 +12,11 @@ import {
   Code,
   HelpCircle,
   FolderOpen,
-  ChevronLeft,
-  ChevronRight,
   Target,
   RefreshCw,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-// Card components available but not currently used
-// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
@@ -95,21 +92,68 @@ const MODULE_TYPE_CONFIG: Record<
   },
 };
 
-// ─── Section Type Config (for step navigation badges) ───────────────
+// ─── Section Card Styles (color-coded by type) ──────────────────────
 
-const SECTION_TYPE_CONFIG: Record<
+const SECTION_CARD_STYLES: Record<
   string,
   {
+    border: string;
+    bg: string;
     icon: React.ComponentType<{ className?: string }>;
+    iconColor: string;
     label: string;
+    labelColor: string;
+    dot: string;
   }
 > = {
-  explanation: { icon: BookOpen, label: "설명" },
-  code_example: { icon: Code, label: "코드 예시" },
-  quiz_question: { icon: HelpCircle, label: "퀴즈" },
-  challenge: { icon: Target, label: "챌린지" },
-  reflection: { icon: BookOpen, label: "생각해보기" },
+  explanation: {
+    border: "border-l-4 border-l-blue-400 dark:border-l-blue-500",
+    bg: "bg-blue-50/60 dark:bg-blue-950/20",
+    icon: BookOpen,
+    iconColor: "text-blue-500",
+    label: "설명",
+    labelColor: "text-blue-600 dark:text-blue-400",
+    dot: "bg-blue-400 dark:bg-blue-500",
+  },
+  code_example: {
+    border: "border-l-4 border-l-emerald-400 dark:border-l-emerald-500",
+    bg: "bg-emerald-50/60 dark:bg-emerald-950/20",
+    icon: Code,
+    iconColor: "text-emerald-500",
+    label: "코드 예시",
+    labelColor: "text-emerald-600 dark:text-emerald-400",
+    dot: "bg-emerald-400 dark:bg-emerald-500",
+  },
+  quiz_question: {
+    border: "border-l-4 border-l-amber-400 dark:border-l-amber-500",
+    bg: "bg-amber-50/60 dark:bg-amber-950/20",
+    icon: HelpCircle,
+    iconColor: "text-amber-500",
+    label: "퀴즈",
+    labelColor: "text-amber-600 dark:text-amber-400",
+    dot: "bg-amber-400 dark:bg-amber-500",
+  },
+  challenge: {
+    border: "border-l-4 border-l-purple-400 dark:border-l-purple-500",
+    bg: "bg-purple-50/60 dark:bg-purple-950/20",
+    icon: Target,
+    iconColor: "text-purple-500",
+    label: "챌린지",
+    labelColor: "text-purple-600 dark:text-purple-400",
+    dot: "bg-purple-400 dark:bg-purple-500",
+  },
+  reflection: {
+    border: "border-l-4 border-l-violet-400 dark:border-l-violet-500",
+    bg: "bg-violet-50/60 dark:bg-violet-950/20",
+    icon: BookOpen,
+    iconColor: "text-violet-500",
+    label: "생각해보기",
+    labelColor: "text-violet-600 dark:text-violet-400",
+    dot: "bg-violet-400 dark:bg-violet-500",
+  },
 };
+
+const DEFAULT_SECTION_STYLE = SECTION_CARD_STYLES.explanation;
 
 // ─── Quiz Section Component ─────────────────────────────────────────
 
@@ -120,7 +164,13 @@ function QuizSection({
 }) {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
-  const correctAnswer = section.quiz_answer ?? 0;
+  const options = section.quiz_options ?? [];
+  const correctAnswer =
+    typeof section.quiz_answer === "number" &&
+    section.quiz_answer >= 0 &&
+    section.quiz_answer < options.length
+      ? section.quiz_answer
+      : 0;
   const isCorrect = selectedOption === correctAnswer;
 
   return (
@@ -128,14 +178,14 @@ function QuizSection({
       {/* Quiz body */}
       <div className="prose prose-sm prose-zinc max-w-none dark:prose-invert">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
-          {section.body}
+          {section.body ?? ""}
         </ReactMarkdown>
       </div>
 
       {/* Options */}
-      {section.quiz_options && (
+      {options.length > 0 && (
         <div className="space-y-2">
-          {section.quiz_options.map((option, optIdx) => {
+          {options.map((option, optIdx) => {
             let optionStyle =
               "border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700";
 
@@ -228,7 +278,7 @@ function ChallengeSection({ section }: { section: ContentSection }) {
     <div className="space-y-4">
       <div className="prose prose-sm prose-zinc max-w-none dark:prose-invert">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
-          {section.body}
+          {section.body ?? ""}
         </ReactMarkdown>
       </div>
       {section.code && (
@@ -280,15 +330,15 @@ export function ModuleContent({
   const [showChat, setShowChat] = useState(false);
 
   // On-demand content generation state
-  const [localSections, setLocalSections] = useState<ContentSection[]>(sections);
+  const [localSections, setLocalSections] = useState<ContentSection[]>(sections ?? []);
   const [isGenerating, setIsGenerating] = useState(
-    !!(needsGeneration && sections.length === 0),
+    !!(needsGeneration && (!sections || sections.length === 0)),
   );
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
-  const [currentStep, setCurrentStep] = useState(0);
-  const totalSteps = localSections.length;
+  // Section refs for scroll-to navigation
+  const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const typeConfig = moduleType ? MODULE_TYPE_CONFIG[moduleType] : null;
   const TypeIcon = typeConfig?.icon ?? BookOpen;
@@ -330,7 +380,6 @@ export function ModuleContent({
         if (cancelled) return;
 
         if (result.generating) {
-          // Another request is already generating — poll after 5s
           setTimeout(() => {
             if (!cancelled) {
               setIsGenerating(false);
@@ -364,21 +413,6 @@ export function ModuleContent({
       cancelled = true;
     };
   }, [needsGeneration, localSections.length, isGenerating, generationError, moduleId, pollCount]);
-
-  // Keyboard navigation: ← → arrow keys
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      const tag = (e.target as HTMLElement).tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-      if (e.key === "ArrowLeft" && currentStep > 0) {
-        setCurrentStep((prev) => prev - 1);
-      } else if (e.key === "ArrowRight" && currentStep < totalSteps - 1) {
-        setCurrentStep((prev) => prev + 1);
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentStep, totalSteps]);
 
   const handleComplete = useCallback(async () => {
     setCompleting(true);
@@ -418,8 +452,46 @@ export function ModuleContent({
     }
   }
 
+  function scrollToSection(idx: number) {
+    sectionRefs.current[idx]?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+
+  function renderSectionContent(section: ContentSection) {
+    if (section.type === "quiz_question") {
+      return <QuizSection section={section} />;
+    }
+    if (section.type === "challenge") {
+      return <ChallengeSection section={section} />;
+    }
+    return (
+      <div className="space-y-4">
+        <div className="prose prose-sm prose-zinc max-w-none dark:prose-invert">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeHighlight]}
+          >
+            {section.body ?? ""}
+          </ReactMarkdown>
+        </div>
+        {section.code && (
+          <div className="overflow-x-auto rounded-lg">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeHighlight]}
+            >
+              {"```\n" + section.code + "\n```"}
+            </ReactMarkdown>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       {/* Module header */}
       <div>
         <div className="flex items-center gap-2">
@@ -500,126 +572,68 @@ export function ModuleContent({
         </div>
       )}
 
+      {/* Empty state: no sections, not generating, no error */}
+      {localSections.length === 0 && !isGenerating && !generationError && (
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 py-12 dark:border-zinc-800 dark:bg-zinc-900/50">
+          <BookOpen className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            아직 학습 콘텐츠가 준비되지 않았습니다.
+          </p>
+        </div>
+      )}
+
       {localSections.length > 0 && (
         <>
-          {/* Progress bar + step counter */}
-          <div className="space-y-2">
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-              <div
-                className="h-1.5 rounded-full bg-zinc-900 transition-all duration-300 dark:bg-white"
-                style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-              {(() => {
-                const currentSection = localSections[currentStep];
-                const sectionConfig = currentSection
-                  ? SECTION_TYPE_CONFIG[currentSection.type]
-                  : null;
-                const SectionIcon = sectionConfig?.icon ?? BookOpen;
-                return (
-                  <span className="flex items-center gap-1">
-                    <SectionIcon className="h-3 w-3" />
-                    {sectionConfig?.label ?? "설명"}
-                  </span>
-                );
-              })()}
-              <span>
-                {currentStep + 1} / {totalSteps}
-              </span>
-            </div>
+          {/* Section dot indicators */}
+          <div className="flex flex-wrap gap-1.5">
+            {localSections.map((s, i) => {
+              const style = SECTION_CARD_STYLES[s.type] ?? DEFAULT_SECTION_STYLE;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => scrollToSection(i)}
+                  title={`${style.label}: ${s.title || `섹션 ${i + 1}`}`}
+                  className={`h-2.5 w-2.5 rounded-full transition-transform hover:scale-125 ${style.dot}`}
+                />
+              );
+            })}
           </div>
 
-          {/* Step cards: hidden/block toggle for state preservation */}
-          <div>
-            {localSections.map((section, idx) => (
-              <div key={idx} className={idx === currentStep ? "block" : "hidden"}>
-                {section.title && (
-                  <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                    {section.title}
-                  </h2>
-                )}
+          {/* All sections — scroll view */}
+          <div className="space-y-5">
+            {localSections.map((section, idx) => {
+              const style = SECTION_CARD_STYLES[section.type] ?? DEFAULT_SECTION_STYLE;
+              const SectionIcon = style.icon;
 
-                {section.type === "quiz_question" ? (
-                  <QuizSection section={section} />
-                ) : section.type === "challenge" ? (
-                  <ChallengeSection section={section} />
-                ) : (
-                  <div className="space-y-4">
-                    <div className="prose prose-sm prose-zinc max-w-none dark:prose-invert">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        rehypePlugins={[rehypeHighlight]}
-                      >
-                        {section.body}
-                      </ReactMarkdown>
-                    </div>
-                    {section.code && (
-                      <div className="overflow-x-auto rounded-lg">
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          rehypePlugins={[rehypeHighlight]}
-                        >
-                          {"```\n" + section.code + "\n```"}
-                        </ReactMarkdown>
-                      </div>
-                    )}
+              return (
+                <div
+                  key={idx}
+                  ref={(el) => { sectionRefs.current[idx] = el; }}
+                  className={`scroll-mt-4 rounded-xl ${style.border} ${style.bg} p-5 md:p-6`}
+                >
+                  {/* Section type header */}
+                  <div className="mb-4 flex items-center gap-2">
+                    <SectionIcon className={`h-4 w-4 ${style.iconColor}`} />
+                    <span
+                      className={`text-xs font-semibold uppercase tracking-wide ${style.labelColor}`}
+                    >
+                      {style.label}
+                    </span>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
 
-          {/* Bottom navigation */}
-          <div className="flex items-center justify-between border-t border-zinc-200 pt-6 dark:border-zinc-800">
-            <Button
-              variant="ghost"
-              onClick={() => setCurrentStep((prev) => prev - 1)}
-              disabled={currentStep === 0}
-            >
-              <ChevronLeft className="mr-1 h-4 w-4" />
-              이전
-            </Button>
+                  {/* Section title */}
+                  {section.title && (
+                    <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                      {section.title}
+                    </h2>
+                  )}
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowChat(!showChat)}
-            >
-              {showChat ? "채팅 닫기" : "AI 튜터"}
-            </Button>
-
-            {currentStep < totalSteps - 1 ? (
-              <Button onClick={() => setCurrentStep((prev) => prev + 1)}>
-                다음
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
-            ) : !isCompleted ? (
-              <Button onClick={handleComplete} disabled={completing}>
-                {completing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    저장 중...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    완료
-                  </>
-                )}
-              </Button>
-            ) : (
-              <Button onClick={handleNext}>
-                {nextModuleId ? (
-                  <>
-                    다음 모듈
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </>
-                ) : (
-                  "학습 경로로 돌아가기"
-                )}
-              </Button>
-            )}
+                  {/* Section content */}
+                  {renderSectionContent(section)}
+                </div>
+              );
+            })}
           </div>
         </>
       )}
@@ -631,6 +645,49 @@ export function ModuleContent({
             projectId={projectId}
             learningPathId={learningPathId}
           />
+        </div>
+      )}
+
+      {/* Sticky bottom action bar */}
+      {localSections.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 bg-white/80 backdrop-blur-sm lg:left-64 dark:border-zinc-800 dark:bg-zinc-950/80">
+          <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowChat(!showChat)}
+            >
+              <MessageSquare className="mr-1.5 h-4 w-4" />
+              {showChat ? "채팅 닫기" : "AI 튜터"}
+            </Button>
+
+            {!isCompleted ? (
+              <Button onClick={handleComplete} disabled={completing} size="sm">
+                {completing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    저장 중...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    학습 완료
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button onClick={handleNext} size="sm">
+                {nextModuleId ? (
+                  <>
+                    다음 모듈
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                ) : (
+                  "학습 경로로 돌아가기"
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -42,3 +42,10 @@ body {
     background-color: #27272a;
   }
 }
+
+/* prose 내 코드 블록: 둥근 모서리 + 패딩 + 가로 스크롤 */
+.prose :where(pre) {
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+}
