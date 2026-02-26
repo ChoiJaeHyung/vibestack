@@ -3,7 +3,8 @@ import { successResponse, errorResponse } from "@/lib/utils/api-response";
 import { authenticateApiKey, isAuthResult } from "@/server/middleware/api-auth";
 import { createServiceClient } from "@/lib/supabase/service";
 import { extractTechHints } from "@/lib/analysis/file-parser";
-import { getDefaultLlmKeyForUser } from "@/server/actions/llm-keys";
+import { getDefaultLlmKeyWithDiagnosis } from "@/server/actions/llm-keys";
+import { llmKeyErrorMessage } from "@/lib/utils/llm-key-errors";
 import { createLLMProvider } from "@/lib/llm/factory";
 import { buildDigestAnalysisPrompt } from "@/lib/prompts/tech-analysis";
 import { decryptContent } from "@/lib/utils/content-encryption";
@@ -150,12 +151,11 @@ async function runAnalysis(
     const techHints = extractTechHints(decryptedFiles);
 
     // Step 4: Load user's default LLM key
-    const llmKeyData = await getDefaultLlmKeyForUser(userId);
-    if (!llmKeyData) {
-      throw new Error(
-        "No LLM API key configured. Please add an API key in settings.",
-      );
+    const llmKeyResult = await getDefaultLlmKeyWithDiagnosis(userId);
+    if (!llmKeyResult.data) {
+      throw new Error(llmKeyErrorMessage(llmKeyResult.error));
     }
+    const llmKeyData = llmKeyResult.data;
 
     // Step 5: Create LLM provider via factory
     const provider = createLLMProvider(llmKeyData.provider, llmKeyData.apiKey);

@@ -43,6 +43,7 @@ const CONTENT_JSON_SCHEMA = `[
 ]`;
 
 import type { EducationalAnalysis } from "@/types/educational-analysis";
+import type { ConceptHint } from "@/lib/knowledge/types";
 
 interface TechStackInput {
   technology_name: string;
@@ -323,6 +324,7 @@ export function buildContentBatchPrompt(
   relevantCode: Array<{ path: string; content: string }>,
   userLevel?: "beginner" | "intermediate" | "advanced",
   educationalAnalysis?: EducationalAnalysis,
+  kbHints?: ConceptHint[],
 ): string {
   const level = userLevel ?? "beginner";
 
@@ -343,6 +345,10 @@ export function buildContentBatchPrompt(
           .join("\n\n")
       : "(no source files available)";
 
+  const kbSection = kbHints && kbHints.length > 0
+    ? `\n## Educational Key Points for ${techName}\n\n이 기술의 핵심 교육 포인트입니다. 콘텐츠 생성 시 이 포인트들을 반드시 포함하고, 퀴즈 주제를 참고하세요.\n\n${kbHints.map(h => `### ${h.concept_name}\n- **핵심 포인트:** ${h.key_points.join(" | ")}\n- **퀴즈 주제:** ${h.common_quiz_topics.join(", ")}`).join("\n\n")}\n`
+    : "";
+
   return `You are an expert programming instructor creating personalized educational content for a "vibe coder" learning **${techName}**.
 
 The student built a working application using AI coding tools and wants to deeply understand their own code. Your job is to generate module content that directly references their actual project files.
@@ -356,6 +362,7 @@ ${modulesSection}
 ## Student's Actual Source Code
 
 ${codeSection}
+${kbSection}
 ${educationalAnalysis ? `\n${formatContentContext(educationalAnalysis, level, relevantCode.map((f) => f.path))}\n` : ""}
 ## Instructions
 

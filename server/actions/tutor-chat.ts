@@ -1,6 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { createLLMProvider } from "@/lib/llm/factory";
-import { getDefaultLlmKeyForUser } from "@/server/actions/llm-keys";
+import { getDefaultLlmKeyWithDiagnosis } from "@/server/actions/llm-keys";
+import { llmKeyErrorMessage } from "@/lib/utils/llm-key-errors";
 import { checkUsageLimit } from "@/lib/utils/usage-limits";
 import { buildTutorPrompt } from "@/lib/prompts/tutor-chat";
 import { decryptContent } from "@/lib/utils/content-encryption";
@@ -126,12 +127,11 @@ export async function executeTutorChat(
   ];
 
   // Get LLM key and create provider
-  const llmKeyData = await getDefaultLlmKeyForUser(userId);
-  if (!llmKeyData) {
-    throw new Error(
-      "No LLM API key configured. Please add an API key in settings.",
-    );
+  const llmKeyResult = await getDefaultLlmKeyWithDiagnosis(userId);
+  if (!llmKeyResult.data) {
+    throw new Error(llmKeyErrorMessage(llmKeyResult.error));
   }
+  const llmKeyData = llmKeyResult.data;
 
   const provider = createLLMProvider(llmKeyData.provider, llmKeyData.apiKey);
   const chatResult = await provider.chat({ messages: allMessages });

@@ -3,7 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createLLMProvider } from "@/lib/llm/factory";
-import { getDefaultLlmKeyForUser } from "@/server/actions/llm-keys";
+import { getDefaultLlmKeyWithDiagnosis } from "@/server/actions/llm-keys";
+import { llmKeyErrorMessage } from "@/lib/utils/llm-key-errors";
 import { checkUsageLimit } from "@/lib/utils/usage-limits";
 import {
   buildStructurePrompt,
@@ -15,6 +16,8 @@ import {
 } from "@/lib/learning/project-digest";
 import { buildTutorPrompt } from "@/lib/prompts/tutor-chat";
 import { decryptContent } from "@/lib/utils/content-encryption";
+import { getKBHints } from "@/lib/knowledge";
+import { after } from "next/server";
 import type { Database, Json } from "@/types/database";
 import type { EducationalAnalysis } from "@/types/educational-analysis";
 
@@ -394,19 +397,19 @@ export async function generateLearningPath(
     }
 
     // Run remaining pre-LLM queries in parallel
-    const [llmKeyData, digest, educationalAnalysis] = await Promise.all([
-      getDefaultLlmKeyForUser(user.id),
+    const [llmKeyResult, digest, educationalAnalysis] = await Promise.all([
+      getDefaultLlmKeyWithDiagnosis(user.id),
       buildProjectDigest(projectId),
       getEducationalAnalysis(projectId),
     ]);
 
-    if (!llmKeyData) {
+    if (!llmKeyResult.data) {
       return {
         success: false,
-        error:
-          "No LLM API key configured. Please add an API key in settings.",
+        error: llmKeyErrorMessage(llmKeyResult.error),
       };
     }
+    const llmKeyData = llmKeyResult.data;
 
     const provider = createLLMProvider(llmKeyData.provider, llmKeyData.apiKey);
 
@@ -555,11 +558,29 @@ export async function generateLearningPath(
 
     const firstModuleId = insertedModules?.[0]?.id ?? null;
 
-    // Fire-and-forget: pre-generate first module content
-    if (firstModuleId) {
-      _generateContentForModule(firstModuleId, user.id).catch(() => {
-        // Errors handled inside _generateContentForModule
+    // Check user plan for background generation
+    const { data: planData } = await serviceClient
+      .from("users")
+      .select("plan_type, plan_expires_at")
+      .eq("id", user.id)
+      .single();
+    const isPaidPlan =
+      (planData?.plan_type === "pro" || planData?.plan_type === "team") &&
+      (!planData?.plan_expires_at || new Date(planData.plan_expires_at) > new Date());
+
+    if (isPaidPlan && insertedModules && insertedModules.length > 0) {
+      // Pro/Team: background-generate ALL modules after response
+      const allModuleIds = insertedModules.map((m) => m.id);
+      after(async () => {
+        try {
+          await _generateAllModuleContentInBackground(allModuleIds, user.id);
+        } catch (err) {
+          console.error("[learning] Background generation failed:", err instanceof Error ? err.message : err);
+        }
       });
+    } else if (firstModuleId) {
+      // Free: fire-and-forget first module only
+      _generateContentForModule(firstModuleId, user.id).catch(() => {});
     }
 
     return {
@@ -625,14 +646,13 @@ export async function generateModuleContent(
       return { success: true, data: { sections: content.sections } };
     }
 
-    // If currently generating and not stale (< 120s), tell client to wait
+    // If currently generating and not stale (< 600s), tell client to wait
     if (content._status === "generating" && content._generating_since) {
-      const elapsed =
-        Date.now() - new Date(content._generating_since).getTime();
-      if (elapsed < 120_000) {
+      const sinceTime = new Date(content._generating_since).getTime();
+      if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 600_000) {
         return { success: true, generating: true };
       }
-      // Otherwise stale — re-generate
+      // Otherwise stale or invalid timestamp — re-generate
     }
 
     // Check _meta exists
@@ -713,11 +733,10 @@ async function _generateContentForModule(
     return { success: true, data: { sections: content.sections } };
   }
 
-  // If currently generating and not stale (< 120s), skip
+  // If currently generating and not stale (< 600s), skip
   if (content._status === "generating" && content._generating_since) {
-    const elapsed =
-      Date.now() - new Date(content._generating_since).getTime();
-    if (elapsed < 120_000) {
+    const sinceTime = new Date(content._generating_since).getTime();
+    if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 600_000) {
       return { success: true, generating: true };
     }
   }
@@ -741,9 +760,8 @@ async function _generateContentForModule(
     if (!c._meta || c._meta.tech_name !== meta.tech_name) return false;
     if (c.sections && c.sections.length > 0) return false;
     if (c._status === "generating" && c._generating_since) {
-      const elapsed =
-        Date.now() - new Date(c._generating_since).getTime();
-      if (elapsed < 120_000) return false;
+      const sinceTime = new Date(c._generating_since).getTime();
+      if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 600_000) return false;
     }
     return true;
   });
@@ -838,21 +856,22 @@ async function _generateContentForModule(
   // Run all pre-LLM queries in parallel
   // Note: usage limit is checked in generateLearningPath (path creation),
   // not here — module content generation is part of an existing path.
-  const [llmKeyData, relevantFiles, educationalAnalysis] =
+  const [llmKeyResult, relevantFiles, educationalAnalysis] =
     await Promise.all([
-      getDefaultLlmKeyForUser(userId),
+      getDefaultLlmKeyWithDiagnosis(userId),
       loadRelevantFiles(pathData.project_id, allRelevantFiles),
       getEducationalAnalysis(pathData.project_id),
     ]);
 
-  if (!llmKeyData) {
-    await setBatchError("No LLM API key configured");
+  if (!llmKeyResult.data) {
+    const errMsg = llmKeyErrorMessage(llmKeyResult.error);
+    await setBatchError(errMsg);
     return {
       success: false,
-      error:
-        "No LLM API key configured. Please add an API key in settings.",
+      error: errMsg,
     };
   }
+  const llmKeyData = llmKeyResult.data;
 
   const provider = createLLMProvider(llmKeyData.provider, llmKeyData.apiKey);
 
@@ -860,6 +879,9 @@ async function _generateContentForModule(
     | "beginner"
     | "intermediate"
     | "advanced";
+
+  // Load KB hints for this technology (in-memory, zero latency)
+  const kbHints = getKBHints(meta.tech_name);
 
   // Build prompt for batch modules
   const contentPrompt = buildContentBatchPrompt(
@@ -873,11 +895,12 @@ async function _generateContentForModule(
     relevantFiles,
     difficulty,
     educationalAnalysis ?? undefined,
+    kbHints,
   );
 
   const llmResult = await provider.chat({
     messages: [{ role: "user", content: contentPrompt }],
-    maxTokens: Math.min(batchModules.length * 16384, 16384),
+    maxTokens: Math.min(batchModules.length * 16384, 65536),
   });
 
   let batchContent: ContentBatchItem[];
@@ -960,6 +983,75 @@ async function _generateContentForModule(
 }
 
 /**
+ * Background: generate all module content with parallel batching.
+ * Called via after() for Pro/Team users after learning path creation.
+ * Groups modules by tech_name and processes up to 2 tech groups concurrently.
+ * Skips already-generated or currently-generating modules.
+ */
+async function _generateAllModuleContentInBackground(
+  moduleIds: string[],
+  userId: string,
+): Promise<void> {
+  if (moduleIds.length === 0) return;
+
+  const serviceClient = createServiceClient();
+
+  // Fetch all modules to group by tech_name
+  const { data: modules, error: fetchError } = await serviceClient
+    .from("learning_modules")
+    .select("id, content, module_order")
+    .in("id", moduleIds)
+    .order("module_order", { ascending: true });
+
+  if (fetchError) {
+    console.error("[learning] Background: failed to fetch modules:", fetchError.message);
+    return;
+  }
+  if (!modules || modules.length === 0) return;
+
+  // Group module IDs by tech_name
+  const techGroups = new Map<string, string[]>();
+  for (const mod of modules) {
+    const content = mod.content as unknown as ModuleContentWithMeta;
+    const techName = content._meta?.tech_name ?? "__unknown__";
+    if (!techGroups.has(techName)) techGroups.set(techName, []);
+    techGroups.get(techName)!.push(mod.id);
+  }
+
+  // Process tech groups in parallel (max 2 concurrent to respect API rate limits)
+  const groups = [...techGroups.values()];
+  const MAX_CONCURRENT = 2;
+
+  for (let i = 0; i < groups.length; i += MAX_CONCURRENT) {
+    const batch = groups.slice(i, i + MAX_CONCURRENT);
+    await Promise.allSettled(
+      batch.map(async (groupModuleIds) => {
+        for (const moduleId of groupModuleIds) {
+          // Re-check status before generating (another group may have covered it)
+          const { data: mod } = await serviceClient
+            .from("learning_modules")
+            .select("content")
+            .eq("id", moduleId)
+            .single();
+          if (!mod) continue;
+          const content = mod.content as unknown as ModuleContentWithMeta;
+          if (content.sections && content.sections.length > 0) continue;
+          if (content._status === "generating" && content._generating_since) {
+            const sinceTime = new Date(content._generating_since).getTime();
+            if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 600_000) continue;
+          }
+          try {
+            await _generateContentForModule(moduleId, userId);
+          } catch (err) {
+            console.error(`[learning] Background: module ${moduleId} failed:`, err instanceof Error ? err.message : err);
+          }
+        }
+      }),
+    );
+  }
+}
+
+/**
  * Prefetch the next module's content in the background.
  * Called from the client after the current module finishes loading.
  * Triggers batch generation, so sibling modules with the same tech_name
@@ -1003,9 +1095,8 @@ export async function prefetchNextModuleContent(
     // Skip if already has content or is currently generating
     if (nextContent.sections && nextContent.sections.length > 0) return;
     if (nextContent._status === "generating" && nextContent._generating_since) {
-      const elapsed =
-        Date.now() - new Date(nextContent._generating_since).getTime();
-      if (elapsed < 120_000) return;
+      const sinceTime = new Date(nextContent._generating_since).getTime();
+      if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 600_000) return;
     }
 
     // Fire-and-forget: batch generation will also cover sibling modules
@@ -1471,14 +1562,14 @@ export async function sendTutorMessage(
     ];
 
     // Get user's default LLM key
-    const llmKeyData = await getDefaultLlmKeyForUser(user.id);
-    if (!llmKeyData) {
+    const llmKeyResult = await getDefaultLlmKeyWithDiagnosis(user.id);
+    if (!llmKeyResult.data) {
       return {
         success: false,
-        error:
-          "No LLM API key configured. Please add an API key in settings.",
+        error: llmKeyErrorMessage(llmKeyResult.error),
       };
     }
+    const llmKeyData = llmKeyResult.data;
 
     // Create LLM provider and call chat
     const provider = createLLMProvider(llmKeyData.provider, llmKeyData.apiKey);
