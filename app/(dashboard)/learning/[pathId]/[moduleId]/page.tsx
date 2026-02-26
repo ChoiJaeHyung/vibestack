@@ -12,6 +12,8 @@ interface PageProps {
   params: Promise<{ pathId: string; moduleId: string }>;
 }
 
+export const maxDuration = 300;
+
 export default async function ModuleDetailPage({ params }: PageProps) {
   const { pathId, moduleId } = await params;
 

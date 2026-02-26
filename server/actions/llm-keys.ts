@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { encrypt, decrypt } from "@/lib/utils/encryption";
 import { createLLMProvider } from "@/lib/llm/factory";
+import type { LlmKeyError, LlmKeyResult } from "@/lib/utils/llm-key-errors";
 
 type LlmProvider =
   | "anthropic"
@@ -250,7 +251,7 @@ export async function getDecryptedLlmKey(
 
     const { data, error } = await supabase
       .from("user_llm_keys")
-      .select("encrypted_key, is_valid")
+      .select("id, encrypted_key, is_valid")
       .eq("user_id", userId)
       .eq("provider", provider)
       .eq("is_valid", true)
@@ -260,9 +261,107 @@ export async function getDecryptedLlmKey(
       return null;
     }
 
-    return decrypt(data.encrypted_key);
-  } catch {
+    try {
+      return decrypt(data.encrypted_key);
+    } catch (decryptErr) {
+      const message =
+        decryptErr instanceof Error ? decryptErr.message : String(decryptErr);
+      const isEnvError = message.includes("ENCRYPTION_KEY");
+
+      console.error(
+        `[llm-keys] Failed to decrypt ${provider} key for user ${userId}: ${message}`,
+      );
+
+      if (!isEnvError) {
+        await supabase
+          .from("user_llm_keys")
+          .update({ is_valid: false })
+          .eq("id", data.id)
+          .then(({ error: updateErr }) => {
+            if (updateErr) {
+              console.error(
+                `[llm-keys] Failed to mark key ${data.id} as invalid:`,
+                updateErr.message,
+              );
+            }
+          });
+      }
+
+      return null;
+    }
+  } catch (err) {
+    console.error(
+      "[llm-keys] Unexpected error in getDecryptedLlmKey:",
+      err instanceof Error ? err.message : err,
+    );
     return null;
+  }
+}
+
+/**
+ * Get the user's default LLM key with diagnosis info on failure.
+ * Returns both the key data and a typed error for caller-specific messages.
+ */
+export async function getDefaultLlmKeyWithDiagnosis(
+  userId: string,
+): Promise<LlmKeyResult> {
+  try {
+    const supabase = createServiceClient();
+
+    const { data, error } = await supabase
+      .from("user_llm_keys")
+      .select("id, provider, encrypted_key")
+      .eq("user_id", userId)
+      .eq("is_valid", true)
+      .order("is_default", { ascending: false })
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .single();
+
+    if (error || !data) {
+      return { data: null, error: "no_key" };
+    }
+
+    try {
+      const apiKey = decrypt(data.encrypted_key);
+      return { data: { provider: data.provider as LlmProvider, apiKey } };
+    } catch (decryptErr) {
+      const message =
+        decryptErr instanceof Error ? decryptErr.message : String(decryptErr);
+      const isEnvError = message.includes("ENCRYPTION_KEY");
+
+      console.error(
+        `[llm-keys] Failed to decrypt key for user ${userId} (provider: ${data.provider}): ${message}`,
+      );
+
+      if (!isEnvError) {
+        await supabase
+          .from("user_llm_keys")
+          .update({ is_valid: false })
+          .eq("id", data.id)
+          .then(({ error: updateErr }) => {
+            if (updateErr) {
+              console.error(
+                `[llm-keys] Failed to mark key ${data.id} as invalid:`,
+                updateErr.message,
+              );
+            } else {
+              console.error(`[llm-keys] Marked key ${data.id} as invalid`);
+            }
+          });
+      }
+
+      return {
+        data: null,
+        error: isEnvError ? "env_error" : "decryption_failed",
+      };
+    }
+  } catch (err) {
+    console.error(
+      "[llm-keys] Unexpected error in getDefaultLlmKeyWithDiagnosis:",
+      err instanceof Error ? err.message : err,
+    );
+    return { data: null, error: "env_error" };
   }
 }
 
@@ -273,32 +372,8 @@ export async function getDecryptedLlmKey(
 export async function getDefaultLlmKeyForUser(
   userId: string,
 ): Promise<{ provider: LlmProvider; apiKey: string } | null> {
-  try {
-    const supabase = createServiceClient();
-
-    // Single query: order by is_default DESC so default key comes first, then by created_at
-    const { data, error } = await supabase
-      .from("user_llm_keys")
-      .select("provider, encrypted_key")
-      .eq("user_id", userId)
-      .eq("is_valid", true)
-      .order("is_default", { ascending: false })
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .single();
-
-    if (error || !data) {
-      return null;
-    }
-
-    const apiKey = decrypt(data.encrypted_key);
-    return {
-      provider: data.provider as LlmProvider,
-      apiKey,
-    };
-  } catch {
-    return null;
-  }
+  const result = await getDefaultLlmKeyWithDiagnosis(userId);
+  return result.data;
 }
 
 interface ValidateLlmKeyResult {

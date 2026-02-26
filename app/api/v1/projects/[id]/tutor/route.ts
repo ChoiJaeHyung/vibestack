@@ -64,7 +64,7 @@ export async function POST(
     if (message.includes("Usage limit")) {
       return errorResponse(message, 403);
     }
-    if (message.includes("No LLM API key")) {
+    if (message.includes("LLM API") && !message.includes("서버 설정")) {
       return errorResponse(message, 400);
     }
 

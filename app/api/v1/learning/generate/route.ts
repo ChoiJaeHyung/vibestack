@@ -3,7 +3,8 @@ import { successResponse, errorResponse } from "@/lib/utils/api-response";
 import { authenticateApiKey, isAuthResult } from "@/server/middleware/api-auth";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createLLMProvider } from "@/lib/llm/factory";
-import { getDefaultLlmKeyForUser } from "@/server/actions/llm-keys";
+import { getDefaultLlmKeyWithDiagnosis } from "@/server/actions/llm-keys";
+import { llmKeyErrorMessage } from "@/lib/utils/llm-key-errors";
 import { checkUsageLimit } from "@/lib/utils/usage-limits";
 import { buildRoadmapPrompt } from "@/lib/prompts/learning-roadmap";
 import type { Database, Json } from "@/types/database";
@@ -130,13 +131,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's default LLM key
-    const llmKeyData = await getDefaultLlmKeyForUser(authResult.userId);
-    if (!llmKeyData) {
-      return errorResponse(
-        "No LLM API key configured. Please add an API key in settings.",
-        400,
-      );
+    const llmKeyResult = await getDefaultLlmKeyWithDiagnosis(authResult.userId);
+    if (!llmKeyResult.data) {
+      return errorResponse(llmKeyErrorMessage(llmKeyResult.error), 400);
     }
+    const llmKeyData = llmKeyResult.data;
 
     // Create LLM provider
     const provider = createLLMProvider(llmKeyData.provider, llmKeyData.apiKey);
