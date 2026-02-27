@@ -11,11 +11,6 @@ import { decryptContent } from "@/lib/utils/content-encryption";
 import type { Database } from "@/types/database";
 import type { AnalyzeResponse } from "@/types/api";
 import type { TechHint, TechnologyResult } from "@/lib/llm/types";
-import { generateMissingKBs } from "@/server/actions/knowledge";
-
-// Analysis + KB generation can take 2-3 minutes for large projects
-export const maxDuration = 300;
-
 type ProjectUpdate = Database["public"]["Tables"]["projects"]["Update"];
 type AnalysisJobInsert = Database["public"]["Tables"]["analysis_jobs"]["Insert"];
 type AnalysisJobUpdate = Database["public"]["Tables"]["analysis_jobs"]["Update"];
@@ -298,17 +293,6 @@ async function runAnalysis(
       .from("analysis_jobs")
       .update(completedUpdate)
       .eq("id", jobId);
-
-    // Generate KB entries for detected technologies (must await in serverless)
-    try {
-      await generateMissingKBs(
-        analysisOutput.technologies.map(t => ({ name: t.name, version: t.version ?? null })),
-        provider,
-      );
-    } catch (kbErr) {
-      console.error("[analyze] KB generation failed:", kbErr);
-      // Non-fatal — don't fail the analysis job for KB errors
-    }
   } catch (error) {
     // Step 11: On error, set job to 'failed' with error_message
     const errorMessage =
