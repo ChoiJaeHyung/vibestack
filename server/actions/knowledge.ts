@@ -1,5 +1,3 @@
-"use server";
-
 import { createClient } from "@supabase/supabase-js";
 import type { LLMProvider } from "@/lib/llm/types";
 import type {
