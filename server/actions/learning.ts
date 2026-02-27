@@ -17,6 +17,7 @@ import {
 import { buildTutorPrompt } from "@/lib/prompts/tutor-chat";
 import { decryptContent } from "@/lib/utils/content-encryption";
 import { getKBHints } from "@/lib/knowledge";
+import { generateKBForTech } from "@/server/actions/knowledge";
 import { after } from "next/server";
 import type { Database, Json } from "@/types/database";
 import type { EducationalAnalysis } from "@/types/educational-analysis";
@@ -873,8 +874,11 @@ async function _generateContentForModule(
     | "intermediate"
     | "advanced";
 
-  // Load KB hints for this technology (in-memory, zero latency)
-  const kbHints = getKBHints(meta.tech_name);
+  // Load KB hints for this technology (cache → DB → seed fallback)
+  let kbHints = await getKBHints(meta.tech_name);
+  if (kbHints.length === 0) {
+    kbHints = await generateKBForTech(meta.tech_name, null, provider);
+  }
 
   // Build prompt for batch modules
   const contentPrompt = buildContentBatchPrompt(

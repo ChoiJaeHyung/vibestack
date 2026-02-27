@@ -9,6 +9,7 @@ import { llmKeyErrorMessage } from "@/lib/utils/llm-key-errors";
 import { createLLMProvider } from "@/lib/llm/factory";
 import { buildDigestAnalysisPrompt } from "@/lib/prompts/tech-analysis";
 import { decryptContent } from "@/lib/utils/content-encryption";
+import { generateMissingKBs } from "@/server/actions/knowledge";
 import type { Database } from "@/types/database";
 import type { TechHint, TechnologyResult } from "@/lib/llm/types";
 
@@ -456,6 +457,12 @@ async function runAnalysisPipeline(
       completed_at: new Date().toISOString(),
     };
     await supabase.from("analysis_jobs").update(completedUpdate).eq("id", jobId);
+
+    // Background KB generation for detected technologies
+    generateMissingKBs(
+      analysisOutput.technologies.map(t => ({ name: t.name, version: t.version ?? null })),
+      provider,
+    ).catch(err => console.error("[projects] KB generation failed:", err));
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Analysis failed unexpectedly";
