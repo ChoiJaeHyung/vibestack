@@ -17,7 +17,7 @@ import {
 import { buildTutorPrompt } from "@/lib/prompts/tutor-chat";
 import { decryptContent } from "@/lib/utils/content-encryption";
 import { getKBHints } from "@/lib/knowledge";
-import { generateKBForTech } from "@/server/actions/knowledge";
+import { generateKBForTech, generateMissingKBs } from "@/server/actions/knowledge";
 import { after } from "next/server";
 import type { Database, Json } from "@/types/database";
 import type { EducationalAnalysis } from "@/types/educational-analysis";
@@ -436,7 +436,7 @@ export async function generateLearningPath(
 
     const structureResult = await provider.chat({
       messages: [{ role: "user", content: structurePrompt }],
-      maxTokens: 16384,
+      maxTokens: 32768,
     });
 
     const totalInputTokens = structureResult.input_tokens;
@@ -565,11 +565,28 @@ export async function generateLearningPath(
 
     const firstModuleId = insertedModules?.[0]?.id ?? null;
 
+    // Pre-generate missing KBs before background content generation
+    // This ensures KB hints are available when Phase 2 starts
+    const techNamesForKB = [...new Set(
+      structure.modules.map((m) => m.tech_name)
+    )];
+
     // All users: background-generate ALL modules after response
     if (insertedModules && insertedModules.length > 0) {
       const allModuleIds = insertedModules.map((m) => m.id);
       after(async () => {
         try {
+          // Step 1: Pre-generate missing KBs so Phase 2 has hints
+          await generateMissingKBs(
+            techNamesForKB.map((name) => ({ name, version: null })),
+            provider,
+          );
+        } catch (err) {
+          console.error("[learning] KB pre-generation failed:", err instanceof Error ? err.message : err);
+        }
+
+        try {
+          // Step 2: Generate all module content
           await _generateAllModuleContentInBackground(allModuleIds, user.id);
         } catch (err) {
           console.error("[learning] Background generation failed:", err instanceof Error ? err.message : err);
@@ -760,8 +777,8 @@ async function _generateContentForModule(
     return true;
   });
 
-  // Up to 2 additional modules (3 total with the requested one)
-  const additionalModules = batchCandidates.slice(0, 2);
+  // Up to 6 additional modules (7 total with the requested one)
+  const additionalModules = batchCandidates.slice(0, 6);
 
   interface BatchModule {
     id: string;
@@ -897,7 +914,7 @@ async function _generateContentForModule(
 
   const llmResult = await provider.chat({
     messages: [{ role: "user", content: contentPrompt }],
-    maxTokens: Math.min(batchModules.length * 16384, 65536),
+    maxTokens: Math.min(batchModules.length * 10000, 100000),
   });
 
   let batchContent: ContentBatchItem[];
@@ -934,6 +951,11 @@ async function _generateContentForModule(
       }
 
       if (sections.length > 0) {
+        if (sections.length < 5) {
+          console.warn(
+            `[learning] Module "${m.title}" has only ${sections.length} sections (expected 5-8). Content may be thin.`,
+          );
+        }
         await serviceClient
           .from("learning_modules")
           .update({
@@ -947,6 +969,9 @@ async function _generateContentForModule(
           .eq("id", m.id);
       } else {
         // No match — reset status so it can be retried individually
+        console.warn(
+          `[learning] Module "${m.title}" got no content from LLM batch. Will be retried on next request.`,
+        );
         await serviceClient
           .from("learning_modules")
           .update({
@@ -1017,7 +1042,7 @@ async function _generateAllModuleContentInBackground(
 
   // Process tech groups in parallel (max 2 concurrent to respect API rate limits)
   const groups = [...techGroups.values()];
-  const MAX_CONCURRENT = 2;
+  const MAX_CONCURRENT = 3;
 
   for (let i = 0; i < groups.length; i += MAX_CONCURRENT) {
     const batch = groups.slice(i, i + MAX_CONCURRENT);

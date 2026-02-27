@@ -35,7 +35,10 @@ const CONTENT_JSON_SCHEMA = `[
           "body": "string (markdown content — reference the student's actual code)",
           "code": "string (code snippet, if applicable, otherwise omit)",
           "quiz_options": ["string array (if quiz_question, otherwise omit)"],
-          "quiz_answer": number (0-based index of correct option, if quiz_question, otherwise omit)
+          "quiz_answer": number (0-based index of correct option, if quiz_question, otherwise omit),
+          "quiz_explanation": "string (explanation of correct answer and why wrong answers are wrong, if quiz_question, otherwise omit)",
+          "challenge_starter_code": "string (skeleton code with TODO comments, if challenge, otherwise omit)",
+          "challenge_answer_code": "string (complete working solution, if challenge, otherwise omit)"
         }
       ]
     }
@@ -252,8 +255,16 @@ export function buildStructurePrompt(
     : "";
 
   const educationalInstruction = educationalAnalysis
-    ? `\n11. **Use the Project Overview, User Flows, and Learning Priorities above** to create a more targeted and personalized roadmap. Prioritize the files and concepts marked in the Learning Priorities section. Reference the File Difficulty Map to set appropriate estimated_minutes for each module.`
+    ? `
+13. **Use the Project Overview, User Flows, and Learning Priorities above** to create a more targeted and personalized roadmap. Prioritize the files and concepts marked in the Learning Priorities section. Reference the File Difficulty Map to set appropriate estimated_minutes for each module.
+14. **Repeated Patterns → 전용 모듈 생성:** 위 Repeated Patterns에 나열된 패턴이 2회 이상 발견된 경우, 해당 패턴을 설명하는 전용 모듈을 반드시 1개 이상 만드세요. module_type은 \`concept\` 또는 \`project_walkthrough\`로 지정하세요.
+15. **User Flows → project_walkthrough 매핑:** 위 User Flows에 나열된 각 flow에 대해, 해당 flow를 따라가는 \`project_walkthrough\` 모듈을 최소 1개 생성하세요. flow의 steps에 나열된 파일을 relevant_files에 포함하세요.
+16. **File Difficulty → estimated_minutes 매핑:** File Difficulty Map의 복잡도(1-5)를 참고하여 관련 모듈의 estimated_minutes를 설정하세요. 복잡도 1-2: 15-20분, 복잡도 3: 25-30분, 복잡도 4-5: 35-45분.`
     : "";
+
+  const baseExtraRules = `
+11. **총 모듈 수 제한:** 전체 모듈 수는 최소 15개, 최대 40개 사이여야 합니다. 기술 수가 적으면 각 기술에 더 많은 모듈을, 기술 수가 많으면 핵심 기술에 집중하되 모든 기술을 커버하세요.
+12. **기술 누락 금지:** 위 Technology Stack에 나열된 모든 기술은 반드시 최소 1개 이상의 모듈에서 다뤄져야 합니다. 어떤 기술도 빠뜨리지 마세요.`;
 
   return `You are an expert programming instructor creating a personalized learning roadmap structure for a "vibe coder."
 
@@ -281,7 +292,12 @@ Create the STRUCTURE of a learning roadmap (no content bodies yet). Follow these
 
 1. **Start with the most important technology** (core framework first, then languages, then supporting tools).
 2. **Order by dependency** — prerequisites come before dependents (e.g., teach JavaScript basics before React, teach React before Next.js).
-3. **Each technology gets 3-7 learning modules** depending on its complexity and importance.
+3. **기술별 최소 모듈 수 (반드시 준수):**
+   - \`core\` importance 기술: 최소 5개 모듈
+   - \`primary\` importance 기술: 최소 3개 모듈
+   - \`secondary\` importance 기술: 최소 2개 모듈
+   - \`utility\` importance 기술: 최소 1개 모듈
+   - 위에 나열된 **모든 기술**을 반드시 하나 이상의 모듈로 커버해야 합니다. 기술을 빠뜨리면 안 됩니다.
 4. **Each module should be 15-45 minutes** of focused learning time.
 5. **Mix module types:**
    - \`concept\` — Explain a core concept with clear analogies and examples
@@ -293,7 +309,7 @@ ${buildLevelGuidance(level)}
 7. **relevant_files** — List specific file paths from the project that are relevant to this module. Use actual paths from the project digest above.
 8. **learning_objectives** — List 2-4 specific things the student will learn in this module.
 9. **Organize modules by layer** — Help the student understand the frontend/backend boundary. For web apps, organize modules to cover: routing/pages (프론트엔드), API endpoints (백엔드), database access patterns (데이터베이스), authentication flow (인증), and shared utilities (공통 유틸리티).
-10. **For \`project_walkthrough\` modules** — Ensure relevant_files contains the specific file(s) the walkthrough will cover. Each project_walkthrough module should focus on one file or one tightly related group of files.${educationalInstruction}
+10. **For \`project_walkthrough\` modules** — Ensure relevant_files contains the specific file(s) the walkthrough will cover. Each project_walkthrough module should focus on one file or one tightly related group of files.${baseExtraRules}${educationalInstruction}
 
 ## Important Rules
 
@@ -380,7 +396,7 @@ For each module listed above, generate detailed content sections. Follow these r
 3. **Each module MUST have 5-8 sections.** Keep individual sections SHORT — explanations should be 1-3 short paragraphs max. Use bullet points over long paragraphs.
 4. **Interleave interactive sections:** After every 1-2 explanation/code_example sections, insert a quiz_question or reflection section. Never have more than 2 explanation sections in a row.
 5. **Micro-learning tone:** Use short sentences. Start sections with a question or hook ("왜 이렇게 할까요?", "이 코드를 보면..."). Prefer bullet points over prose. Each section should feel like a quick card, not a lecture.
-6. **Quiz questions** should have exactly 4 options with one correct answer (0-indexed).
+6. **Quiz questions** should have exactly 4 options with one correct answer (0-indexed). Always include a \`quiz_explanation\` field: explain why the correct answer is right and briefly note why the main wrong answers are incorrect (2-4 sentences).
 7. **For ${level} level:**
 ${buildLevelGuidance(level)}
 8. **For \`project_walkthrough\` modules:** Walk through one of the student's actual files from top to bottom. Start with the imports (각 라이브러리가 무슨 역할인지), then the main logic (핵심 로직 설명), then the exports (다른 파일에서 어떻게 사용되는지). Explain how this file connects to the rest of the project. Use the actual code from the source files above — do NOT paraphrase or abbreviate.
@@ -390,7 +406,7 @@ ${buildLevelGuidance(level)}
    const supabase = createClient()  // Supabase 클라이언트 생성
    const { data } = await supabase.auth.getUser()  // 현재 로그인한 사용자 정보 가져오기
    \`\`\`
-10. **For \`challenge\` sections:** Give a small, concrete task the student can try on their own project. Specify the exact file to modify, what to add or change, and what the expected result should be. Make challenges relevant to the student's actual codebase.${educationalAnalysis ? `
+10. **For \`challenge\` sections:** Give a small, concrete task the student can try on their own project. Specify the exact file to modify, what to add or change, and what the expected result should be. Make challenges relevant to the student's actual codebase. Always include \`challenge_starter_code\` (skeleton with TODO comments showing what to fill in) and \`challenge_answer_code\` (the complete working solution).${educationalAnalysis ? `
 11. **Use the Educational Metadata above** to enrich your content. Reference gotchas as quiz questions, use teaching_notes for explanation sections, and leverage code quality observations as practical learning points. For beginner level, use the Tech Stack Metaphors to make concepts accessible.` : ""}
 
 ## Important Rules
@@ -427,7 +443,10 @@ const ROADMAP_JSON_SCHEMA = `{
             "body": "string (markdown content)",
             "code": "string (code snippet, if applicable, otherwise omit)",
             "quiz_options": ["string array (if quiz_question, otherwise omit)"],
-            "quiz_answer": number (0-based index of correct option, if quiz_question, otherwise omit)
+            "quiz_answer": number (0-based index of correct option, if quiz_question, otherwise omit),
+            "quiz_explanation": "string (explanation of correct answer and why wrong answers are wrong, if quiz_question, otherwise omit)",
+            "challenge_starter_code": "string (skeleton code with TODO comments, if challenge, otherwise omit)",
+            "challenge_answer_code": "string (complete working solution, if challenge, otherwise omit)"
           }
         ]
       }
