@@ -12,3 +12,26 @@ export interface TechKnowledge {
   version: string;            // "15"
   concepts: ConceptHint[];
 }
+
+/** Row from technology_knowledge DB table */
+export interface TechnologyKnowledgeRow {
+  id: string;
+  technology_name: string;
+  technology_name_normalized: string;
+  version: string | null;
+  concepts: ConceptHint[];
+  source: "seed" | "llm_generated";
+  generation_status: "ready" | "generating" | "failed";
+  llm_provider: string | null;
+  llm_model: string | null;
+  generation_error: string | null;
+  generated_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Input for generating KB for a technology */
+export interface KBGenerationInput {
+  name: string;
+  version: string | null;
+}
