@@ -85,7 +85,7 @@ export default function GuidePage() {
               <ul className="mt-4 space-y-3">
                 <CheckItem>
                   <strong>AI 코딩 도구</strong> — Claude Code, Cursor, Windsurf,
-                  Cline 중 하나 이상 설치
+                  Cline, Kimi Code, OpenAI Codex 중 하나 이상 설치
                 </CheckItem>
                 <CheckItem>
                   <strong>AI로 만든 프로젝트</strong> — 분석하고 싶은 프로젝트
@@ -278,6 +278,73 @@ export default function GuidePage() {
   }
 }`}
               </CodeBlock>
+
+              <h4 className="mt-6 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                Kimi Code CLI
+              </h4>
+              <p className="mt-1 text-sm">
+                설정 파일:{" "}
+                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                  ~/.kimi/mcp.json
+                </code>
+              </p>
+              <CodeBlock>
+{`{
+  "mcpServers": {
+    "vibeuniv": {
+      "command": "npx",
+      "args": ["-y", "@vibeuniv/mcp-server@latest"],
+      "env": {
+        "VIBEUNIV_API_KEY": "여기에_발급받은_API_키"
+      }
+    }
+  }
+}`}
+              </CodeBlock>
+              <p className="mt-2 text-sm">
+                또는 CLI에서 직접 추가할 수도 있어요:{" "}
+                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                  kimi mcp
+                </code>{" "}
+                명령으로 MCP 서버를 관리하고,{" "}
+                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                  /mcp
+                </code>{" "}
+                로 연결 상태를 확인할 수 있습니다.
+              </p>
+
+              <h4 className="mt-6 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                OpenAI Codex CLI
+              </h4>
+              <p className="mt-1 text-sm">
+                설정 파일:{" "}
+                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                  ~/.codex/config.toml
+                </code>{" "}
+                (TOML 형식)
+              </p>
+              <CodeBlock>
+{`[mcp_servers.vibeuniv]
+command = "npx"
+args = ["-y", "@vibeuniv/mcp-server@latest"]
+
+[mcp_servers.vibeuniv.env]
+VIBEUNIV_API_KEY = "여기에_발급받은_API_키"`}
+              </CodeBlock>
+              <p className="mt-2 text-sm">
+                또는 CLI에서 한 줄로 추가할 수 있어요:
+              </p>
+              <CodeBlock>
+{`codex mcp add vibeuniv --env VIBEUNIV_API_KEY=여기에_발급받은_API_키 -- npx -y @vibeuniv/mcp-server@latest`}
+              </CodeBlock>
+              <p className="mt-2 text-sm">
+                프로젝트별 설정은{" "}
+                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                  .codex/config.toml
+                </code>{" "}
+                (프로젝트 루트)에 추가하면 됩니다.
+                CLI와 IDE 확장 모두 같은 설정 파일을 공유해요.
+              </p>
 
               <InfoBox>
                 설정 파일을 직접 수정하기 어렵다면, 사용 중인 AI 코딩 도구에게
