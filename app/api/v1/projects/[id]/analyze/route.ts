@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { after } from "next/server";
 import { successResponse, errorResponse } from "@/lib/utils/api-response";
 import { authenticateApiKey, isAuthResult } from "@/server/middleware/api-auth";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -8,9 +9,14 @@ import { llmKeyErrorMessage } from "@/lib/utils/llm-key-errors";
 import { createLLMProvider } from "@/lib/llm/factory";
 import { buildDigestAnalysisPrompt } from "@/lib/prompts/tech-analysis";
 import { decryptContent } from "@/lib/utils/content-encryption";
+import { generateMissingKBs } from "@/server/actions/knowledge";
 import type { Database } from "@/types/database";
 import type { AnalyzeResponse } from "@/types/api";
 import type { TechHint, TechnologyResult } from "@/lib/llm/types";
+
+// Analysis + KB generation can take 2-3 minutes for large projects
+export const maxDuration = 300;
+
 type ProjectUpdate = Database["public"]["Tables"]["projects"]["Update"];
 type AnalysisJobInsert = Database["public"]["Tables"]["analysis_jobs"]["Insert"];
 type AnalysisJobUpdate = Database["public"]["Tables"]["analysis_jobs"]["Update"];
@@ -97,12 +103,10 @@ export async function POST(
       return errorResponse("Failed to create analysis job", 500);
     }
 
-    // Run analysis asynchronously (fire-and-forget)
-    runAnalysis(supabase, projectId, authResult.userId, job.id).catch(
-      () => {
-        // Error handling is done inside runAnalysis
-      },
-    );
+    // Run analysis in background using after() to ensure it completes on Vercel
+    after(async () => {
+      await runAnalysis(supabase, projectId, authResult.userId, job.id);
+    });
 
     return successResponse<AnalyzeResponse>({
       job_id: job.id,
@@ -293,8 +297,19 @@ async function runAnalysis(
       .from("analysis_jobs")
       .update(completedUpdate)
       .eq("id", jobId);
+
+    // Step 11: Generate KB entries for detected technologies
+    try {
+      await generateMissingKBs(
+        analysisOutput.technologies.map(t => ({ name: t.name, version: t.version ?? null })),
+        provider,
+      );
+    } catch (kbErr) {
+      console.error("[analyze] KB generation failed:", kbErr);
+      // Non-fatal — don't fail the analysis job for KB errors
+    }
   } catch (error) {
-    // Step 11: On error, set job to 'failed' with error_message
+    // Step 12: On error, set job to 'failed' with error_message
     const errorMessage =
       error instanceof Error ? error.message : "Analysis failed unexpectedly";
 
