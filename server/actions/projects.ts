@@ -458,11 +458,16 @@ async function runAnalysisPipeline(
     };
     await supabase.from("analysis_jobs").update(completedUpdate).eq("id", jobId);
 
-    // Background KB generation for detected technologies
-    generateMissingKBs(
-      analysisOutput.technologies.map(t => ({ name: t.name, version: t.version ?? null })),
-      provider,
-    ).catch(err => console.error("[projects] KB generation failed:", err));
+    // Generate KB entries for detected technologies (must await in serverless)
+    try {
+      await generateMissingKBs(
+        analysisOutput.technologies.map(t => ({ name: t.name, version: t.version ?? null })),
+        provider,
+      );
+    } catch (kbErr) {
+      console.error("[projects] KB generation failed:", kbErr);
+      // Non-fatal — don't fail the analysis job for KB errors
+    }
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Analysis failed unexpectedly";
