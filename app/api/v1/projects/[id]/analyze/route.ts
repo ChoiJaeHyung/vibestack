@@ -13,6 +13,9 @@ import type { AnalyzeResponse } from "@/types/api";
 import type { TechHint, TechnologyResult } from "@/lib/llm/types";
 import { generateMissingKBs } from "@/server/actions/knowledge";
 
+// Analysis + KB generation can take 2-3 minutes for large projects
+export const maxDuration = 300;
+
 type ProjectUpdate = Database["public"]["Tables"]["projects"]["Update"];
 type AnalysisJobInsert = Database["public"]["Tables"]["analysis_jobs"]["Insert"];
 type AnalysisJobUpdate = Database["public"]["Tables"]["analysis_jobs"]["Update"];
