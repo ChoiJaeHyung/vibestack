@@ -11,6 +11,8 @@ import { registerGetLearning } from "./tools/get-learning.js";
 import { registerLogSession } from "./tools/log-session.js";
 import { registerAskTutor } from "./tools/ask-tutor.js";
 import { registerSubmitAnalysis } from "./tools/submit-analysis.js";
+import { registerGenerateCurriculum } from "./tools/generate-curriculum.js";
+import { registerSubmitCurriculum } from "./tools/submit-curriculum.js";
 
 async function main(): Promise<void> {
   console.error("[vibeuniv] Starting VibeUniv MCP Server v0.2.0...");
@@ -34,8 +36,10 @@ async function main(): Promise<void> {
   registerLogSession(server, client);
   registerAskTutor(server, client);
   registerSubmitAnalysis(server, client);
+  registerGenerateCurriculum(server, client);
+  registerSubmitCurriculum(server, client);
 
-  console.error("[vibeuniv] 7 tools registered");
+  console.error("[vibeuniv] 9 tools registered");
 
   const transport = new StdioServerTransport();
   await server.connect(transport);

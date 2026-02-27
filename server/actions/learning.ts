@@ -106,6 +106,9 @@ interface ContentSection {
   code?: string;
   quiz_options?: string[];
   quiz_answer?: number;
+  challenge_starter_code?: string;
+  challenge_answer_code?: string;
+  quiz_explanation?: string;
 }
 
 interface ModuleContent {
@@ -211,6 +214,9 @@ interface ContentBatchItem {
       code?: string;
       quiz_options?: string[];
       quiz_answer?: number;
+      challenge_starter_code?: string;
+      challenge_answer_code?: string;
+      quiz_explanation?: string;
     }>;
   };
 }
@@ -558,18 +564,8 @@ export async function generateLearningPath(
 
     const firstModuleId = insertedModules?.[0]?.id ?? null;
 
-    // Check user plan for background generation
-    const { data: planData } = await serviceClient
-      .from("users")
-      .select("plan_type, plan_expires_at")
-      .eq("id", user.id)
-      .single();
-    const isPaidPlan =
-      (planData?.plan_type === "pro" || planData?.plan_type === "team") &&
-      (!planData?.plan_expires_at || new Date(planData.plan_expires_at) > new Date());
-
-    if (isPaidPlan && insertedModules && insertedModules.length > 0) {
-      // Pro/Team: background-generate ALL modules after response
+    // All users: background-generate ALL modules after response
+    if (insertedModules && insertedModules.length > 0) {
       const allModuleIds = insertedModules.map((m) => m.id);
       after(async () => {
         try {
@@ -578,9 +574,6 @@ export async function generateLearningPath(
           console.error("[learning] Background generation failed:", err instanceof Error ? err.message : err);
         }
       });
-    } else if (firstModuleId) {
-      // Free: fire-and-forget first module only
-      _generateContentForModule(firstModuleId, user.id).catch(() => {});
     }
 
     return {
@@ -1080,27 +1073,30 @@ export async function prefetchNextModuleContent(
 
     if (!currentModule) return;
 
-    // Find the next module by order
-    const { data: nextModule } = await serviceClient
+    // Find the next 3 modules by order
+    const { data: nextModules } = await serviceClient
       .from("learning_modules")
       .select("id, content")
       .eq("learning_path_id", currentModule.learning_path_id)
-      .eq("module_order", currentModule.module_order + 1)
-      .single();
+      .gt("module_order", currentModule.module_order)
+      .order("module_order", { ascending: true })
+      .limit(3);
 
-    if (!nextModule) return;
+    if (!nextModules || nextModules.length === 0) return;
 
-    const nextContent = nextModule.content as unknown as ModuleContentWithMeta;
+    for (const nextModule of nextModules) {
+      const nextContent = nextModule.content as unknown as ModuleContentWithMeta;
 
-    // Skip if already has content or is currently generating
-    if (nextContent.sections && nextContent.sections.length > 0) return;
-    if (nextContent._status === "generating" && nextContent._generating_since) {
-      const sinceTime = new Date(nextContent._generating_since).getTime();
-      if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 600_000) return;
+      // Skip if already has content or is currently generating
+      if (nextContent.sections && nextContent.sections.length > 0) continue;
+      if (nextContent._status === "generating" && nextContent._generating_since) {
+        const sinceTime = new Date(nextContent._generating_since).getTime();
+        if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 600_000) continue;
+      }
+
+      // Fire-and-forget: batch generation will also cover sibling modules
+      _generateContentForModule(nextModule.id, user.id).catch(() => {});
     }
-
-    // Fire-and-forget: batch generation will also cover sibling modules
-    _generateContentForModule(nextModule.id, user.id).catch(() => {});
   } catch {
     // Silently ignore prefetch errors
   }

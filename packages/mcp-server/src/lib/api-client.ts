@@ -2,10 +2,12 @@ import type {
   ApiResponse,
   AnalysisResult,
   CreateProjectInput,
+  CurriculumSubmitResult,
   LearningPath,
   Project,
   ProjectFile,
   SessionLog,
+  TechStackItem,
   TutorResponse,
 } from "../types.js";
 
@@ -176,6 +178,7 @@ export class VibeUnivClient {
           category: t.category,
           version: t.version ?? undefined,
           confidence: t.confidence_score,
+          importance: t.importance,
         })),
         startedAt: raw.started_at ?? undefined,
         completedAt: raw.completed_at ?? undefined,
@@ -258,5 +261,67 @@ export class VibeUnivClient {
       `/projects/${projectId}/educational-analysis`,
       { analysis_data: analysisData }
     );
+  }
+
+  async getTechStacks(projectId: string): Promise<TechStackItem[]> {
+    interface RawStackCategory {
+      category: string;
+      technologies: Array<{
+        id: string;
+        technology_name: string;
+        version: string | null;
+        confidence_score: number;
+        importance: string;
+        description: string | null;
+      }>;
+    }
+
+    interface RawStackResponse {
+      project_id: string;
+      total_technologies: number;
+      categories: RawStackCategory[];
+    }
+
+    const raw = await this.request<RawStackResponse>(
+      "GET",
+      `/projects/${projectId}/stack`
+    );
+
+    const items: TechStackItem[] = [];
+    for (const cat of raw.categories) {
+      for (const tech of cat.technologies) {
+        items.push({
+          name: tech.technology_name,
+          category: cat.category,
+          version: tech.version ?? undefined,
+          confidence: tech.confidence_score,
+          importance: tech.importance,
+        });
+      }
+    }
+    return items;
+  }
+
+  async submitCurriculum(
+    projectId: string,
+    curriculum: Record<string, unknown>,
+  ): Promise<CurriculumSubmitResult> {
+    interface RawCurriculumResponse {
+      learning_path_id: string;
+      title: string;
+      total_modules: number;
+    }
+
+    const raw = await this.request<RawCurriculumResponse>(
+      "POST",
+      `/projects/${projectId}/curriculum`,
+      { curriculum }
+    );
+
+    return {
+      learningPathId: raw.learning_path_id,
+      title: raw.title,
+      totalModules: raw.total_modules,
+    };
   }
 }
