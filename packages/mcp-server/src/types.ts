@@ -36,6 +36,7 @@ export interface TechStackItem {
   category: string;
   version?: string;
   confidence: number;
+  importance: string;
 }
 
 export interface LearningPath {
@@ -74,4 +75,10 @@ export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
+}
+
+export interface CurriculumSubmitResult {
+  learningPathId: string;
+  title: string;
+  totalModules: number;
 }
