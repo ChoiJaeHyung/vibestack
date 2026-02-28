@@ -25,7 +25,7 @@ VibeUniv(vibeuniv.com)는 바이브 코더(Vibe Coder)들이 AI로 만든 프로
 - **AI:** Multi-LLM (Anthropic, OpenAI, Google, Groq, Mistral, DeepSeek 등)
 - **MCP:** @modelcontextprotocol/sdk (TypeScript)
 - **Deploy:** Vercel
-- **Payments:** Stripe
+- **Payments:** 토스페이먼츠 (TossPayments)
 
 ## 코딩 컨벤션
 
@@ -107,8 +107,8 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 ENCRYPTION_KEY=                 # API 키 암호화용 (32바이트)
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
+NEXT_PUBLIC_TOSS_CLIENT_KEY=     # 토스페이먼츠 클라이언트 키
+TOSS_SECRET_KEY=                # 토스페이먼츠 시크릿 키
 NEXT_PUBLIC_APP_URL=
 ```
 
@@ -138,6 +138,141 @@ NEXT_PUBLIC_APP_URL=
 - **Email:** test@vibestack.dev
 - **Password:** testpass123
 
+## 프로젝트 구조 요약
+
+> 상세한 스키마/로직은 `research.md` 참조
+
+### 핵심 파일 위치 맵
+
+| 영역 | 경로 | 설명 |
+|------|------|------|
+| **페이지** | `app/(dashboard)/` | 대시보드, 프로젝트, 학습, 설정 |
+| **외부 API** | `app/api/v1/` | MCP/CLI용 API 키 인증 |
+| **내부 API** | `app/api/dashboard/`, `app/api/usage/` 등 | 세션 인증 |
+| **결제 API** | `app/api/payments/` | 토스페이먼츠 연동 |
+| **Server Actions** | `server/actions/` | 핵심 비즈니스 로직 |
+| **LLM 어댑터** | `lib/llm/` | 멀티 LLM Provider 팩토리 |
+| **파일 분석** | `lib/analysis/` | 파일 파싱, 다이제스트 생성, tech-stack upsert 유틸 |
+| **학습 시스템** | `lib/learning/`, `lib/prompts/` | 커리큘럼 생성 (2-Phase) |
+| **KB 시스템** | `lib/knowledge/` | 3-Tier 지식 베이스 |
+| **프롬프트** | `lib/prompts/` | LLM 프롬프트 템플릿 |
+| **보안** | `lib/utils/encryption.ts` | AES-256-GCM 암호화 |
+| **MCP 서버** | `packages/mcp-server/src/` | 10개 MCP 도구 (v0.3.0, Local-First) |
+| **DB 타입** | `types/database.ts` | Supabase 전체 스키마 타입 |
+| **마이그레이션** | `supabase/migrations/` | 001~007 SQL |
+
+### DB 테이블 (18개)
+
+**사용자**: `users`, `user_api_keys`, `user_llm_keys`
+**프로젝트**: `projects`, `project_files`, `tech_stacks`, `analysis_jobs`, `educational_analyses`
+**학습**: `learning_paths`, `learning_modules`, `learning_progress`
+**AI/MCP**: `ai_conversations`, `mcp_sessions`
+**어드민**: `system_settings`, `announcements`, `admin_audit_log`
+**결제**: `payments`
+**KB**: `technology_knowledge`
+
+### 핵심 데이터 플로우
+
+1. **프로젝트 분석 (웹)**: 파일 업로드 → file-parser → digest-generator → LLM 분석 → tech_stacks 저장
+2. **프로젝트 분석 (MCP, Local-First)**: analyze → 서버에서 파일 fetch → 로컬 AI 분석 → submit_tech_stacks → 서버 저장 (서버 LLM 0)
+3. **커리큘럼 생성 (2-Phase)**: Phase 1: 구조 생성(LLM) → Phase 2: 기술별 콘텐츠 생성(LLM+KB)
+4. **AI 튜터 (웹)**: 프로젝트 파일 + 기술 스택 → 시스템 프롬프트 → LLM 대화
+5. **AI 튜터 (MCP, Local-First)**: tutor-context → 로컬 AI가 직접 답변 (서버 LLM 0)
+6. **결제**: createPaymentRequest → 토스 결제 → confirm → plan_type 업데이트
+
+### LLM Provider (11개)
+
+Anthropic, OpenAI, Google, Groq, Mistral, DeepSeek, Cohere, Together, Fireworks, XAI, OpenRouter
+- 팩토리 패턴: `lib/llm/factory.ts` → `createLLMProvider(provider, apiKey)`
+- BYOK: 사용자 키 AES-256-GCM 암호화 저장/복호화
+
+### MCP 도구 (10개, v0.3.0)
+
+`vibeuniv_sync_project`, `vibeuniv_upload_files`, `vibeuniv_analyze`, `vibeuniv_submit_tech_stacks`, `vibeuniv_get_learning`, `vibeuniv_ask_tutor`, `vibeuniv_log_session`, `vibeuniv_submit_analysis`, `vibeuniv_generate_curriculum`, `vibeuniv_submit_curriculum`
+
+> **Local-First 패턴**: `analyze`, `ask_tutor`, `generate_curriculum`은 서버 LLM을 호출하지 않고 로컬 AI에게 지침을 반환한다. 결과는 companion 도구로 서버에 저장.
+
+---
+
+## 작업 규약 (필수 준수)
+
+### 1. 계획 수립 → 승인 → 실행 프로세스
+
+**모든 비자명(non-trivial) 작업은 반드시 아래 프로세스를 따른다:**
+
+#### Step 1: 분석 및 계획 수립
+- 관련 파일을 먼저 읽고 현재 코드를 이해한다
+- `research.md`를 참조하여 기존 구조/스키마를 파악한다
+- 영향 범위(어떤 파일/테이블/API가 변경되는지)를 분석한다
+
+#### Step 2: TODO 리스트 작성 및 제안
+- 상세한 TODO 리스트를 사용자에게 제시한다:
+  ```
+  ## 작업 계획: [제목]
+
+  ### 영향 분석
+  - 변경 파일: [목록]
+  - 변경 테이블: [목록]
+  - 신규 파일: [목록]
+
+  ### TODO
+  1. [ ] 구체적 작업 1
+  2. [ ] 구체적 작업 2
+  3. [ ] ...
+
+  ### 위험 요소
+  - [잠재적 문제점]
+  ```
+- 여러 접근 방식이 가능한 경우, 각각의 장단점을 제시한다
+
+#### Step 3: 사용자 승인 대기
+- **반드시 사용자의 명시적 승인("ㅇㅇ", "진행해", "OK" 등)을 받은 후에만 코드 수정을 시작한다**
+- 승인 없이 코드를 수정하지 않는다 (읽기/분석은 가능)
+- 사용자가 수정 요청을 하면 계획을 업데이트하고 다시 승인을 받는다
+
+#### Step 4: 실행
+- 승인된 TODO 리스트 순서대로 작업한다
+- 각 TODO 완료 시 진행 상황을 보고한다
+- 예상치 못한 문제 발생 시 즉시 사용자에게 알리고 방향을 확인한다
+- **작업 완료 후 반드시 `research.md`와 `CLAUDE.md`의 관련 섹션을 업데이트한다** (아래 3번 규칙 참조)
+
+### 2. 예외: 즉시 실행 가능한 작업
+다음은 계획 수립 없이 바로 실행해도 된다:
+- 단순 오타 수정
+- 1-2줄 수준의 명확한 버그 수정
+- 파일 읽기/구조 탐색/질문 답변
+- 사용자가 "바로 해줘" 등으로 즉시 실행을 명시한 경우
+
+### 3. 문서 자동 동기화 (필수)
+
+**코드 변경 시 `research.md`와 `CLAUDE.md`를 반드시 함께 업데이트한다. 이것은 선택이 아닌 의무다.**
+
+#### 업데이트 트리거 → 대상 매핑
+
+| 변경 내용 | research.md 업데이트 대상 | CLAUDE.md 업데이트 대상 |
+|-----------|--------------------------|------------------------|
+| DB 마이그레이션 추가/수정 | 섹션 2 (스키마) 전체: 테이블, 컬럼, FK, RLS | DB 테이블 목록, 테이블 수 |
+| Server Action 추가/수정 | 섹션 3.x (해당 로직 플로우) | 핵심 파일 위치 맵 |
+| API 라우트 추가/수정 | 섹션 1 (디렉토리 구조) + 관련 플로우 | 핵심 파일 위치 맵 |
+| 컴포넌트 추가/수정 | 섹션 1 (디렉토리 구조) | - |
+| LLM Provider 추가/수정 | 섹션 3.10 (LLM Provider) | LLM Provider 목록 |
+| MCP 도구 추가/수정 | 섹션 3.7 (MCP 도구) | MCP 도구 목록 |
+| 프롬프트 변경 | 관련 플로우 섹션 | - |
+| 결제/과금 로직 변경 | 섹션 3.6 (결제), 3.9 (사용량) | 과금 모델 |
+| 환경변수 추가 | - | 환경변수 섹션 |
+| 보안/인증 로직 변경 | 섹션 4 (보안 아키텍처) | - |
+| 새 페이지 라우트 추가 | 섹션 1 (디렉토리 구조) | - |
+| types/ 타입 변경 | 섹션 5 (타입 정의) | - |
+| KB 시드 데이터 추가 | 섹션 3.8 (KB 시스템) | - |
+
+#### 업데이트 절차
+1. 코드 변경 완료 후, 위 매핑 테이블을 확인한다
+2. 해당하는 섹션을 `research.md`에서 찾아 업데이트한다
+3. `CLAUDE.md`의 요약 섹션도 필요 시 업데이트한다
+4. 문서 업데이트를 빠뜨린 경우, 다음 작업 시작 전에 보완한다
+
+---
+
 ## 현재 진행 상황
 - [x] Phase 1: 프로젝트 초기 설정
 - [x] Phase 2: MCP 서버 개발
@@ -146,3 +281,4 @@ NEXT_PUBLIC_APP_URL=
 - [x] Phase 5: 학습 시스템
 - [x] Phase 6: 대시보드 + 결제 + 출시
 - [x] VibeStack → VibeUniv 리브랜딩 (PR #2)
+- [x] Phase A: MCP Local-First Refactoring (서버 LLM 호출 99.5% 제거)
