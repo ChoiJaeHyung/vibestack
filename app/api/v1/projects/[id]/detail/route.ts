@@ -84,7 +84,7 @@ export async function GET(
     if (filesList.length > MAX_FILES) {
       allFileList = filesList.map((f) => ({
         file_name: f.file_name,
-        file_path: f.file_path,
+        file_path: f.file_path ?? "",
       }));
     }
 
@@ -100,7 +100,7 @@ export async function GET(
 
       files.push({
         file_name: f.file_name,
-        file_path: f.file_path,
+        file_path: f.file_path ?? "",
         content,
       });
     }
