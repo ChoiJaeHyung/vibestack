@@ -82,3 +82,122 @@ export interface CurriculumSubmitResult {
   title: string;
   totalModules: number;
 }
+
+export interface ConceptHintItem {
+  concept_key: string;
+  concept_name: string;
+  key_points: string[];
+  common_quiz_topics: string[];
+  prerequisite_concepts: string[];
+  tags: string[];
+}
+
+export interface KnowledgeHintsResult {
+  techs: Record<string, ConceptHintItem[]>;
+  availableCount: number;
+  requestedCount: number;
+}
+
+// ─── Local-First Types (Phase A) ─────────────────────────────────
+
+// Project detail with file contents (for local analysis)
+export interface ProjectDetail {
+  id: string;
+  name: string;
+  status: string;
+  files: Array<{
+    file_name: string;
+    file_path: string;
+    content: string;
+  }>;
+  allFileList?: Array<{
+    file_name: string;
+    file_path: string;
+  }>;
+  existingTechStacks: TechStackItem[];
+}
+
+// Tech stack submission from local AI analysis
+export interface TechStackSubmission {
+  technologies: Array<{
+    name: string;
+    category: string;
+    version?: string;
+    confidence: number;
+    importance: string;
+    description?: string;
+  }>;
+  architecture_summary?: string;
+}
+
+export interface TechStackSubmitResult {
+  savedCount: number;
+  projectStatus: string;
+}
+
+// Tutor context for local AI tutoring
+export interface TutorContext {
+  techStacks: Array<{
+    technology_name: string;
+    category: string;
+    description: string | null;
+  }>;
+  files: Array<{
+    file_name: string;
+    content: string;
+  }>;
+  learningContext?: {
+    path_title: string;
+    current_module: string;
+  };
+}
+
+// Curriculum context (combined tech stacks + KB hints + educational analysis)
+export interface CurriculumContext {
+  techStacks: TechStackItem[];
+  knowledgeHints: Record<string, ConceptHintItem[]>;
+  educationalAnalysis: EducationalAnalysisData | null;
+}
+
+// ─── Educational Analysis ────────────────────────────────────────
+
+export interface EducationalAnalysisData {
+  project_overview: {
+    one_liner: string;
+    app_type: string;
+    target_users: string;
+    core_features: string[];
+    tech_stack_metaphors: Array<{ tech_name: string; metaphor: string }>;
+  };
+  user_flows: Array<{
+    name: string;
+    trigger: string;
+    difficulty: string;
+    steps: Array<{ description: string; file: string; line_range: string }>;
+  }>;
+  file_analysis: Array<{
+    path: string;
+    role: string;
+    complexity: number;
+    difficulty: string;
+    key_concepts: string[];
+    prerequisites: string[];
+    gotchas: string[];
+    teaching_notes: string;
+  }>;
+  learning_priorities: {
+    beginner: { start_with: string[]; focus_on: string[]; skip_for_now: string[] };
+    intermediate: { start_with: string[]; focus_on: string[]; deep_dive: string[] };
+    advanced: { start_with: string[]; focus_on: string[]; challenge_topics: string[] };
+  };
+  repeated_patterns: Array<{
+    name: string;
+    description: string;
+    occurrences: Array<{ file: string; line_range: string }>;
+    teaching_value: string;
+  }>;
+  code_quality: {
+    good_practices: Array<{ description: string; concept: string }>;
+    improvement_areas: Array<{ description: string; severity: string; teaching_opportunity: string }>;
+  };
+}

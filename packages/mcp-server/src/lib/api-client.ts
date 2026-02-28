@@ -1,13 +1,21 @@
 import type {
   ApiResponse,
   AnalysisResult,
+  ConceptHintItem,
   CreateProjectInput,
+  CurriculumContext,
   CurriculumSubmitResult,
+  EducationalAnalysisData,
+  KnowledgeHintsResult,
   LearningPath,
   Project,
+  ProjectDetail,
   ProjectFile,
   SessionLog,
   TechStackItem,
+  TechStackSubmission,
+  TechStackSubmitResult,
+  TutorContext,
   TutorResponse,
 } from "../types.js";
 
@@ -96,7 +104,7 @@ export class VibeUnivClient {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.apiKey}`,
       "Content-Type": "application/json",
-      "User-Agent": "vibeuniv-mcp-server/0.2.0",
+      "User-Agent": "vibeuniv-mcp-server/0.3.0",
     };
 
     const response = await fetch(url, {
@@ -302,6 +310,38 @@ export class VibeUnivClient {
     return items;
   }
 
+  async getKnowledgeHints(techNames: string[]): Promise<KnowledgeHintsResult> {
+    interface RawKnowledgeResponse {
+      techs: Record<string, ConceptHintItem[]>;
+      available_count: number;
+      requested_count: number;
+    }
+
+    const techsParam = encodeURIComponent(techNames.join(","));
+    const raw = await this.request<RawKnowledgeResponse>(
+      "GET",
+      `/knowledge?techs=${techsParam}`
+    );
+
+    return {
+      techs: raw.techs,
+      availableCount: raw.available_count,
+      requestedCount: raw.requested_count,
+    };
+  }
+
+  async getEducationalAnalysis(projectId: string): Promise<EducationalAnalysisData | null> {
+    try {
+      return await this.request<EducationalAnalysisData>(
+        "GET",
+        `/projects/${projectId}/educational-analysis`
+      );
+    } catch (err) {
+      console.error(`[vibeuniv] Educational analysis fetch failed (non-fatal): ${err instanceof Error ? err.message : err}`);
+      return null;
+    }
+  }
+
   async submitCurriculum(
     projectId: string,
     curriculum: Record<string, unknown>,
@@ -323,5 +363,39 @@ export class VibeUnivClient {
       title: raw.title,
       totalModules: raw.total_modules,
     };
+  }
+
+  // ─── Local-First Methods (Phase A) ──────────────────────────────
+
+  async getProjectDetail(projectId: string): Promise<ProjectDetail> {
+    return this.request<ProjectDetail>(
+      "GET",
+      `/projects/${projectId}/detail`,
+    );
+  }
+
+  async submitTechStacks(
+    projectId: string,
+    submission: TechStackSubmission,
+  ): Promise<TechStackSubmitResult> {
+    return this.request<TechStackSubmitResult>(
+      "POST",
+      `/projects/${projectId}/tech-stacks`,
+      submission,
+    );
+  }
+
+  async getTutorContext(projectId: string): Promise<TutorContext> {
+    return this.request<TutorContext>(
+      "GET",
+      `/projects/${projectId}/tutor-context`,
+    );
+  }
+
+  async getCurriculumContext(projectId: string): Promise<CurriculumContext> {
+    return this.request<CurriculumContext>(
+      "GET",
+      `/projects/${projectId}/curriculum-context`,
+    );
   }
 }
