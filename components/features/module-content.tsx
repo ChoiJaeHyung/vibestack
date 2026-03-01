@@ -115,8 +115,12 @@ const DEFAULT_SECTION_CONFIG = SECTION_CONFIG.explanation;
 
 function QuizSection({
   section,
+  sectionIndex,
+  onResult,
 }: {
   section: ContentSection;
+  sectionIndex: number;
+  onResult: (sectionIndex: number, correct: boolean) => void;
 }) {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -132,7 +136,7 @@ function QuizSection({
   return (
     <div className="space-y-4">
       {/* Quiz body */}
-      <div className="prose prose-invert max-w-none">
+      <div className="prose dark:prose-invert max-w-none">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {section.body ?? ""}
         </ReactMarkdown>
@@ -185,7 +189,10 @@ function QuizSection({
       {/* Check answer button */}
       {!showAnswer && (
         <Button
-          onClick={() => setShowAnswer(true)}
+          onClick={() => {
+            setShowAnswer(true);
+            onResult(sectionIndex, selectedOption === correctAnswer);
+          }}
           disabled={selectedOption === null}
           variant="secondary"
           size="sm"
@@ -226,7 +233,7 @@ function QuizSection({
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-text-faint">
                 해설
               </p>
-              <div className="prose prose-invert max-w-none">
+              <div className="prose dark:prose-invert max-w-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {section.quiz_explanation}
                 </ReactMarkdown>
@@ -318,7 +325,7 @@ function ChallengeSection({
 
   return (
     <div className="space-y-4">
-      <div className="prose prose-invert max-w-none">
+      <div className="prose dark:prose-invert max-w-none">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {section.body ?? ""}
         </ReactMarkdown>
@@ -470,13 +477,24 @@ export function ModuleContent({
     progress?.status === "completed",
   );
   const startTimeRef = useRef<number>(Date.now());
+  const quizResultsRef = useRef<Map<number, boolean>>(new Map());
   const contentRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
 
+  const handleQuizResult = useCallback((sectionIndex: number, correct: boolean) => {
+    quizResultsRef.current.set(sectionIndex, correct);
+  }, []);
+
+  // Reset quiz results and start time when module changes
+  useEffect(() => {
+    quizResultsRef.current.clear();
+    startTimeRef.current = Date.now();
+  }, [moduleId]);
+
   // Set panel props when module changes
   useEffect(() => {
-    setPanelProps({ projectId, projectName, learningPathId, moduleId });
-  }, [projectId, projectName, learningPathId, moduleId, setPanelProps]);
+    setPanelProps({ projectId, projectName, learningPathId, moduleId, moduleName: title });
+  }, [projectId, projectName, learningPathId, moduleId, title, setPanelProps]);
 
   // On-demand content generation state
   const [localSections, setLocalSections] = useState<ContentSection[]>(sections ?? []);
@@ -592,18 +610,29 @@ export function ModuleContent({
       (Date.now() - startTimeRef.current) / 1000,
     );
 
+    // Compute quiz score (0-100)
+    let score: number | undefined;
+    const quizResults = quizResultsRef.current;
+    if (quizResults.size > 0) {
+      const correct = [...quizResults.values()].filter(Boolean).length;
+      score = Math.round((correct / quizResults.size) * 100);
+    }
+
     try {
       const result = await updateLearningProgress(
         moduleId,
         "completed",
-        undefined,
+        score,
         timeSpentSeconds,
       );
       if (result.success) {
         setIsCompleted(true);
+      } else {
+        alert("학습 진행 상황 저장에 실패했습니다. 다시 시도해 주세요.");
       }
-    } catch {
-      // Ignore
+    } catch (err) {
+      console.error("[learning] Progress save error:", err);
+      alert("학습 진행 상황 저장에 실패했습니다. 다시 시도해 주세요.");
     } finally {
       setCompleting(false);
     }
@@ -687,14 +716,14 @@ export function ModuleContent({
 
   function renderSectionContent(section: ContentSection, sectionIndex: number) {
     if (section.type === "quiz_question") {
-      return <QuizSection section={section} />;
+      return <QuizSection section={section} sectionIndex={sectionIndex} onResult={handleQuizResult} />;
     }
     if (section.type === "challenge") {
       return <ChallengeSection section={section} moduleId={moduleId} sectionIndex={sectionIndex} />;
     }
     return (
       <div className="space-y-4">
-        <div className="prose prose-invert max-w-none">
+        <div className="prose dark:prose-invert max-w-none">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeHighlight]}

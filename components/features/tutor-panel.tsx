@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
-import { X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { X, MessageCircle, Search } from "lucide-react";
 import { useTutorPanel } from "@/components/features/tutor-panel-context";
 import { TutorChat } from "@/components/features/tutor-chat";
+import { TutorSearch } from "@/components/features/tutor-search";
+
+type TabType = "chat" | "search";
 
 export function TutorPanel() {
   const { isOpen, close, panelProps, selectedText } = useTutorPanel();
+  const [activeTab, setActiveTab] = useState<TabType>("chat");
 
   // Close on Escape key
   useEffect(() => {
@@ -18,6 +22,13 @@ export function TutorPanel() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, close]);
+
+  // Switch to chat tab when new selectedText arrives (adjust state during render)
+  const [prevSelectedText, setPrevSelectedText] = useState(selectedText);
+  if (selectedText && selectedText !== prevSelectedText) {
+    setActiveTab("chat");
+    setPrevSelectedText(selectedText);
+  }
 
   return (
     <>
@@ -36,35 +47,71 @@ export function TutorPanel() {
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border-default px-4 py-3">
-          <span className="text-sm font-medium text-text-primary">
-            AI 튜터
-          </span>
-          <button
-            type="button"
-            onClick={close}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-bg-input hover:text-text-primary"
-          >
-            <X className="h-4 w-4" />
-          </button>
+        <div className="border-b border-border-default">
+          <div className="flex items-center justify-between px-4 py-3">
+            <span className="text-sm font-medium text-text-primary">
+              AI 튜터
+            </span>
+            <button
+              type="button"
+              onClick={close}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-bg-input hover:text-text-primary"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex px-4 gap-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab("chat")}
+              className={`flex items-center gap-1.5 rounded-t-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                activeTab === "chat"
+                  ? "bg-bg-input text-violet-400"
+                  : "text-text-muted hover:text-text-secondary"
+              }`}
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              채팅
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("search")}
+              className={`flex items-center gap-1.5 rounded-t-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                activeTab === "search"
+                  ? "bg-bg-input text-violet-400"
+                  : "text-text-muted hover:text-text-secondary"
+              }`}
+            >
+              <Search className="h-3.5 w-3.5" />
+              검색
+            </button>
+          </div>
         </div>
 
-        {/* Chat */}
+        {/* Content */}
         <div className="flex-1 overflow-hidden">
-          {panelProps ? (
-            <TutorChat
-              projectId={panelProps.projectId}
-              projectName={panelProps.projectName}
-              learningPathId={panelProps.learningPathId}
-              moduleId={panelProps.moduleId}
-              selectedText={selectedText ?? undefined}
-            />
+          {activeTab === "chat" ? (
+            panelProps ? (
+              <TutorChat
+                projectId={panelProps.projectId}
+                projectName={panelProps.projectName}
+                learningPathId={panelProps.learningPathId}
+                moduleId={panelProps.moduleId}
+                selectedText={selectedText ?? undefined}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <p className="text-sm text-text-muted">
+                  학습 모듈을 선택하세요
+                </p>
+              </div>
+            )
           ) : (
-            <div className="flex h-full items-center justify-center">
-              <p className="text-sm text-text-muted">
-                학습 모듈을 선택하세요
-              </p>
-            </div>
+            <TutorSearch
+              moduleName={panelProps?.moduleName}
+            />
           )}
         </div>
       </div>
