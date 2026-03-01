@@ -921,7 +921,7 @@ async function _generateContentForModule(
 
   const llmResult = await provider.chat({
     messages: [{ role: "user", content: contentPrompt }],
-    maxTokens: Math.min(batchModules.length * 10000, 100000),
+    maxTokens: Math.min(batchModules.length * 16000, 128000),
   });
 
   let batchContent: ContentBatchItem[];
@@ -1472,6 +1472,7 @@ export async function sendTutorMessage(
   message: string,
   conversationId?: string,
   learningPathId?: string,
+  moduleId?: string,
 ): Promise<SendTutorMessageResult> {
   try {
     const supabase = await createClient();
@@ -1529,7 +1530,7 @@ export async function sendTutorMessage(
 
     // Build learning context if a learning path ID is provided
     let learningContext:
-      | { path_title: string; current_module: string }
+      | { path_title: string; current_module: string; module_sections?: string }
       | undefined;
 
     if (learningPathId) {
@@ -1541,17 +1542,45 @@ export async function sendTutorMessage(
         .single();
 
       if (pathData) {
-        // Find the current module (first in_progress or first not_started)
-        const { data: modules } = await supabase
-          .from("learning_modules")
-          .select("id, title")
-          .eq("learning_path_id", learningPathId)
-          .order("module_order", { ascending: true })
-          .limit(1);
+        // If moduleId is provided, fetch that specific module
+        let currentModuleTitle = "Getting started";
+        let moduleSections: string | undefined;
+
+        if (moduleId) {
+          const { data: moduleData } = await supabase
+            .from("learning_modules")
+            .select("title, content")
+            .eq("id", moduleId)
+            .eq("learning_path_id", learningPathId)
+            .single();
+
+          if (moduleData) {
+            currentModuleTitle = moduleData.title;
+            // Extract section titles from module content
+            const content = moduleData.content as Record<string, unknown> | null;
+            if (content && Array.isArray((content as { sections?: unknown[] }).sections)) {
+              const sections = (content as { sections: Array<{ title?: string; type?: string }> }).sections;
+              moduleSections = sections
+                .map((s) => `- [${s.type ?? "section"}] ${s.title ?? "Untitled"}`)
+                .join("\n");
+            }
+          }
+        } else {
+          // Fallback: first module
+          const { data: modules } = await supabase
+            .from("learning_modules")
+            .select("id, title")
+            .eq("learning_path_id", learningPathId)
+            .order("module_order", { ascending: true })
+            .limit(1);
+
+          currentModuleTitle = modules?.[0]?.title ?? "Getting started";
+        }
 
         learningContext = {
           path_title: pathData.title,
-          current_module: modules?.[0]?.title ?? "Getting started",
+          current_module: currentModuleTitle,
+          module_sections: moduleSections,
         };
       }
     }

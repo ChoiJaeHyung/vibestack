@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, type MouseEvent as ReactMouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
@@ -25,7 +25,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import { updateLearningProgress, generateModuleContent, prefetchNextModuleContent } from "@/server/actions/learning";
-import { TutorChat } from "@/components/features/tutor-chat";
+import { useTutorPanel } from "@/components/features/tutor-panel-context";
 import hljs from "highlight.js/lib/core";
 import javascript from "highlight.js/lib/languages/javascript";
 import typescript from "highlight.js/lib/languages/typescript";
@@ -132,7 +132,7 @@ function QuizSection({
   return (
     <div className="space-y-4">
       {/* Quiz body */}
-      <div className="prose prose-sm prose-invert max-w-none">
+      <div className="prose prose-invert max-w-none">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {section.body ?? ""}
         </ReactMarkdown>
@@ -226,7 +226,7 @@ function QuizSection({
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-text-faint">
                 해설
               </p>
-              <div className="prose prose-sm prose-invert max-w-none">
+              <div className="prose prose-invert max-w-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {section.quiz_explanation}
                 </ReactMarkdown>
@@ -318,7 +318,7 @@ function ChallengeSection({
 
   return (
     <div className="space-y-4">
-      <div className="prose prose-sm prose-invert max-w-none">
+      <div className="prose prose-invert max-w-none">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {section.body ?? ""}
         </ReactMarkdown>
@@ -464,12 +464,19 @@ export function ModuleContent({
   needsGeneration,
 }: ModuleContentProps) {
   const router = useRouter();
+  const { isOpen: isTutorOpen, toggle: toggleTutor, open: openTutor, setPanelProps } = useTutorPanel();
   const [completing, setCompleting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(
     progress?.status === "completed",
   );
   const startTimeRef = useRef<number>(Date.now());
-  const [showChat, setShowChat] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
+
+  // Set panel props when module changes
+  useEffect(() => {
+    setPanelProps({ projectId, projectName, learningPathId, moduleId });
+  }, [projectId, projectName, learningPathId, moduleId, setPanelProps]);
 
   // On-demand content generation state
   const [localSections, setLocalSections] = useState<ContentSection[]>(sections ?? []);
@@ -631,6 +638,53 @@ export function ModuleContent({
     setPollCount((c) => c + 1);
   }, []);
 
+  // Text selection → "Ask AI Tutor" tooltip
+  const handleMouseUp = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed) {
+      setTooltip(null);
+      return;
+    }
+
+    const text = selection.toString().trim();
+    if (text.length < 5) {
+      setTooltip(null);
+      return;
+    }
+
+    // Skip selections inside code editors (react-simple-code-editor)
+    const anchorNode = selection.anchorNode;
+    if (anchorNode) {
+      let node: Node | null = anchorNode;
+      while (node) {
+        if (node instanceof HTMLElement && node.classList.contains("npm__react-simple-code-editor__textarea")) {
+          setTooltip(null);
+          return;
+        }
+        node = node.parentNode;
+      }
+    }
+
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    setTooltip({
+      x: rect.left + rect.width / 2,
+      y: rect.top - 10,
+      text,
+    });
+  }, []);
+
+  const handleMouseDown = useCallback(() => {
+    setTooltip(null);
+  }, []);
+
+  const handleAskTutor = useCallback(() => {
+    if (!tooltip) return;
+    openTutor(`이 부분에 대해 더 설명해 주세요:\n\n"${tooltip.text}"`);
+    setTooltip(null);
+    window.getSelection()?.removeAllRanges();
+  }, [tooltip, openTutor]);
+
   function renderSectionContent(section: ContentSection, sectionIndex: number) {
     if (section.type === "quiz_question") {
       return <QuizSection section={section} />;
@@ -640,7 +694,7 @@ export function ModuleContent({
     }
     return (
       <div className="space-y-4">
-        <div className="prose prose-sm prose-invert max-w-none">
+        <div className="prose prose-invert max-w-none">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeHighlight]}
@@ -663,7 +717,29 @@ export function ModuleContent({
   }
 
   return (
-    <div className="space-y-6 pb-20">
+    <div
+      className="space-y-6 pb-20"
+      ref={contentRef}
+      onMouseUp={handleMouseUp}
+      onMouseDown={handleMouseDown}
+    >
+      {/* Floating "Ask AI Tutor" tooltip */}
+      {tooltip && (
+        <div
+          className="fixed z-50 -translate-x-1/2 -translate-y-full animate-in fade-in zoom-in-95 duration-150"
+          style={{ left: tooltip.x, top: tooltip.y }}
+        >
+          <button
+            type="button"
+            onClick={handleAskTutor}
+            className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white shadow-lg transition-colors hover:bg-violet-700"
+          >
+            <Brain className="h-3.5 w-3.5" />
+            AI 튜터에게 물어보기
+          </button>
+        </div>
+      )}
+
       {/* Module header */}
       <div>
         <div className="flex items-center gap-2">
@@ -798,28 +874,19 @@ export function ModuleContent({
         </div>
       )}
 
-      {/* AI Tutor Chat Panel */}
-      {showChat && (
-        <div className="h-[500px]">
-          <TutorChat
-            projectId={projectId}
-            projectName={projectName}
-            learningPathId={learningPathId}
-          />
-        </div>
-      )}
-
       {/* Sticky bottom action bar */}
       {localSections.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 lg:left-64">
+        <div className={`fixed bottom-0 left-0 z-40 lg:left-64 transition-[right] duration-300 ${
+          isTutorOpen ? "right-[420px]" : "right-0"
+        }`}>
           <div className="border-t border-border-default bg-background/90 backdrop-blur-xl backdrop-saturate-150">
             <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-2.5">
               {/* Left: AI Tutor */}
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowChat(!showChat)}
-                className={showChat ? "text-violet-400" : ""}
+                onClick={toggleTutor}
+                className={isTutorOpen ? "text-violet-400" : ""}
               >
                 <Brain className="mr-1.5 h-4 w-4" />
                 AI 튜터

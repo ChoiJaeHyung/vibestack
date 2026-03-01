@@ -3,6 +3,8 @@ import { getAuthUser, getUserProfile } from "@/lib/supabase/auth";
 import { Sidebar } from "@/components/ui/sidebar";
 import { AnnouncementBanner } from "@/components/features/announcement-banner";
 import { AuthStateListener } from "@/components/features/auth-state-listener";
+import { TutorPanelProvider } from "@/components/features/tutor-panel-context";
+import { DashboardMain } from "@/components/features/dashboard-main";
 import type { UserRole } from "@/types/database";
 
 export default async function DashboardLayout({
@@ -45,12 +47,12 @@ export default async function DashboardLayout({
     <div className="min-h-screen bg-background">
       <AuthStateListener />
       <Sidebar userEmail={userEmail} userRole={userRole} />
-      <main className="lg:pl-64">
-        <div className="mx-auto max-w-5xl px-6 py-8 pt-16 lg:pt-8">
+      <TutorPanelProvider>
+        <DashboardMain>
           <AnnouncementBanner />
           {children}
-        </div>
-      </main>
+        </DashboardMain>
+      </TutorPanelProvider>
     </div>
   );
 }

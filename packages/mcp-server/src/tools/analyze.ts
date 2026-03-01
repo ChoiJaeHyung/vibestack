@@ -42,8 +42,11 @@ export function registerAnalyze(server: McpServer, client: VibeUnivClient): void
             output += "\n";
           }
 
-          output += "To re-analyze, call vibeuniv_analyze with force: true.\n";
-          output += "Next step: Use vibeuniv_generate_curriculum to create a learning curriculum.";
+          output += "To re-analyze, call vibeuniv_analyze with force: true.\n\n";
+          output += "📚 다음 단계: 학습 커리큘럼 생성\n";
+          output += "사용자에게 원하는 난이도를 물어보세요:\n";
+          output += "  - beginner (초급) / intermediate (중급) / advanced (고급)\n";
+          output += "난이도를 확인한 후 vibeuniv_generate_curriculum을 호출하세요.";
 
           return {
             content: [{ type: "text" as const, text: output }],
@@ -94,24 +97,10 @@ export function registerAnalyze(server: McpServer, client: VibeUnivClient): void
         }
 
         // Analysis instructions
-        output += `### Analysis Instructions\n\n`;
-        output += `For each technology detected, provide:\n`;
-        output += `- **name**: Technology name (e.g., "Next.js", "React", "TypeScript")\n`;
-        output += `- **category**: One of: framework, language, database, auth, deploy, styling, testing, build_tool, library, other\n`;
-        output += `- **version**: Version string if detectable (e.g., "15.1.0"), omit if unknown\n`;
-        output += `- **confidence**: 0.0 to 1.0 — how confident you are\n`;
-        output += `- **importance**: One of: core (essential to the project), supporting (actively used), dev_dependency (development only)\n`;
-        output += `- **description**: One sentence describing how this tech is used in the project\n\n`;
-        output += `Also provide an **architecture_summary** — a 2-3 sentence description of the overall project architecture.\n\n`;
-        output += `### Submit Results\n\n`;
-        output += `After completing the analysis, submit the results using:\n\n`;
-        output += `vibeuniv_submit_tech_stacks({\n`;
-        output += `  project_id: "${project_id}",\n`;
-        output += `  analysis: {\n`;
-        output += `    technologies: [ { name, category, version, confidence, importance, description }, ... ],\n`;
-        output += `    architecture_summary: "..."\n`;
-        output += `  }\n`;
-        output += `})\n`;
+        output += `### Instructions\n\n`;
+        output += `For each technology: { name, category(framework|language|database|auth|deploy|styling|testing|build_tool|library|other), version?, confidence(0-1), importance(core|supporting|dev_dependency), description }\n`;
+        output += `Also: architecture_summary (2-3 sentences).\n\n`;
+        output += `Submit: vibeuniv_submit_tech_stacks({ project_id: "${project_id}", analysis: { technologies: [...], architecture_summary } })\n`;
 
         return {
           content: [{ type: "text" as const, text: output }],

@@ -16,11 +16,19 @@ vibeuniv/
 │   ├── robots.ts                     # SEO robots.txt
 │   ├── sitemap.ts                    # SEO sitemap
 │   ├── manifest.ts                   # PWA manifest
+│   ├── not-found.tsx                 # 커스텀 404 페이지
+│   ├── opengraph-image.tsx           # 다이나믹 OG 이미지 (1200x630)
+│   ├── twitter-image.tsx             # 다이나믹 Twitter 카드 이미지
 │   │
 │   ├── (auth)/                       # 인증 페이지 그룹
-│   │   ├── login/page.tsx
-│   │   ├── signup/page.tsx
-│   │   └── callback/route.ts         # OAuth 콜백
+│   │   ├── layout.tsx                # 인증 페이지 공통 메타데이터 (noindex)
+│   │   ├── login/
+│   │   │   ├── page.tsx
+│   │   │   └── layout.tsx            # 로그인 페이지 메타데이터
+│   │   ├── signup/
+│   │   │   ├── page.tsx
+│   │   │   └── layout.tsx            # 회원가입 페이지 메타데이터
+│   │   └── callback/route.ts         # OAuth 콜백 (next 파라미터 검증)
 │   │
 │   ├── (dashboard)/                  # 보호된 대시보드 그룹
 │   │   ├── layout.tsx                # Sidebar + main layout
@@ -101,7 +109,8 @@ vibeuniv/
 │   │   ├── input.tsx
 │   │   ├── loading.tsx
 │   │   ├── sidebar.tsx
-│   │   └── theme-provider.tsx
+│   │   ├── theme-provider.tsx        # next-themes 래퍼
+│   │   └── theme-toggle.tsx          # 라이트/다크 모드 토글 버튼
 │   └── features/                     # 기능 컴포넌트
 │       ├── dashboard-content.tsx      # 대시보드 (통계, 차트, 최근 프로젝트)
 │       ├── projects-content.tsx       # 프로젝트 목록 + 관리
@@ -113,8 +122,11 @@ vibeuniv/
 │       ├── learning-content.tsx       # 학습 경로 목록
 │       ├── learning-path-card.tsx     # 학습 카드
 │       ├── learning-generator.tsx     # 학습 경로 생성 UI
-│       ├── module-content.tsx         # 모듈 학습 (섹션 렌더링)
+│       ├── module-content.tsx         # 모듈 학습 (섹션 렌더링, 텍스트 선택→AI질문)
 │       ├── tutor-chat.tsx             # AI 튜터 채팅 인터페이스
+│       ├── tutor-panel.tsx            # AI 튜터 우측 슬라이드 패널
+│       ├── tutor-panel-context.tsx    # 튜터 패널 상태 Context Provider
+│       ├── dashboard-main.tsx         # 대시보드 main 래퍼 (패널 push 효과)
 │       ├── billing-manager.tsx        # 구독 관리
 │       ├── payment-confirm.tsx        # 결제 확인 (토스)
 │       ├── upgrade-modal.tsx          # 업그레이드 모달
@@ -510,11 +522,15 @@ Phase 1: 구조 생성
    - learning_paths + learning_modules 저장 (content 비어있음)
        │
        ▼
-Phase 2: 콘텐츠 생성 (기술별 배치)
+Phase 2: 콘텐츠 생성 (기술별 배치, maxTokens: 16000*n, cap 128K)
    - 각 tech_name 그룹별로:
      - knowledge/index.ts: getKBHints() → KB 힌트 조회
      - 관련 소스 파일 필터링
      - learning-roadmap.ts: buildContentBatchPrompt() → LLM에 콘텐츠 요청
+       - 프롬프트 규칙: 5-8 paragraphs per explanation, friendly teacher tone
+       - 📚 더 알아보기 (공식 문서 인용 링크) 필수
+       - 코드 라인별 설명 (numbered list) 필수
+       - beginner: 실생활 비유, 💡 핵심 포인트 요약 박스
      - LLM 응답: { modules[]: { content: { sections[] } } }
      - learning_modules.content 업데이트
        │
@@ -544,14 +560,22 @@ Section = {
 1. 사용량 확인 (Free: 월 20회)
 2. 프로젝트 파일 로드 (최대 10개)
 3. 기술 스택 로드
-4. tutor-chat.ts: buildTutorPrompt() → 시스템 프롬프트
+4. moduleId가 있으면 해당 모듈의 title + section titles를 학습 컨텍스트에 포함
+5. tutor-chat.ts: buildTutorPrompt() → 시스템 프롬프트
    - 학생의 실제 코드를 참조
    - 간단하게 설명, 전문용어 자제
    - ~500 단어 제한
-5. LLM 호출 → 응답
-6. ai_conversations에 저장 (messages JSONB)
-7. 토큰 사용량 추적
+   - module_sections 블록: 학생이 보고 있는 모듈 섹션 목록 포함
+6. LLM 호출 → 응답
+7. ai_conversations에 저장 (messages JSONB)
+8. 토큰 사용량 추적
 ```
+
+**UI 구조:**
+- 우측 슬라이드 패널 (420px, `tutor-panel.tsx`)
+- `TutorPanelProvider` (Context) → `DashboardMain` (push 효과) → `TutorPanel`
+- 텍스트 선택 시 플로팅 "AI 튜터에게 물어보기" 툴팁 → 클릭 시 패널 열림 + 질문 자동 입력
+- 모바일: 전체화면 오버레이 + 배경 터치 닫기
 
 ### 3.6 결제 플로우 (토스페이먼츠)
 
@@ -656,19 +680,57 @@ ConceptHint 구조:
 | API 키 | Bearer vs_<hex> + bcrypt | 외부 API (MCP/CLI) |
 | Service Role | SUPABASE_SERVICE_ROLE_KEY | 백그라운드 작업 |
 
+**보안 강화 (PR #48, #49):**
+- `getAuthUser()`에서 `is_banned` 체크 → 밴 유저 전체 차단
+- Admin dev-mode 바이패스는 `NODE_ENV === "development"`일 때만 동작
+- OAuth 콜백 `next` 파라미터 검증 (`//` 시작 차단, open redirect 방지)
+
 ### 4.2 암호화
 
 - **LLM 키**: AES-256-GCM (ENCRYPTION_KEY 환경변수)
 - **API 키**: bcrypt 12 rounds (단방향 해시)
 - **토스 시크릿 키**: 환경변수 (TOSS_SECRET_KEY)
+- **토스 빌링키**: AES-256-GCM 암호화 저장 (encrypt/decrypt 사용)
+- **콘텐츠 복호화 실패 시**: 암호문 형식 감지 → `[Decryption failed]` 반환 (암호문 미노출)
 
 ### 4.3 레이트 리밋
 
-| 경로 | 제한 | 키 |
-|------|------|-----|
+| 경로/액션 | 제한 | 키 |
+|-----------|------|-----|
 | `/api/v1/*` | 60/분 | API 키 또는 IP |
 | `/api/auth/*` | 10/분 | IP |
 | `/api/payments/*` | 20/분 | IP |
+| `startAnalysis` (Server Action) | 5/분 | user_id |
+| `generateLearningPath` (Server Action) | 5/분 | user_id |
+| `sendTutorMessage` (Server Action) | 20/분 | user_id |
+
+> **Note**: 인메모리 레이트 리미터 사용 중. Vercel Serverless에서 인스턴스간 공유 안 됨. 추후 Redis/Upstash로 교체 필요.
+
+### 4.4 결제 보안 (토스페이먼츠)
+
+- **결제 금액 검증**: confirm 시 DB의 pending 레코드 금액과 클라이언트 제출 금액 비교
+- **웹훅 검증**: 토스 결제 응답의 `secret` 값을 DB에 저장 → 웹훅 도착 시 `timingSafeEqual`로 비교
+- **빌링키**: 클라이언트에 미반환 (`{ registered: true }`만 응답), AES-256-GCM 암호화 저장
+- **Payments RLS**: SELECT만 허용, INSERT/UPDATE/DELETE는 service_role만 가능 (명시적 deny 정책)
+
+### 4.5 파일 업로드 제한
+
+- 파일당 최대 100KB (`MAX_FILE_CONTENT_SIZE`)
+- 요청당 최대 100개 파일 (`MAX_FILES_PER_UPLOAD`)
+- `app/api/v1/projects/[id]/files/route.ts`에서 검증
+
+### 4.6 HTTP 보안 헤더 (next.config.ts)
+
+- `X-Frame-Options: DENY`
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- `Content-Security-Policy`: self + Toss SDK + Supabase + Pretendard CDN + Google Fonts
+
+### 4.7 Admin 검색 보안
+
+- PostgREST 필터 인젝션 방지: `%`, `_`, `,`, `(`, `)`, `.` 문자 제거 후 `.or()` 사용
 
 ---
 
@@ -717,3 +779,5 @@ interface LLMProvider {
 | 005 | dashboard_rpc.sql | get_dashboard_data() RPC 함수 |
 | 006 | toss_payments.sql | 토스페이먼츠 (payments 테이블, users 컬럼 변경) |
 | 007 | technology_knowledge.sql | technology_knowledge 테이블 + 시드 데이터 5종 |
+| 008 | payments_rls.sql | payments 테이블 INSERT/UPDATE/DELETE deny 정책 + admin SELECT 정책 |
+| 009 | payments_webhook_secret.sql | payments 테이블에 toss_secret 컬럼 추가 (웹훅 검증용) |

@@ -43,7 +43,9 @@ interface TutorChatProps {
   projectId: string;
   projectName?: string;
   learningPathId?: string;
+  moduleId?: string;
   conversationId?: string;
+  selectedText?: string;
 }
 
 /**
@@ -80,7 +82,9 @@ export function TutorChat({
   projectId,
   projectName,
   learningPathId,
+  moduleId,
   conversationId: initialConversationId,
+  selectedText,
 }: TutorChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -164,6 +168,18 @@ export function TutorChat({
     }
   }, [input]);
 
+  // Watch for selectedText prop changes → auto-fill input
+  const prevSelectedTextRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (selectedText && selectedText !== prevSelectedTextRef.current) {
+      setInput(selectedText);
+      prevSelectedTextRef.current = selectedText;
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+    }
+  }, [selectedText]);
+
   // Load conversation list
   async function handleLoadConversations() {
     if (showHistory) {
@@ -215,6 +231,7 @@ export function TutorChat({
         trimmed,
         conversationId,
         learningPathId,
+        moduleId,
       );
 
       if (result.success && result.data) {
@@ -253,7 +270,7 @@ export function TutorChat({
   }
 
   return (
-    <div className="flex h-full flex-col rounded-2xl border border-border-default bg-bg-surface">
+    <div className="flex h-full flex-col">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border-default px-4 py-3">
         <div className="flex items-center gap-2 min-w-0">

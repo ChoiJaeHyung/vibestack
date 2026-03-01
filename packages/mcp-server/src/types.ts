@@ -148,7 +148,13 @@ export interface TutorContext {
   }>;
   learningContext?: {
     path_title: string;
+    learning_path_id: string;
     current_module: string;
+    modules: Array<{
+      id: string;
+      title: string;
+      module_order: number;
+    }>;
   };
 }
 

@@ -30,7 +30,24 @@ export function registerSubmitCurriculum(server: McpServer, client: VibeUnivClie
           content: [
             {
               type: "text" as const,
-              text: `Curriculum submitted successfully!\n\n- Learning Path ID: ${result.learningPathId}\n- Title: ${result.title}\n- Total Modules: ${result.totalModules}\n\nThe user can now access the learning path at https://vibeuniv.com to start learning.`,
+              text: [
+                `커리큘럼이 성공적으로 생성되었습니다!`,
+                ``,
+                `- Learning Path ID: ${result.learningPathId}`,
+                `- 제목: ${result.title}`,
+                `- 총 모듈 수: ${result.totalModules}`,
+                ``,
+                `${"=".repeat(50)}`,
+                `🎓 학습 준비 완료!`,
+                `${"=".repeat(50)}`,
+                ``,
+                `맞춤 학습 커리큘럼이 준비되었습니다.`,
+                `아래 링크에서 바로 학습을 시작할 수 있습니다:`,
+                ``,
+                `👉 https://vibeuniv.com`,
+                ``,
+                `AI 튜터와 함께 프로젝트 기반 학습을 시작해보세요!`,
+              ].join("\n"),
             },
           ],
         };

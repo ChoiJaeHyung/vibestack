@@ -14,7 +14,7 @@ VibeUniv(vibeuniv.com)는 바이브 코더(Vibe Coder)들이 AI로 만든 프로
 - **도메인:** vibeuniv.com
 - **로고 아이콘:** GraduationCap (lucide-react)
 - **톤:** 캐주얼하고 트렌디한 학습 플랫폼. 부담 없고 가볍고 재밌어 보이는 느낌
-- **디자인:** 깔끔한 zinc 모노크롬 (화려한 색상 X)
+- **디자인:** CSS 변수 기반 라이트/다크 모드 지원 (next-themes). 기본 다크 모드, 토글로 전환
 - **GitHub repo:** ChoiJaeHyung/vibestack (레포명은 그대로)
 
 ## 기술 스택 (절대 변경 금지)
@@ -125,9 +125,9 @@ NEXT_PUBLIC_APP_URL=
 3. AI 튜터 대화 (프로젝트 코드를 컨텍스트로 활용)
 
 ### 과금 모델
-- Free: 3 프로젝트, 기본 분석, 월 20회 AI 대화
-- Pro ($19/mo): 무제한, 심화 분석, BYOK(자체 LLM 키)
-- Team ($49/mo): Pro + 팀 공유 + 우선순위
+- Free: 3 프로젝트, 기본 분석, 월 1회 학습 로드맵, 월 20회 AI 대화
+- Pro (₩25,000/월): 무제한 프로젝트, 심화 분석, 무제한 로드맵/AI 대화, BYOK
+- Team (₩59,000/월): Pro + 팀 공유 + 우선 지원
 
 ## Git 워크플로우
 - main 브랜치 직접 push 금지 (hook으로 차단됨)
@@ -153,13 +153,16 @@ NEXT_PUBLIC_APP_URL=
 | **Server Actions** | `server/actions/` | 핵심 비즈니스 로직 |
 | **LLM 어댑터** | `lib/llm/` | 멀티 LLM Provider 팩토리 |
 | **파일 분석** | `lib/analysis/` | 파일 파싱, 다이제스트 생성, tech-stack upsert 유틸 |
-| **학습 시스템** | `lib/learning/`, `lib/prompts/` | 커리큘럼 생성 (2-Phase) |
+| **학습 시스템** | `lib/learning/`, `lib/prompts/` | 커리큘럼 생성 (2-Phase), 상세 콘텐츠 + 인용 링크 |
+| **AI 튜터 패널** | `components/features/tutor-panel*.tsx`, `dashboard-main.tsx` | 우측 슬라이드 패널, 텍스트 선택→AI 질문 |
 | **KB 시스템** | `lib/knowledge/` | 3-Tier 지식 베이스 |
 | **프롬프트** | `lib/prompts/` | LLM 프롬프트 템플릿 |
-| **보안** | `lib/utils/encryption.ts` | AES-256-GCM 암호화 |
+| **보안** | `lib/utils/encryption.ts`, `content-encryption.ts` | AES-256-GCM 암호화, 콘텐츠 복호화 |
+| **보안 헤더** | `next.config.ts` | CSP, HSTS, X-Frame-Options 등 |
+| **SEO** | `app/opengraph-image.tsx`, `twitter-image.tsx`, `not-found.tsx` | OG 이미지, 404 페이지 |
 | **MCP 서버** | `packages/mcp-server/src/` | 10개 MCP 도구 (v0.3.0, Local-First) |
 | **DB 타입** | `types/database.ts` | Supabase 전체 스키마 타입 |
-| **마이그레이션** | `supabase/migrations/` | 001~007 SQL |
+| **마이그레이션** | `supabase/migrations/` | 001~009 SQL |
 
 ### DB 테이블 (18개)
 
@@ -178,7 +181,8 @@ NEXT_PUBLIC_APP_URL=
 3. **커리큘럼 생성 (2-Phase)**: Phase 1: 구조 생성(LLM) → Phase 2: 기술별 콘텐츠 생성(LLM+KB)
 4. **AI 튜터 (웹)**: 프로젝트 파일 + 기술 스택 → 시스템 프롬프트 → LLM 대화
 5. **AI 튜터 (MCP, Local-First)**: tutor-context → 로컬 AI가 직접 답변 (서버 LLM 0)
-6. **결제**: createPaymentRequest → 토스 결제 → confirm → plan_type 업데이트
+6. **결제**: createPaymentRequest → 토스 결제 → confirm (금액 검증 + secret 저장) → plan_type 업데이트
+7. **웹훅**: 토스 웹훅 → secret 비교 검증 → 결제 상태 동기화
 
 ### LLM Provider (11개)
 
@@ -271,6 +275,37 @@ Anthropic, OpenAI, Google, Groq, Mistral, DeepSeek, Cohere, Together, Fireworks,
 3. `CLAUDE.md`의 요약 섹션도 필요 시 업데이트한다
 4. 문서 업데이트를 빠뜨린 경우, 다음 작업 시작 전에 보완한다
 
+### 4. 배포 전 검증 규약 (필수)
+
+**모든 코드 변경 후, PR/배포 전에 반드시 아래 검증 절차를 수행한다. 이것은 선택이 아닌 의무다.**
+
+#### Step 1: 빌드 검증
+- `npx next build` 실행하여 빌드 성공 확인
+- TypeScript 타입 에러, 빌드 에러가 없어야 한다
+- 빌드 실패 시 수정 후 다시 빌드할 것
+
+#### Step 2: 영향 범위 검증
+- 변경된 페이지를 브라우저(Playwright)로 직접 확인한다
+- 라이트/다크 모드 모두에서 깨지는 UI가 없는지 확인한다
+- API 변경 시 관련 엔드포인트가 정상 동작하는지 확인한다
+
+#### Step 3: 보안 체크리스트
+- [ ] `dangerouslySetInnerHTML` 사용 시 입력값 새니타이즈 확인
+- [ ] 사용자 입력이 DB 쿼리에 들어갈 때 파라미터화 확인
+- [ ] 새 API 라우트에 인증 체크 존재 확인
+- [ ] 환경변수에 민감 정보가 `NEXT_PUBLIC_` prefix로 노출되지 않는지 확인
+- [ ] 새 테이블에 RLS 적용 확인
+
+#### Step 4: 문서 동기화
+- 위 3번(문서 자동 동기화) 규약에 따라 `research.md`와 `CLAUDE.md` 업데이트
+- 마이그레이션 추가 시 마이그레이션 히스토리 테이블 업데이트
+- 새 컴포넌트/페이지 추가 시 디렉토리 구조 업데이트
+
+#### 검증 생략 가능한 경우
+- 문서만 수정한 경우 (빌드 검증 불필요)
+- 주석/타입 주석만 수정한 경우
+- 사용자가 "검증 생략해" 등으로 명시한 경우
+
 ---
 
 ## 현재 진행 상황
@@ -282,3 +317,10 @@ Anthropic, OpenAI, Google, Groq, Mistral, DeepSeek, Cohere, Together, Fireworks,
 - [x] Phase 6: 대시보드 + 결제 + 출시
 - [x] VibeStack → VibeUniv 리브랜딩 (PR #2)
 - [x] Phase A: MCP Local-First Refactoring (서버 LLM 호출 99.5% 제거)
+- [x] UI 리디자인 + 토스페이먼츠 결제 (PR #44)
+- [x] 랜딩 페이지 로그아웃 버튼 (PR #45)
+- [x] 라이트/다크 모드 + 테마 토글 (PR #44에 포함)
+- [x] SEO 최적화: OG 이미지, 404, 메타데이터, JSON-LD, 폰트 최적화 (PR #47)
+- [x] 보안 감사 + 14개 취약점 수정 (PR #48)
+- [x] 토스 웹훅 검증 방식 수정: HMAC → secret 비교 (PR #49)
+- [x] 학습 콘텐츠 품질 개선 (프롬프트: 상세 설명, 인용 링크, 코드 라인별 설명) + AI 튜터 우측 슬라이드 패널 + 텍스트 선택→AI 질문

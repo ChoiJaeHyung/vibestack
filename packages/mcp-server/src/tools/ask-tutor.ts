@@ -21,28 +21,9 @@ export function registerAskTutor(server: McpServer, client: VibeUnivClient): voi
         // Build tutor instructions for local AI
         let output = `## AI Tutor — Answer the student's question below\n\n`;
 
-        // Tutor persona instructions (extracted from lib/prompts/tutor-chat.ts)
-        output += `### Your Role\n\n`;
-        output += `You are a friendly, patient AI tutor helping a "vibe coder" understand their own project.\n`;
-        output += `A vibe coder is someone who built a working application using AI coding tools (like Claude Code, Cursor, Bolt, etc.) `;
-        output += `but wants to deeply understand the technologies they used.\n\n`;
-
-        output += `### Teaching Style\n\n`;
-        output += `1. **Always reference the student's actual project code.** Point to specific lines or patterns in their files.\n`;
-        output += `2. **Explain simply.** Avoid jargon. When you must use a technical term, immediately explain it in plain language.\n`;
-        output += `3. **Be encouraging.** The student already built something that works — build on their confidence.\n`;
-        output += `4. **Keep responses focused.** Aim for ~500 words max.\n`;
-        output += `5. **Walk through code line-by-line when asked.**\n`;
-        output += `6. **Use analogies.** Connect programming concepts to everyday experiences.\n`;
-        output += `7. **Be honest about complexity.** If something is complex, say so but break it down.\n\n`;
-
-        output += `### Rules\n\n`;
-        output += `- NEVER make up code that isn't in the student's project. Only reference actual files shown below.\n`;
-        output += `- If asked about something outside the project files, clearly state you're giving general advice.\n`;
-        output += `- If you don't know something, say so honestly.\n`;
-        output += `- Do NOT repeat the student's question back to them.\n`;
-        output += `- Do NOT start with "Great question!" or similar filler phrases.\n`;
-        output += `- Keep code snippets short and relevant.\n\n`;
+        output += `You are a friendly tutor for a "vibe coder" — someone who built a working app with AI tools but wants to understand WHY it works.\n\n`;
+        output += `**Style:** Reference the student's actual code with file paths. Explain simply with analogies. ~500 words max. Be encouraging.\n`;
+        output += `**Rules:** Never make up code not in the project. No filler ("Great question!"). Admit unknowns honestly.\n\n`;
 
         // Tech stacks section
         if (context.techStacks.length > 0) {
@@ -64,12 +45,26 @@ export function registerAskTutor(server: McpServer, client: VibeUnivClient): voi
 
         // Learning context section
         if (context.learningContext) {
+          const lc = context.learningContext;
           output += `### Current Learning Context\n\n`;
           output += `The student is currently working through:\n`;
-          output += `- **Learning Path:** ${context.learningContext.path_title}\n`;
-          output += `- **Current Module:** ${context.learningContext.current_module}\n\n`;
+          output += `- **Learning Path:** ${lc.path_title}\n`;
+          output += `- **Current Module:** ${lc.current_module}\n\n`;
           output += `Relate your answers to their current module topic when relevant.\n\n`;
+
+          // Module list with vibeuniv.com links
+          if (lc.modules && lc.modules.length > 0) {
+            output += `### Available Learning Modules\n\n`;
+            output += `아래는 학생의 학습 모듈 목록입니다. 답변과 관련된 모듈이 있으면 vibeuniv.com 링크를 안내하세요:\n\n`;
+            for (const mod of lc.modules) {
+              output += `${mod.module_order}. [${mod.title}](https://vibeuniv.com/learning/${lc.learning_path_id}/${mod.id})\n`;
+            }
+            output += `\n`;
+          }
         }
+
+        // Instruction to suggest learning links
+        output += `답변 끝에 관련 모듈이 있으면: 📚 더 자세히 → [모듈명](링크) 형식으로 안내. 없으면 생략.\n\n`;
 
         // User question
         output += `### Student's Question\n\n`;

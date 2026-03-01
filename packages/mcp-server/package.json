@@ -1,6 +1,6 @@
 {
   "name": "@vibeuniv/mcp-server",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "VibeUniv MCP Server - Sync your vibe-coded projects for tech stack analysis and learning",
   "type": "module",
   "bin": {
