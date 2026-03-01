@@ -8,6 +8,9 @@ import {
   CheckCircle2,
   ChevronDown,
   GraduationCap,
+  FolderSearch,
+  Brain,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UpgradeModal } from "@/components/features/upgrade-modal";
@@ -53,6 +56,63 @@ const DIFFICULTY_OPTIONS: Array<{
   },
 ];
 
+// ─── Generation Progress Steps ─────────────────────────────────────
+
+const GENERATION_STEPS = [
+  { icon: FolderSearch, label: "프로젝트 분석 중...", threshold: 10 },
+  { icon: Brain, label: "학습 구조 설계 중...", threshold: 25 },
+  { icon: BookOpen, label: "모듈 콘텐츠 준비 중...", threshold: 45 },
+];
+
+function GeneratingStepsUI({ elapsedSeconds }: { elapsedSeconds: number }) {
+  const currentStep = GENERATION_STEPS.findIndex((s) => elapsedSeconds < s.threshold);
+  const activeStep = currentStep === -1 ? GENERATION_STEPS.length - 1 : currentStep;
+
+  return (
+    <div className="flex flex-col items-center gap-5 py-6">
+      {/* Steps */}
+      <div className="flex items-center gap-6 sm:gap-8">
+        {GENERATION_STEPS.map((step, idx) => {
+          const StepIcon = step.icon;
+          const isActive = idx === activeStep;
+          const isDone = idx < activeStep;
+
+          return (
+            <div key={idx} className="flex flex-col items-center gap-2">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-full transition-all ${
+                isDone
+                  ? "bg-green-500/20 ring-2 ring-green-500/40"
+                  : isActive
+                    ? "bg-violet-500/20 ring-2 ring-violet-500/40 animate-pulse"
+                    : "bg-bg-input ring-1 ring-border-strong"
+              }`}>
+                {isDone ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-400" />
+                ) : (
+                  <StepIcon className={`h-5 w-5 ${isActive ? "text-violet-400" : "text-text-dim"}`} />
+                )}
+              </div>
+              <span className={`text-xs ${isActive ? "text-text-tertiary" : "text-text-dim"}`}>
+                Step {idx + 1}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-sm font-medium text-text-tertiary">
+        {GENERATION_STEPS[activeStep].label}
+      </p>
+
+      <div className="flex items-center gap-2 text-xs text-text-dim">
+        <span className="tabular-nums">{elapsedSeconds}초 경과</span>
+        <span>·</span>
+        <span>보통 30~60초 소요</span>
+      </div>
+    </div>
+  );
+}
+
 interface LearningGeneratorProps {
   hasExistingPaths?: boolean;
 }
@@ -69,6 +129,7 @@ export function LearningGenerator({ hasExistingPaths = false }: LearningGenerato
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [remainingPaths, setRemainingPaths] = useState<number | null>(null);
   const [isUnlimited, setIsUnlimited] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const loadProjects = useCallback(async () => {
     setLoadingProjects(true);
@@ -126,6 +187,18 @@ export function LearningGenerator({ hasExistingPaths = false }: LearningGenerato
     }
     fetchUsage();
   }, []);
+
+  // Elapsed time counter for generation progress UI
+  useEffect(() => {
+    if (!loading) {
+      setElapsedSeconds(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setElapsedSeconds((s) => s + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   async function handleGenerate() {
     if (!selectedProjectId) {
@@ -312,30 +385,28 @@ export function LearningGenerator({ hasExistingPaths = false }: LearningGenerato
           )}
 
           {/* Usage hint */}
-          {!isUnlimited && remainingPaths !== null && (
+          {!isUnlimited && remainingPaths !== null && !loading && (
             <p className="text-xs text-text-faint">
               남은 로드맵 생성: {remainingPaths}회
             </p>
           )}
 
+          {/* Generation progress steps */}
+          {loading && (
+            <GeneratingStepsUI elapsedSeconds={elapsedSeconds} />
+          )}
+
           {/* Generate button */}
-          <Button
-            onClick={handleGenerate}
-            disabled={loading || !selectedProjectId || projects.length === 0}
-            className="w-full"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                AI가 로드맵을 생성하는 중...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                생성하기
-              </>
-            )}
-          </Button>
+          {!loading && (
+            <Button
+              onClick={handleGenerate}
+              disabled={!selectedProjectId || projects.length === 0}
+              className="w-full"
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              생성하기
+            </Button>
+          )}
         </div>
       )}
 

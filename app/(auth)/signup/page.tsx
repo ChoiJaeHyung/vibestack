@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +63,41 @@ export default function SignupPage() {
     });
   };
 
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendError, setResendError] = useState<string | null>(null);
+  const [resendSuccess, setResendSuccess] = useState(false);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((prev) => prev - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+
+  const handleResendEmail = useCallback(async () => {
+    if (resendCooldown > 0) return;
+
+    setResendError(null);
+    setResendSuccess(false);
+    setResendCooldown(60);
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+      });
+
+      if (error) {
+        setResendError(error.message);
+        return;
+      }
+
+      setResendSuccess(true);
+    } catch {
+      setResendError("이메일 재전송에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    }
+  }, [email, resendCooldown]);
+
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 bg-background relative">
@@ -81,11 +116,34 @@ export default function SignupPage() {
             로 확인 이메일을 보냈습니다. 이메일의 링크를 클릭하여 가입을
             완료해주세요.
           </p>
-          <Link href="/login">
-            <Button variant="secondary" className="mt-4">
-              로그인 페이지로 돌아가기
+          <p className="text-xs text-text-faint">
+            보통 1-2분 내에 도착합니다. 스팸 폴더도 확인해 주세요.
+          </p>
+          <div className="pt-2 space-y-3">
+            {resendSuccess && (
+              <p className="text-sm text-green-400">
+                이메일을 다시 보냈습니다.
+              </p>
+            )}
+            {resendError && (
+              <p className="text-sm text-red-400">{resendError}</p>
+            )}
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={handleResendEmail}
+              disabled={resendCooldown > 0}
+            >
+              {resendCooldown > 0
+                ? `이메일 재전송 (${resendCooldown}초)`
+                : "확인 이메일 다시 보내기"}
             </Button>
-          </Link>
+            <Link href="/login">
+              <Button variant="ghost" className="w-full mt-2">
+                로그인 페이지로 돌아가기
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     );

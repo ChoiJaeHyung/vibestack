@@ -754,18 +754,6 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
               </span>
             </div>
             <div className="flex items-center gap-6 text-sm text-text-muted">
-              <Link
-                href="/terms"
-                className="transition-colors hover:text-text-primary"
-              >
-                이용약관
-              </Link>
-              <Link
-                href="/privacy"
-                className="transition-colors hover:text-text-primary"
-              >
-                개인정보처리방침
-              </Link>
               <a
                 href="https://github.com/vibestack"
                 target="_blank"

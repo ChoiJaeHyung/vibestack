@@ -281,6 +281,14 @@ export function DashboardContent() {
   const learningPercent = stats?.learningProgress.percentage ?? 0;
   const monthlyChats = stats?.monthlyChats ?? 0;
 
+  // Show learning CTA when user has analyzed projects but no learning paths
+  const hasAnalyzedProjects = stats?.recentProjects.some(
+    (p) => p.status === "analyzed",
+  ) ?? false;
+  const hasNoLearningPaths =
+    (stats?.learningProgress.total ?? 0) === 0 && !stats?.currentLearning;
+  const showLearningCTA = hasAnalyzedProjects && hasNoLearningPaths;
+
   return (
     <div className="space-y-6">
       {/* Header: greeting */}
@@ -296,6 +304,31 @@ export function DashboardContent() {
       {/* Upgrade Banner */}
       {usageData && (
         <DashboardUpgradeBanner planType={usageData.planType} />
+      )}
+
+      {/* Learning CTA — shown when user has analyzed projects but no learning paths */}
+      {showLearningCTA && (
+        <div className="rounded-2xl border border-violet-500/20 bg-violet-500/[0.04] p-5">
+          <div className="flex items-center gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10">
+              <GraduationCap className="h-5 w-5 text-violet-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-text-primary">
+                프로젝트 분석이 완료되었어요! 맞춤 학습을 시작해보세요
+              </p>
+              <p className="mt-0.5 text-xs text-text-faint">
+                AI가 프로젝트 기술 스택에 맞는 학습 로드맵을 생성해드려요
+              </p>
+            </div>
+            <Link href="/learning">
+              <Button variant="primary" size="sm" className="shrink-0">
+                학습 시작
+                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
       )}
 
       {/* 4 Stat Cards */}

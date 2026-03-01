@@ -15,14 +15,26 @@ export default function LoginPage() {
   );
 }
 
+const ERROR_MESSAGES: Record<string, string> = {
+  auth_callback_error: "소셜 로그인에 실패했습니다. 다시 시도해주세요.",
+  banned: "이 계정은 이용이 제한되었습니다. 관리자에게 문의하세요.",
+};
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const expired = searchParams.get("expired") === "true";
+  const errorParam = searchParams.get("error");
+  const paramErrorMessage = errorParam ? ERROR_MESSAGES[errorParam] ?? null : null;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +66,30 @@ function LoginForm() {
     });
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetLoading(true);
+    setResetError(null);
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/callback?next=/settings`,
+      });
+
+      if (error) {
+        setResetError(error.message);
+        return;
+      }
+
+      setResetSuccess(true);
+    } catch {
+      setResetError("요청 중 오류가 발생했습니다. 다시 시도해주세요.");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-background relative">
       {/* Dot grid background */}
@@ -78,6 +114,12 @@ function LoginForm() {
         {expired && (
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
             세션이 만료되었습니다. 다시 로그인해 주세요.
+          </div>
+        )}
+
+        {paramErrorMessage && (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
+            {paramErrorMessage}
           </div>
         )}
 
@@ -108,33 +150,90 @@ function LoginForm() {
           </div>
         </div>
 
-        {/* Email login form */}
-        <form onSubmit={handleEmailLogin} className="space-y-4">
-          <Input
-            id="email"
-            label="Email"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            id="password"
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          {error && (
-            <p className="text-sm text-red-400">{error}</p>
-          )}
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "로그인 중..." : "로그인"}
-          </Button>
-        </form>
+        {/* Email login form / Password reset form */}
+        {showResetForm ? (
+          <div className="space-y-4">
+            {resetSuccess ? (
+              <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-4 text-sm text-green-200 space-y-2">
+                <p className="font-medium">비밀번호 재설정 링크를 보내드렸습니다.</p>
+                <p>이메일을 확인해주세요.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <p className="text-sm text-text-muted">
+                  가입한 이메일을 입력하시면 비밀번호 재설정 링크를 보내드립니다.
+                </p>
+                <Input
+                  id="reset-email"
+                  label="Email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                />
+                {resetError && (
+                  <p className="text-sm text-red-400">{resetError}</p>
+                )}
+                <Button type="submit" className="w-full" disabled={resetLoading}>
+                  {resetLoading ? "전송 중..." : "재설정 링크 보내기"}
+                </Button>
+              </form>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setShowResetForm(false);
+                setResetSuccess(false);
+                setResetError(null);
+              }}
+              className="w-full text-center text-sm text-text-muted hover:text-text-primary transition-colors"
+            >
+              로그인으로 돌아가기
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleEmailLogin} className="space-y-4">
+            <Input
+              id="email"
+              label="Email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <div>
+              <Input
+                id="password"
+                label="Password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <div className="mt-1 text-right">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowResetForm(true);
+                    setResetEmail(email);
+                  }}
+                  className="text-xs text-text-muted hover:text-violet-400 transition-colors"
+                >
+                  비밀번호를 잊으셨나요?
+                </button>
+              </div>
+            </div>
+            {error && (
+              <p className="text-sm text-red-400">{error}</p>
+            )}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "로그인 중..." : "로그인"}
+            </Button>
+          </form>
+        )}
 
         <p className="text-center text-sm text-text-muted">
           계정이 없으신가요?{" "}

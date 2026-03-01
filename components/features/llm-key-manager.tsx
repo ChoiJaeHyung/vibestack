@@ -13,6 +13,7 @@ import {
   XCircle,
   ShieldCheck,
   ChevronDown,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,15 @@ interface LlmKeyItem {
   last_verified_at: string | null;
   created_at: string;
 }
+
+const PROVIDER_KEY_URLS: Partial<Record<LlmProvider, string>> = {
+  anthropic: "https://console.anthropic.com/settings/keys",
+  openai: "https://platform.openai.com/api-keys",
+  google: "https://aistudio.google.com/apikey",
+  groq: "https://console.groq.com/keys",
+  mistral: "https://console.mistral.ai/api-keys",
+  deepseek: "https://platform.deepseek.com/api_keys",
+};
 
 const PROVIDER_OPTIONS: Array<{ value: LlmProvider; label: string }> = [
   { value: "anthropic", label: "Anthropic" },
@@ -207,6 +217,11 @@ export function LlmKeyManager() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* BYOK explanation */}
+        <div className="rounded-xl border border-border-default bg-bg-input px-4 py-3 text-sm text-text-muted">
+          <strong className="text-text-secondary">BYOK(Bring Your Own Key)</strong>는 직접 발급받은 AI 서비스 API 키를 사용하는 방식입니다. Pro 플랜에서 지원되며, 더 빠른 응답과 원하는 모델을 선택할 수 있습니다.
+        </div>
+
         {/* Provider selector + API key input */}
         <div className="space-y-3">
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -255,6 +270,22 @@ export function LlmKeyManager() {
               </button>
             </div>
           </div>
+          {PROVIDER_KEY_URLS[selectedProvider] && (
+            <a
+              href={PROVIDER_KEY_URLS[selectedProvider]}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-text-faint transition-colors hover:text-violet-400"
+            >
+              {getProviderLabel(selectedProvider)} 키 발급받기
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+          {!PROVIDER_KEY_URLS[selectedProvider] && (
+            <p className="text-xs text-text-faint">
+              공식 사이트에서 API 키를 발급받으세요
+            </p>
+          )}
           <div className="flex gap-2">
             <Button
               variant="secondary"

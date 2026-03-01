@@ -73,6 +73,7 @@ interface GetProjectStatusResult {
   success: boolean;
   status?: string;
   error?: string;
+  errorMessage?: string;
 }
 
 export async function deleteProject(
@@ -266,7 +267,24 @@ export async function getProjectStatus(
       return { success: false, error: "Project not found" };
     }
 
-    return { success: true, status: data.status };
+    // Fetch latest error message from analysis_jobs when project is in error state
+    let errorMessage: string | undefined;
+    if (data.status === "error") {
+      const { data: latestJob } = await supabase
+        .from("analysis_jobs")
+        .select("error_message")
+        .eq("project_id", projectId)
+        .eq("status", "failed")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (latestJob?.error_message) {
+        errorMessage = latestJob.error_message;
+      }
+    }
+
+    return { success: true, status: data.status, errorMessage };
   } catch {
     return { success: false, error: "An unexpected error occurred" };
   }

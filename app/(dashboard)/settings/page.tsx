@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { User, CreditCard } from "lucide-react";
+import { User, CreditCard, Mail } from "lucide-react";
 import { ApiKeyManager } from "@/components/features/api-key-manager";
 import { LlmKeyManager } from "@/components/features/llm-key-manager";
 import { getCurrentPlan } from "@/server/actions/billing";
+import { getAuthUser } from "@/lib/supabase/auth";
 
 export default async function SettingsPage() {
-  const planResult = await getCurrentPlan();
+  const [planResult, authUser] = await Promise.all([
+    getCurrentPlan(),
+    getAuthUser(),
+  ]);
   const planType = planResult.data?.plan_type ?? "free";
   const planLabel = planType.charAt(0).toUpperCase() + planType.slice(1);
 
@@ -28,12 +32,20 @@ export default async function SettingsPage() {
               <User className="h-5 w-5 text-text-muted" />
               <CardTitle>프로필</CardTitle>
             </div>
-            <CardDescription>계정 정보를 관리합니다</CardDescription>
+            <CardDescription>계정 정보를 확인합니다</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-text-muted">
-              프로필 설정은 추후 구현됩니다.
-            </p>
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-500/10 ring-1 ring-violet-500/20">
+                <Mail className="h-4 w-4 text-violet-400" />
+              </div>
+              <div>
+                <p className="text-xs text-text-faint">이메일</p>
+                <p className="text-sm font-medium text-text-primary">
+                  {authUser?.email ?? "알 수 없음"}
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

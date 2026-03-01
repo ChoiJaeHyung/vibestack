@@ -1,7 +1,17 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Brain, Send, Loader2, User } from "lucide-react";
+import {
+  Brain,
+  Send,
+  Loader2,
+  User,
+  History,
+  Plus,
+  ChevronDown,
+  MessageSquare,
+  AlertTriangle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UpgradeModal } from "@/components/features/upgrade-modal";
 import ReactMarkdown from "react-markdown";
@@ -9,6 +19,7 @@ import remarkGfm from "remark-gfm";
 import {
   sendTutorMessage,
   getChatHistory,
+  listConversations,
 } from "@/server/actions/learning";
 import { invalidateCache } from "@/lib/hooks/use-cached-fetch";
 import type { UsageData } from "@/server/actions/usage";
@@ -18,14 +29,56 @@ interface ChatMessage {
   content: string;
 }
 
+interface ConversationItem {
+  id: string;
+  title: string | null;
+  context_type: string | null;
+  total_tokens: number;
+  learning_path_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 interface TutorChatProps {
   projectId: string;
+  projectName?: string;
   learningPathId?: string;
   conversationId?: string;
 }
 
+/**
+ * Translate English LLM error messages to Korean for end users.
+ */
+function translateErrorMessage(msg: string): string {
+  const lower = msg.toLowerCase();
+
+  if (lower.includes("rate limit")) {
+    return "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.";
+  }
+  if (
+    lower.includes("api key") ||
+    lower.includes("api_key") ||
+    lower.includes("authentication") ||
+    lower.includes("unauthorized")
+  ) {
+    return "API 키가 유효하지 않습니다. 설정에서 확인해주세요.";
+  }
+  if (lower.includes("timeout") || lower.includes("timed out")) {
+    return "응답 시간이 초과되었습니다. 다시 시도해주세요.";
+  }
+  if (lower.includes("context length") || lower.includes("token")) {
+    return "메시지가 너무 깁니다. 짧게 다시 작성해주세요.";
+  }
+  // If the message already looks Korean, return as-is
+  if (/[\uAC00-\uD7AF]/.test(msg)) {
+    return msg;
+  }
+  return `오류가 발생했습니다: ${msg}`;
+}
+
 export function TutorChat({
   projectId,
+  projectName,
   learningPathId,
   conversationId: initialConversationId,
 }: TutorChatProps) {
@@ -43,6 +96,11 @@ export function TutorChat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Conversation history panel state
+  const [showHistory, setShowHistory] = useState(false);
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [loadingConversations, setLoadingConversations] = useState(false);
+
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
@@ -53,12 +111,12 @@ export function TutorChat({
 
   // Load existing conversation history
   useEffect(() => {
-    if (!initialConversationId) return;
+    if (!conversationId) return;
 
     async function loadHistory() {
       setLoadingHistory(true);
       try {
-        const result = await getChatHistory(initialConversationId as string);
+        const result = await getChatHistory(conversationId as string);
         if (result.success && result.data) {
           const chatMessages = result.data.filter(
             (m): m is ChatMessage =>
@@ -74,7 +132,7 @@ export function TutorChat({
     }
 
     loadHistory();
-  }, [initialConversationId]);
+  }, [conversationId]);
 
   // Fetch usage data on mount
   useEffect(() => {
@@ -105,6 +163,42 @@ export function TutorChat({
       textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
     }
   }, [input]);
+
+  // Load conversation list
+  async function handleLoadConversations() {
+    if (showHistory) {
+      setShowHistory(false);
+      return;
+    }
+    setShowHistory(true);
+    setLoadingConversations(true);
+    try {
+      const result = await listConversations(projectId);
+      if (result.success && result.data) {
+        setConversations(result.data);
+      }
+    } catch {
+      // Ignore errors
+    } finally {
+      setLoadingConversations(false);
+    }
+  }
+
+  // Switch to a different conversation
+  function handleSelectConversation(convId: string) {
+    setConversationId(convId);
+    setMessages([]);
+    setError(null);
+    setShowHistory(false);
+  }
+
+  // Start a new conversation
+  function handleNewConversation() {
+    setConversationId(undefined);
+    setMessages([]);
+    setError(null);
+    setShowHistory(false);
+  }
 
   async function handleSend() {
     const trimmed = input.trim();
@@ -142,7 +236,7 @@ export function TutorChat({
         if (errMsg.toLowerCase().includes("limit") || errMsg.includes("한도")) {
           setShowUpgradeModal(true);
         }
-        setError(errMsg);
+        setError(translateErrorMessage(errMsg));
       }
     } catch {
       setError("알 수 없는 오류가 발생했습니다");
@@ -161,12 +255,100 @@ export function TutorChat({
   return (
     <div className="flex h-full flex-col rounded-2xl border border-border-default bg-bg-surface">
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-border-default px-4 py-3">
-        <Brain className="h-4 w-4 text-violet-400" />
-        <span className="text-sm font-medium text-text-primary">
-          AI 튜터
-        </span>
+      <div className="flex items-center justify-between border-b border-border-default px-4 py-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <Brain className="h-4 w-4 shrink-0 text-violet-400" />
+          <span className="text-sm font-medium text-text-primary">
+            AI 튜터
+          </span>
+          {projectName && (
+            <span className="truncate text-xs text-text-muted">
+              · {projectName}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={handleNewConversation}
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-bg-input hover:text-text-primary"
+            title="새 대화"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={handleLoadConversations}
+            className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
+              showHistory
+                ? "bg-violet-500/10 text-violet-400"
+                : "text-text-muted hover:bg-bg-input hover:text-text-primary"
+            }`}
+            title="대화 기록"
+          >
+            <History className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
+
+      {/* Conversation history panel */}
+      {showHistory && (
+        <div className="border-b border-border-default bg-bg-elevated">
+          <div className="flex items-center justify-between px-4 py-2">
+            <span className="text-xs font-medium text-text-muted">
+              대화 기록
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowHistory(false)}
+              className="text-text-faint hover:text-text-muted transition-colors"
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div className="max-h-48 overflow-y-auto px-2 pb-2">
+            {loadingConversations ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
+              </div>
+            ) : conversations.length === 0 ? (
+              <p className="px-2 py-3 text-center text-xs text-text-faint">
+                대화 기록이 없습니다
+              </p>
+            ) : (
+              <div className="space-y-0.5">
+                {conversations.map((conv) => (
+                  <button
+                    key={conv.id}
+                    type="button"
+                    onClick={() => handleSelectConversation(conv.id)}
+                    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors ${
+                      conversationId === conv.id
+                        ? "bg-violet-500/10 text-violet-300"
+                        : "text-text-muted hover:bg-bg-input hover:text-text-primary"
+                    }`}
+                  >
+                    <MessageSquare className="h-3 w-3 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium">
+                        {conv.title || "제목 없는 대화"}
+                      </p>
+                      <p className="text-[10px] text-text-faint">
+                        {new Date(conv.updated_at).toLocaleDateString("ko-KR", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
@@ -269,7 +451,16 @@ export function TutorChat({
 
       {/* Input */}
       <div className="border-t border-border-default p-3">
-        {!isUnlimited && remainingChats !== null && (
+        {/* Usage warning at 80%+ (remaining <= 4 out of 20) */}
+        {!isUnlimited && remainingChats !== null && remainingChats > 0 && remainingChats <= 4 && (
+          <div className="mb-1.5 flex items-center gap-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5">
+            <AlertTriangle className="h-3 w-3 shrink-0 text-amber-400" />
+            <p className="text-xs text-amber-300">
+              남은 대화: {remainingChats}회 — 한도에 가까워지고 있어요
+            </p>
+          </div>
+        )}
+        {!isUnlimited && remainingChats !== null && remainingChats > 4 && (
           <p className="mb-1.5 text-xs text-text-faint">
             남은 대화: {remainingChats}회
           </p>
