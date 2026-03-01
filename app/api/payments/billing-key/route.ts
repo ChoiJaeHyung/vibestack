@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { successResponse, errorResponse } from "@/lib/utils/api-response";
+import { encrypt } from "@/lib/utils/encryption";
 
 interface BillingKeyRequestBody {
   authKey: string;
@@ -59,13 +60,13 @@ export async function POST(request: NextRequest) {
     await serviceClient
       .from("users")
       .update({
-        toss_billing_key: issueData.billingKey,
+        toss_billing_key: encrypt(issueData.billingKey),
         toss_customer_key: customerKey,
         updated_at: new Date().toISOString(),
       })
       .eq("id", user.id);
 
-    return successResponse({ billingKey: issueData.billingKey });
+    return successResponse({ registered: true });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "빌링키 발급 중 오류가 발생했습니다";

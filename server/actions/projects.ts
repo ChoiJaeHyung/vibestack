@@ -10,6 +10,7 @@ import { createLLMProvider } from "@/lib/llm/factory";
 import { buildDigestAnalysisPrompt } from "@/lib/prompts/tech-analysis";
 import { decryptContent } from "@/lib/utils/content-encryption";
 import { generateMissingKBs } from "@/server/actions/knowledge";
+import { rateLimit } from "@/lib/utils/rate-limit";
 import type { Database } from "@/types/database";
 import type { TechHint, TechnologyResult } from "@/lib/llm/types";
 
@@ -118,6 +119,12 @@ export async function startAnalysis(
 
     if (authError || !user) {
       return { success: false, error: "Not authenticated" };
+    }
+
+    // Rate limit: 5 analysis requests per minute per user
+    const rl = rateLimit(`analysis:${user.id}`, 5);
+    if (!rl.success) {
+      return { success: false, error: "Too many analysis requests. Please try again later." };
     }
 
     // Verify project belongs to user

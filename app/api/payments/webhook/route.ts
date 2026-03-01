@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { createHmac, timingSafeEqual } from "crypto";
 
 interface TossWebhookPayload {
   eventType: string;
@@ -12,9 +13,39 @@ interface TossWebhookPayload {
   };
 }
 
+function verifyWebhookSignature(rawBody: string, signature: string): boolean {
+  const secret = process.env.TOSS_WEBHOOK_SECRET;
+  if (!secret) {
+    throw new Error("TOSS_WEBHOOK_SECRET environment variable is not set");
+  }
+  const computed = createHmac("sha256", secret).update(rawBody).digest("base64");
+  try {
+    return timingSafeEqual(Buffer.from(computed), Buffer.from(signature));
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as TossWebhookPayload;
+    const rawBody = await request.text();
+
+    // Verify webhook signature
+    const signature = request.headers.get("toss-signature");
+    if (!signature) {
+      return NextResponse.json(
+        { success: false, error: "Missing webhook signature" },
+        { status: 401 },
+      );
+    }
+    if (!verifyWebhookSignature(rawBody, signature)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid webhook signature" },
+        { status: 401 },
+      );
+    }
+
+    const body = JSON.parse(rawBody) as TossWebhookPayload;
     const { eventType, data } = body;
 
     if (eventType !== "PAYMENT_STATUS_CHANGED") {

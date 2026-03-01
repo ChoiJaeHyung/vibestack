@@ -4,6 +4,8 @@ export const APP_DESCRIPTION =
   "AI로 만든 프로젝트의 기술 스택을 이해하고 학습하는 플랫폼";
 
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+export const MAX_FILE_CONTENT_SIZE = 100 * 1024; // 100KB per file content (API upload)
+export const MAX_FILES_PER_UPLOAD = 100; // max files per upload request
 export const MAX_FILES_PER_PROJECT = 500;
 export const MAX_PROJECTS_FREE = 3;
 export const MAX_AI_CHATS_FREE = 20;

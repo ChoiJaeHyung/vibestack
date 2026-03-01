@@ -1,5 +1,18 @@
 import type { NextConfig } from "next";
 
+const cspDirectives = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.tosspayments.com",
+  "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
+  "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com",
+  "img-src 'self' data: blob:",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  "frame-src https://js.tosspayments.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+];
+
 const nextConfig: NextConfig = {
   headers: async () => [
     {
@@ -16,6 +29,10 @@ const nextConfig: NextConfig = {
         {
           key: "Permissions-Policy",
           value: "camera=(), microphone=(), geolocation=()",
+        },
+        {
+          key: "Content-Security-Policy",
+          value: cspDirectives.join("; "),
         },
       ],
     },

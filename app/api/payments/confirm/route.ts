@@ -28,6 +28,24 @@ export async function POST(request: NextRequest) {
       return errorResponse("Missing required fields: paymentKey, orderId, amount", 400);
     }
 
+    // 서버측 결제 금액 검증: DB에 저장된 pending 결제 레코드와 비교
+    const serviceClient = createServiceClient();
+    const { data: pendingPayment, error: pendingError } = await serviceClient
+      .from("payments")
+      .select("amount, plan")
+      .eq("order_id", orderId)
+      .eq("user_id", user.id)
+      .eq("status", "pending")
+      .single();
+
+    if (pendingError || !pendingPayment) {
+      return errorResponse("Pending payment record not found", 404);
+    }
+
+    if (pendingPayment.amount !== amount) {
+      return errorResponse("Payment amount mismatch", 400);
+    }
+
     const secretKey = process.env.TOSS_SECRET_KEY;
     if (!secretKey) {
       return errorResponse("TossPayments is not configured", 500);
@@ -55,20 +73,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const serviceClient = createServiceClient();
-
-    // payments 테이블에서 주문 정보 조회
-    const { data: payment, error: paymentError } = await serviceClient
-      .from("payments")
-      .select("plan")
-      .eq("order_id", orderId)
-      .eq("user_id", user.id)
-      .single();
-
-    if (paymentError || !payment) {
-      return errorResponse("Payment record not found", 404);
-    }
-
     // 결제 기록 업데이트
     await serviceClient
       .from("payments")
@@ -87,13 +91,13 @@ export async function POST(request: NextRequest) {
     await serviceClient
       .from("users")
       .update({
-        plan_type: payment.plan,
+        plan_type: pendingPayment.plan,
         plan_expires_at: expiresAt.toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq("id", user.id);
 
-    return successResponse({ status: "done", plan: payment.plan });
+    return successResponse({ status: "done", plan: pendingPayment.plan });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "결제 승인 중 오류가 발생했습니다";

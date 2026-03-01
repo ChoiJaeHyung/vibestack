@@ -210,7 +210,10 @@ export async function listAllUsers(
       .select("id, email, name, plan_type, role, is_banned, created_at", { count: "exact" });
 
     if (search) {
-      query = query.or(`email.ilike.%${search}%,name.ilike.%${search}%`);
+      const sanitized = search.replace(/[%_,().]/g, "");
+      if (sanitized.length > 0) {
+        query = query.or(`email.ilike.%${sanitized}%,name.ilike.%${sanitized}%`);
+      }
     }
     if (roleFilter) {
       query = query.eq("role", roleFilter);
