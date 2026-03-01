@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -7,6 +8,12 @@ import { AnimatedCounter } from "@/components/features/animated-counter";
 import { SectionReveal } from "@/components/features/section-reveal";
 import { GlowCard } from "@/components/features/glow-card";
 import { FaqAccordion } from "@/components/features/faq-accordion";
+
+export const metadata: Metadata = {
+  title: "VibeUniv — AI로 만든 앱, 내 코드로 제대로 배우기",
+  description:
+    "Cursor, Claude Code로 앱을 만들었나요? 프로젝트를 연결하면 AI가 기술 스택을 분석하고, 내 코드가 교재가 되는 맞춤 학습을 시작할 수 있어요. 무료로 지금 시작하세요.",
+};
 
 export default async function LandingPage() {
   let userEmail: string | null = null;
@@ -381,6 +388,67 @@ export default async function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* FAQ JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: [
+              {
+                "@type": "Question",
+                name: "바이브 코딩이 뭔가요?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "바이브 코딩(Vibe Coding)은 AI 코딩 도구(Claude Code, Cursor, Bolt 등)를 사용하여 프롬프트만으로 앱을 만드는 방식이에요. 문제는 이렇게 만든 앱이 왜 돌아가는지 모를 수 있다는 거예요. VibeUniv는 바로 그 부분을 채워드립니다.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "MCP로 프로젝트를 연결하는 방법이 궁금해요",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "MCP(Model Context Protocol)를 사용하면 코딩 도구에서 프로젝트를 자동으로 VibeUniv에 연결할 수 있어요. 1단계: API 키 발급, 2단계: MCP 서버 설정, 3단계: 프로젝트 동기화. 코딩 도구를 재시작하면 자동 연결됩니다.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "어떤 AI 모델을 지원하나요?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "총 11개 LLM 프로바이더를 지원합니다. Anthropic (Claude), OpenAI (GPT), Google (Gemini), Groq, Mistral, DeepSeek, Cohere, Together AI, Fireworks AI, xAI (Grok), OpenRouter. Pro 플랜에서는 BYOK 기능으로 본인의 API 키를 등록해서 쓸 수 있어요.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Free 플랜으로 충분한가요?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "개인 사이드 프로젝트 1~2개를 학습하기에는 충분해요! 프로젝트 3개, 기본 분석, 월 1회 로드맵, 월 20회 AI 대화가 포함됩니다. 더 많은 프로젝트나 무제한 AI 대화가 필요하다면 Pro(₩25,000/월)를 추천해요.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "내 코드는 안전하게 보관되나요?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "보안은 최우선 사항이에요. 모든 데이터는 암호화되어 전송 및 저장됩니다. 민감한 파일(.env 등)은 자동 제외되고, LLM API 키는 AES-256-GCM으로 암호화됩니다. 언제든 데이터 삭제도 가능해요.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "BYOK(Bring Your Own Key)가 뭔가요?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "BYOK는 본인이 가진 LLM API 키를 등록해서 사용하는 기능이에요. Pro 플랜 이상에서 사용할 수 있습니다. Settings > LLM Keys에서 프로바이더를 선택하고 API 키를 입력하면 바로 사용 가능해요.",
+                },
+              },
+            ],
+          }),
+        }}
+      />
     </div>
   );
 }
