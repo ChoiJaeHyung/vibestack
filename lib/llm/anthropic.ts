@@ -69,9 +69,36 @@ export class AnthropicProvider implements LLMProvider {
         input.systemPrompt ??
         input.messages.find((m) => m.role === "system")?.content;
 
+      const maxTokens = input.maxTokens ?? MAX_TOKENS;
+
+      // Use streaming for large maxTokens to avoid SDK 10-minute timeout
+      if (maxTokens > 16384) {
+        const stream = this.client.messages.stream({
+          model: this.modelName,
+          max_tokens: maxTokens,
+          messages,
+          ...(systemMessage ? { system: systemMessage } : {}),
+        });
+
+        const response = await stream.finalMessage();
+
+        const textBlock = response.content.find(
+          (block) => block.type === "text",
+        );
+        if (!textBlock || textBlock.type !== "text") {
+          throw new Error("No text content in Anthropic response");
+        }
+
+        return {
+          content: textBlock.text,
+          input_tokens: response.usage.input_tokens,
+          output_tokens: response.usage.output_tokens,
+        };
+      }
+
       const response = await this.client.messages.create({
         model: this.modelName,
-        max_tokens: input.maxTokens ?? MAX_TOKENS,
+        max_tokens: maxTokens,
         messages,
         ...(systemMessage ? { system: systemMessage } : {}),
       });
