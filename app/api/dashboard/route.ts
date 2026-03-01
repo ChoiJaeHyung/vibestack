@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthUser } from "@/lib/supabase/auth";
+import { getAllBadges, getUserBadges } from "@/server/actions/badges";
+import { getStreak } from "@/server/actions/streak";
+import type { StreakData } from "@/server/actions/streak";
 import type { Json } from "@/types/database";
 
 // ─── Types (exported for client components) ─────────────────────────
@@ -26,6 +29,14 @@ interface CurrentLearning {
   pathTitle: string;
 }
 
+interface DashboardBadgeInfo {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+}
+
 export interface DashboardData {
   totalProjects: number;
   uniqueTechnologies: number;
@@ -38,6 +49,7 @@ export interface DashboardData {
   recentProjects: RecentProject[];
   techDistribution: TechDistributionItem[];
   currentLearning: CurrentLearning | null;
+  learnedToday: boolean;
   userEmail: string;
   usage: {
     projects: { used: number; limit: number | null };
@@ -45,6 +57,11 @@ export interface DashboardData {
     aiChats: { used: number; limit: number | null };
     planType: "free" | "pro" | "team";
   };
+  badges: {
+    all: DashboardBadgeInfo[];
+    earnedSlugs: string[];
+  };
+  streak: StreakData;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────
@@ -58,6 +75,11 @@ const FREE_LIMITS = {
 function getStartOfMonth(): string {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+}
+
+function getStartOfToday(): string {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
 }
 
 // ─── GET handler ────────────────────────────────────────────────────
@@ -75,6 +97,7 @@ export async function GET() {
 
     const supabase = await createClient();
     const startOfMonth = getStartOfMonth();
+    const startOfToday = getStartOfToday();
 
     // ── Phase 1: All independent queries in parallel ────────────────
     const [
@@ -86,6 +109,7 @@ export async function GET() {
       learningPathCountResult,
       { data: allProjectIds },
       { data: allProgress },
+      { count: todayProgressCount },
     ] = await Promise.all([
       supabase
         .from("projects")
@@ -127,6 +151,12 @@ export async function GET() {
         .from("learning_progress")
         .select("module_id, status")
         .eq("user_id", authUser.id),
+      // Check if user has any learning progress updated today
+      supabase
+        .from("learning_progress")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", authUser.id)
+        .gte("updated_at", startOfToday),
     ]);
 
     // ── Phase 2: Queries that depend on Phase 1 results ─────────────
@@ -223,6 +253,24 @@ export async function GET() {
       }),
     );
 
+    // ── Badge + Streak data ──────────────────────────────────────────
+    const [allBadgesData, earnedBadgesData, streakResult] = await Promise.all([
+      getAllBadges(),
+      getUserBadges(authUser.id),
+      getStreak(authUser.id),
+    ]);
+
+    const badgesForDashboard = {
+      all: allBadgesData.map((b) => ({
+        id: b.id,
+        slug: b.slug,
+        name: b.name,
+        description: b.description,
+        icon: b.icon,
+      })),
+      earnedSlugs: earnedBadgesData.map((b) => b.slug),
+    };
+
     // ── Usage data ──────────────────────────────────────────────────
     const planType = ((userResult.data?.plan_type as string) ?? "free") as
       | "free"
@@ -242,6 +290,7 @@ export async function GET() {
       recentProjects,
       techDistribution,
       currentLearning,
+      learnedToday: (todayProgressCount ?? 0) > 0,
       userEmail: authUser.email || "User",
       usage: {
         projects: {
@@ -257,6 +306,15 @@ export async function GET() {
           limit: isFree ? FREE_LIMITS.aiChats : null,
         },
         planType,
+      },
+      badges: badgesForDashboard,
+      streak: streakResult.data ?? {
+        currentStreak: 0,
+        longestStreak: 0,
+        weeklyTarget: 3,
+        lastActiveDate: null,
+        weekActiveDays: 0,
+        weekStartDate: null,
       },
     };
 

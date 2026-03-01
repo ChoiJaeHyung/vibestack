@@ -155,6 +155,7 @@ NEXT_PUBLIC_APP_URL=
 | **파일 분석** | `lib/analysis/` | 파일 파싱, 다이제스트 생성, tech-stack upsert 유틸 |
 | **학습 시스템** | `lib/learning/`, `lib/prompts/` | 커리큘럼 생성 (2-Phase), 상세 콘텐츠 + 인용 링크, 퀴즈 점수 추적(최고점 유지), 콘텐츠 검증 + retry |
 | **AI 튜터 패널** | `components/features/tutor-panel*.tsx`, `tutor-search.tsx`, `dashboard-main.tsx` | 우측 슬라이드 패널 (채팅/검색 탭), 텍스트 선택→AI 질문, Google 검색 |
+| **게이미피케이션** | `components/features/celebration-modal.tsx`, `streak-widget.tsx`, `badge-*.tsx`, `server/actions/streak.ts`, `server/actions/badges.ts` | 모듈 완료 축하(confetti), 학습 스트릭(주간 캘린더), 배지/업적, 넛지 배너 |
 | **KB 시스템** | `lib/knowledge/` | 3-Tier 지식 베이스 |
 | **프롬프트** | `lib/prompts/` | LLM 프롬프트 템플릿 |
 | **보안** | `lib/utils/encryption.ts`, `content-encryption.ts` | AES-256-GCM 암호화, 콘텐츠 복호화 |
@@ -162,13 +163,14 @@ NEXT_PUBLIC_APP_URL=
 | **SEO** | `app/opengraph-image.tsx`, `twitter-image.tsx`, `not-found.tsx` | OG 이미지, 404 페이지 |
 | **MCP 서버** | `packages/mcp-server/src/` | 10개 MCP 도구 (v0.3.0, Local-First) |
 | **DB 타입** | `types/database.ts` | Supabase 전체 스키마 타입 |
-| **마이그레이션** | `supabase/migrations/` | 001~009 SQL |
+| **마이그레이션** | `supabase/migrations/` | 001~012 SQL |
 
-### DB 테이블 (18개)
+### DB 테이블 (21개)
 
 **사용자**: `users`, `user_api_keys`, `user_llm_keys`
 **프로젝트**: `projects`, `project_files`, `tech_stacks`, `analysis_jobs`, `educational_analyses`
 **학습**: `learning_paths`, `learning_modules`, `learning_progress`
+**게이미피케이션**: `user_streaks`, `badges`, `user_badges`
 **AI/MCP**: `ai_conversations`, `mcp_sessions`
 **어드민**: `system_settings`, `announcements`, `admin_audit_log`
 **결제**: `payments`
@@ -328,3 +330,5 @@ Anthropic, OpenAI, Google, Groq, Mistral, DeepSeek, Cohere, Together, Fireworks,
 - [x] 프로젝트 연동 속도 개선 (파일 업로드 다이제스트 `after()` 백그라운드) + 커리큘럼 컨텍스트에 소스코드 추가 + 커리큘럼 지시문/검증 강화 (최소 10모듈, 3섹션/모듈, code/quiz 필수)
 - [x] 학습 콘텐츠 품질 대폭 강화: 라이트모드 렌더링 수정, 퀴즈 점수 DB 저장(최고점 유지+시간 누적), MCP/웹 콘텐츠 검증 강화(explanation 200자↑, code+quiz 각각 필수, retry 최대 3회), MCP JSON 스키마 포맷 개선, AI 튜터에 모듈 콘텐츠 서머리 전달(6000자), 전체 프롬프트 해요체 톤 강화
 - [x] 초급(beginner) 콘텐츠 "5~6세 수준" 강화: 3단계 개념 쪼개기(비유→정의→코드), before/after 비교, 코드 우리말 번역, 비유 퀴즈 50%+, beginner 검증 강화(5섹션↑/400자↑), maxTokens 1.5배(24000*n), MCP 지시문 동적화
+- [x] 튜터 패널 Google 검색 탭 추가 (PR #57)
+- [x] 게이미피케이션 시스템: 모듈 완료 축하(confetti 애니메이션), 학습 스트릭(일간 기반 + 주간 캘린더 위젯), 주간 학습 목표(2/3/5/7일), 배지/업적 8종(first_step, consistent_learner, quiz_master 등), 대시보드 넛지 배너("오늘 학습")

@@ -13,8 +13,13 @@ import {
   BookOpen,
   Settings,
   Sparkles,
+  Flame,
+  X,
+  Trophy,
 } from "lucide-react";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
+import { BadgeGrid } from "@/components/features/badge-grid";
+import { StreakWidget } from "@/components/features/streak-widget";
 import type { DashboardData } from "@/app/api/dashboard/route";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -267,6 +272,7 @@ export function DashboardContent() {
     "/api/dashboard",
     fetchDashboard,
   );
+  const [nudgeDismissed, setNudgeDismissed] = useState(false);
 
   if (isLoading && !data) {
     return <DashboardSkeleton />;
@@ -280,6 +286,13 @@ export function DashboardContent() {
   const uniqueTech = stats?.uniqueTechnologies ?? 0;
   const learningPercent = stats?.learningProgress.percentage ?? 0;
   const monthlyChats = stats?.monthlyChats ?? 0;
+
+  // Show nudge banner when user has learning paths but hasn't studied today
+  const learnedToday = stats?.learnedToday ?? false;
+  const showNudgeBanner =
+    !nudgeDismissed &&
+    !learnedToday &&
+    stats?.currentLearning != null;
 
   // Show learning CTA when user has analyzed projects but no learning paths
   const hasAnalyzedProjects = stats?.recentProjects.some(
@@ -331,6 +344,36 @@ export function DashboardContent() {
         </div>
       )}
 
+      {/* Today Learning Nudge Banner */}
+      {showNudgeBanner && stats?.currentLearning && (
+        <div className="relative rounded-xl border border-violet-500/20 bg-violet-500/10 p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/20">
+              <Flame className="h-5 w-5 text-violet-400" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-text-primary">
+                오늘 아직 학습을 시작하지 않았어요!
+              </p>
+              <Link
+                href={`/learning/${stats.currentLearning.pathId}/${stats.currentLearning.moduleId}`}
+                className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-violet-400 transition-colors hover:text-violet-300"
+              >
+                이어서 학습하기
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+            <button
+              type="button"
+              onClick={() => setNudgeDismissed(true)}
+              className="shrink-0 rounded-lg p-1 text-text-muted transition-colors hover:text-text-primary"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 4 Stat Cards */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         <StatCard icon={FolderOpen} label="총 프로젝트" value={totalProjects} />
@@ -338,6 +381,17 @@ export function DashboardContent() {
         <StatCard icon={GraduationCap} label="학습 진행률" value={learningPercent} suffix="%" />
         <StatCard icon={MessageCircle} label="AI 대화" value={monthlyChats} />
       </div>
+
+      {/* Streak Widget */}
+      {stats?.streak && (
+        <StreakWidget
+          currentStreak={stats.streak.currentStreak}
+          longestStreak={stats.streak.longestStreak}
+          weeklyTarget={stats.streak.weeklyTarget}
+          weekActiveDays={stats.streak.weekActiveDays}
+          lastActiveDate={stats.streak.lastActiveDate}
+        />
+      )}
 
       {/* Bento Grid Row 1: Continue Learning + Usage */}
       <div className="grid gap-4 lg:grid-cols-2">
@@ -473,6 +527,25 @@ export function DashboardContent() {
           </div>
         )}
       </div>
+
+      {/* Badge Grid */}
+      {stats?.badges && stats.badges.all.length > 0 && (
+        <div className="rounded-2xl border border-border-default bg-bg-surface p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Trophy className="h-4 w-4 text-violet-400" />
+            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider">
+              내 배지
+            </h2>
+            <span className="text-xs text-text-dim">
+              {stats.badges.earnedSlugs.length} / {stats.badges.all.length}
+            </span>
+          </div>
+          <BadgeGrid
+            allBadges={stats.badges.all}
+            earnedBadgeSlugs={new Set(stats.badges.earnedSlugs)}
+          />
+        </div>
+      )}
     </div>
   );
 }
