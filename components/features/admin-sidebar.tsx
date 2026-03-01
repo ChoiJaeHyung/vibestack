@@ -45,10 +45,10 @@ export function AdminSidebar({ userEmail, userRole }: AdminSidebarProps) {
       {/* Mobile hamburger */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed top-4 left-4 z-50 rounded-lg border border-zinc-200 bg-white p-2 shadow-sm lg:hidden dark:border-zinc-800 dark:bg-zinc-950"
+        className="fixed top-4 left-4 z-50 rounded-xl border border-border-default bg-bg-surface p-2 shadow-sm lg:hidden"
         aria-label="Open menu"
       >
-        <Menu className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+        <Menu className="h-5 w-5 text-text-muted" />
       </button>
 
       {/* Overlay */}
@@ -61,18 +61,18 @@ export function AdminSidebar({ userEmail, userRole }: AdminSidebarProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-zinc-200 bg-white transition-transform duration-200 ease-in-out lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-950 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border-default bg-bg-elevated transition-transform duration-200 ease-in-out lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Logo */}
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center gap-2">
-            <GraduationCap className="h-6 w-6 text-zinc-900 dark:text-zinc-100" />
-            <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+            <GraduationCap className="h-6 w-6 text-violet-400" />
+            <span className="text-lg font-bold text-text-primary">
               Admin
             </span>
-            <span className="rounded bg-zinc-200 px-1.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+            <span className="rounded-lg bg-violet-500/10 px-1.5 py-0.5 text-xs font-medium text-violet-300">
               {userRole === "super_admin" ? "Super" : "Admin"}
             </span>
           </div>
@@ -81,7 +81,7 @@ export function AdminSidebar({ userEmail, userRole }: AdminSidebarProps) {
             className="rounded-lg p-1 lg:hidden"
             aria-label="Close menu"
           >
-            <X className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+            <X className="h-5 w-5 text-text-muted" />
           </button>
         </div>
 
@@ -95,10 +95,10 @@ export function AdminSidebar({ userEmail, userRole }: AdminSidebarProps) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
                   active
-                    ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
-                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+                    ? "bg-violet-500/10 text-violet-300"
+                    : "text-text-muted hover:bg-bg-input hover:text-text-primary"
                 }`}
               >
                 <Icon className="h-5 w-5" />
@@ -109,19 +109,19 @@ export function AdminSidebar({ userEmail, userRole }: AdminSidebarProps) {
         </nav>
 
         {/* Back to dashboard + user */}
-        <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
+        <div className="border-t border-border-default p-4">
           <Link
             href="/dashboard"
-            className="mb-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+            className="mb-3 flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-text-muted hover:bg-bg-input hover:text-text-primary"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Dashboard
           </Link>
           <div className="flex items-center gap-3 px-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 text-sm font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 text-sm font-medium text-white">
               {userEmail?.charAt(0).toUpperCase() ?? "A"}
             </div>
-            <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            <p className="truncate text-sm font-medium text-text-primary">
               {userEmail ?? "Admin"}
             </p>
           </div>

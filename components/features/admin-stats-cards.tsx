@@ -50,21 +50,21 @@ export function AdminStatsCards({
         return (
           <div
             key={stat.label}
-            className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
+            className="rounded-2xl border border-border-default bg-bg-surface p-5"
           >
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-zinc-100 p-2 dark:bg-zinc-800">
-                <Icon className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+              <div className="rounded-xl bg-violet-500/10 p-2">
+                <Icon className="h-5 w-5 text-violet-400" />
               </div>
               <div>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-sm text-text-muted">
                   {stat.label}
                 </p>
-                <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                <p className="text-xl font-bold text-text-primary">
                   {stat.value}
                 </p>
                 {stat.detail && (
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                  <p className="text-xs text-text-faint">
                     {stat.detail}
                   </p>
                 )}

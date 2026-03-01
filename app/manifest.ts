@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "VibeUniv",
     short_name: "VibeUniv",
     description:
-      "바이브 코딩으로 만든 프로젝트의 기술 스택을 AI가 분석하고 맞춤 학습 로드맵을 제공합니다",
+      "AI 코딩 도구로 만든 앱, 내 코드로 제대로 배우기. 프로젝트를 연결하면 AI가 기술 스택을 분석하고 맞춤 학습 로드맵을 만들어 드려요.",
     start_url: "/",
     display: "standalone",
     background_color: "#09090b",

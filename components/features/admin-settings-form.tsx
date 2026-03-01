@@ -79,10 +79,10 @@ export function AdminSettingsForm({ settings }: AdminSettingsFormProps) {
     <div className="space-y-6">
       {message && (
         <div
-          className={`rounded-lg px-4 py-3 text-sm ${
+          className={`rounded-xl border px-4 py-3 text-sm ${
             message.type === "success"
-              ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-              : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+              ? "border-green-500/30 bg-green-500/10 text-green-400"
+              : "border-red-500/30 bg-red-500/10 text-red-400"
           }`}
         >
           {message.text}
@@ -92,23 +92,23 @@ export function AdminSettingsForm({ settings }: AdminSettingsFormProps) {
       {Object.entries(grouped).map(([category, items]) => (
         <div
           key={category}
-          className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
+          className="rounded-2xl border border-border-default bg-bg-surface"
         >
-          <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+          <div className="border-b border-border-default px-6 py-4">
+            <h3 className="text-base font-semibold text-text-primary">
               {categoryLabels[category] ?? category}
             </h3>
           </div>
-          <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <div className="divide-y divide-border-default">
             {items.map((setting) => (
               <div key={setting.id} className="px-6 py-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                    <p className="font-medium text-text-primary">
                       {setting.setting_key}
                     </p>
                     {setting.description && (
-                      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-1 text-sm text-text-muted">
                         {setting.description}
                       </p>
                     )}
@@ -117,27 +117,27 @@ export function AdminSettingsForm({ settings }: AdminSettingsFormProps) {
                         <textarea
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
-                          className="w-full rounded-lg border border-zinc-200 bg-zinc-50 p-3 font-mono text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                          className="w-full rounded-xl border border-border-default bg-bg-input p-3 font-mono text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                           rows={5}
                         />
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleSave(setting)}
                             disabled={isPending}
-                            className="rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                            className="rounded-xl bg-violet-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-600 disabled:opacity-50"
                           >
                             {isPending ? "Saving..." : "Save"}
                           </button>
                           <button
                             onClick={cancelEdit}
-                            className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300"
+                            className="rounded-xl border border-border-default px-3 py-1.5 text-sm text-text-tertiary hover:bg-bg-input"
                           >
                             Cancel
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <pre className="mt-2 overflow-x-auto rounded-lg bg-zinc-50 p-3 text-xs text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+                      <pre className="mt-2 overflow-x-auto rounded-xl bg-[rgba(0,0,0,0.3)] p-3 text-xs text-text-tertiary border border-border-default">
                         {JSON.stringify(setting.setting_value, null, 2)}
                       </pre>
                     )}
@@ -145,13 +145,13 @@ export function AdminSettingsForm({ settings }: AdminSettingsFormProps) {
                   {editingKey !== setting.setting_key && (
                     <button
                       onClick={() => startEdit(setting)}
-                      className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900"
+                      className="rounded-xl border border-border-default px-3 py-1.5 text-sm text-text-muted hover:bg-bg-input hover:text-text-primary"
                     >
                       Edit
                     </button>
                   )}
                 </div>
-                <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">
+                <p className="mt-2 text-xs text-text-faint">
                   Last updated: {new Date(setting.updated_at).toLocaleString()}
                 </p>
               </div>
@@ -161,8 +161,8 @@ export function AdminSettingsForm({ settings }: AdminSettingsFormProps) {
       ))}
 
       {settings.length === 0 && (
-        <div className="rounded-lg border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-950">
-          <p className="text-zinc-500 dark:text-zinc-400">No system settings found</p>
+        <div className="rounded-2xl border border-border-default bg-bg-surface p-8 text-center">
+          <p className="text-text-muted">No system settings found</p>
         </div>
       )}
     </div>

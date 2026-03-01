@@ -76,26 +76,17 @@ function getProviderLabel(provider: LlmProvider): string {
 
 function getProviderColor(provider: LlmProvider): string {
   const colors: Record<LlmProvider, string> = {
-    anthropic:
-      "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
-    openai:
-      "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
-    google:
-      "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-    groq: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
-    mistral:
-      "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-    deepseek:
-      "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300",
-    cohere:
-      "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300",
-    together:
-      "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300",
-    fireworks:
-      "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-    xai: "bg-gray-100 text-gray-800 dark:bg-gray-800/50 dark:text-gray-300",
-    openrouter:
-      "bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300",
+    anthropic: "bg-orange-500/10 text-orange-300 border border-orange-500/20",
+    openai: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20",
+    google: "bg-blue-500/10 text-blue-300 border border-blue-500/20",
+    groq: "bg-purple-500/10 text-purple-300 border border-purple-500/20",
+    mistral: "bg-amber-500/10 text-amber-300 border border-amber-500/20",
+    deepseek: "bg-cyan-500/10 text-cyan-300 border border-cyan-500/20",
+    cohere: "bg-rose-500/10 text-rose-300 border border-rose-500/20",
+    together: "bg-indigo-500/10 text-indigo-300 border border-indigo-500/20",
+    fireworks: "bg-red-500/10 text-red-300 border border-red-500/20",
+    xai: "bg-zinc-500/10 text-zinc-300 border border-zinc-500/20",
+    openrouter: "bg-violet-500/10 text-violet-300 border border-violet-500/20",
   };
   return colors[provider];
 }
@@ -208,7 +199,7 @@ export function LlmKeyManager() {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Brain className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+          <Brain className="h-5 w-5 text-text-muted" />
           <CardTitle>LLM API Keys</CardTitle>
         </div>
         <CardDescription>
@@ -227,15 +218,15 @@ export function LlmKeyManager() {
                   setValidationResult(null);
                   setError(null);
                 }}
-                className="flex h-10 w-full appearance-none rounded-lg border border-zinc-200 bg-white px-3 py-2 pr-8 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-1 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:focus:ring-zinc-300"
+                className="flex h-10 w-full appearance-none rounded-xl border border-border-default bg-bg-input px-3 py-2 pr-8 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/40 transition-all duration-200"
               >
                 {PROVIDER_OPTIONS.map((provider) => (
-                  <option key={provider.value} value={provider.value}>
+                  <option key={provider.value} value={provider.value} className="bg-bg-elevated">
                     {provider.label}
                   </option>
                 ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
             </div>
             <div className="relative flex-1">
               <Input
@@ -254,7 +245,7 @@ export function LlmKeyManager() {
               <button
                 type="button"
                 onClick={() => setShowApiKey(!showApiKey)}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
               >
                 {showApiKey ? (
                   <EyeOff className="h-4 w-4" />
@@ -295,16 +286,16 @@ export function LlmKeyManager() {
 
         {/* Error message */}
         {error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p className="text-sm text-red-400">{error}</p>
         )}
 
         {/* Validation result */}
         {validationResult && (
           <div
-            className={`flex items-center gap-2 rounded-lg border px-4 py-3 text-sm ${
+            className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm ${
               validationResult.valid
-                ? "border-green-200 bg-green-50 text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-200"
-                : "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200"
+                ? "border-green-500/30 bg-green-500/10 text-green-300"
+                : "border-red-500/30 bg-red-500/10 text-red-300"
             }`}
           >
             {validationResult.valid ? (
@@ -319,14 +310,14 @@ export function LlmKeyManager() {
         {/* Key list */}
         {listLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-text-muted" />
           </div>
         ) : keys.length === 0 ? (
-          <p className="py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="py-4 text-center text-sm text-text-muted">
             등록된 LLM API 키가 없습니다
           </p>
         ) : (
-          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <div className="divide-y divide-border-default">
             {keys.map((key) => (
               <div
                 key={key.id}
@@ -340,25 +331,25 @@ export function LlmKeyManager() {
                       {getProviderLabel(key.provider)}
                     </span>
                     {key.is_valid ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-0.5 text-xs text-green-300 border border-green-500/20">
                         <CheckCircle2 className="h-3 w-3" />
                         Valid
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 text-xs text-red-300 border border-red-500/20">
                         <XCircle className="h-3 w-3" />
                         Invalid
                       </span>
                     )}
                     {key.is_default && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-300 border border-amber-500/20">
                         <Star className="h-3 w-3" />
                         기본
                       </span>
                     )}
                   </div>
-                  <div className="mt-0.5 flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
-                    <code>****{key.display_hint ?? "***"}</code>
+                  <div className="mt-0.5 flex items-center gap-3 text-xs text-text-faint">
+                    <code className="font-mono">****{key.display_hint ?? "***"}</code>
                     <span>
                       등록: {new Date(key.created_at).toLocaleDateString()}
                     </span>
@@ -374,9 +365,9 @@ export function LlmKeyManager() {
                       title="기본 설정"
                     >
                       {settingDefaultId === key.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-zinc-500" />
+                        <Loader2 className="h-4 w-4 animate-spin text-text-faint" />
                       ) : (
-                        <Star className="h-4 w-4 text-zinc-400" />
+                        <Star className="h-4 w-4 text-text-muted" />
                       )}
                     </Button>
                   )}

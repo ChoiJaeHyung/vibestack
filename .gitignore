@@ -51,6 +51,9 @@ next-env.d.ts
 # playwright mcp
 .playwright-mcp/
 
+# mcp config (contains API keys)
+.mcp.json
+
 # mcp server dist
 packages/mcp-server/dist/
 packages/mcp-server/node_modules/

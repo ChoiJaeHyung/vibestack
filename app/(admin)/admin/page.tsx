@@ -7,10 +7,10 @@ export default async function AdminDashboardPage() {
   if (!result.success || !result.data) {
     return (
       <div>
-        <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+        <h1 className="mb-6 text-2xl font-bold text-text-primary">
           Admin Dashboard
         </h1>
-        <p className="text-zinc-500 dark:text-zinc-400">
+        <p className="text-text-muted">
           Failed to load dashboard stats.
         </p>
       </div>
@@ -21,7 +21,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+      <h1 className="mb-6 text-2xl font-bold text-text-primary">
         Admin Dashboard
       </h1>
 
@@ -34,39 +34,39 @@ export default async function AdminDashboardPage() {
 
       {/* Recent Signups */}
       <div className="mt-8">
-        <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mb-4 text-lg font-semibold text-text-primary">
           Recent Signups
         </h2>
-        <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+        <div className="overflow-x-auto rounded-2xl border border-border-default">
           <table className="w-full text-sm">
-            <thead className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
+            <thead className="border-b border-border-default bg-bg-surface">
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">Email</th>
-                <th className="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">Name</th>
-                <th className="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">Plan</th>
-                <th className="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">Joined</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted">Email</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted">Name</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted">Plan</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted">Joined</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <tbody className="divide-y divide-border-default">
               {recentSignups.map((user) => (
-                <tr key={user.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
-                  <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                <tr key={user.id} className="hover:bg-bg-surface">
+                  <td className="px-4 py-3 font-medium text-text-primary">
                     {user.email}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                  <td className="px-4 py-3 text-text-muted">
                     {user.name ?? "-"}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                  <td className="px-4 py-3 text-text-muted">
                     {user.plan_type}
                   </td>
-                  <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                  <td className="px-4 py-3 text-text-muted">
                     {new Date(user.created_at).toLocaleDateString()}
                   </td>
                 </tr>
               ))}
               {recentSignups.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">
+                  <td colSpan={4} className="px-4 py-8 text-center text-text-muted">
                     No recent signups
                   </td>
                 </tr>

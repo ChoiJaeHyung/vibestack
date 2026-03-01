@@ -5,7 +5,7 @@ import { rateLimit } from "@/lib/utils/rate-limit";
 const RATE_LIMITS: Record<string, number> = {
   "/api/v1": 60,
   "/api/auth": 10,
-  "/api/stripe": 20,
+  "/api/payments": 20,
 };
 
 function getRateLimitKey(request: NextRequest, prefix: string): string {

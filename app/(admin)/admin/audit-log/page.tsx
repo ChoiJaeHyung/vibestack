@@ -6,7 +6,7 @@ export default async function AdminAuditLogPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+      <h1 className="mb-6 text-2xl font-bold text-text-primary">
         Audit Log
       </h1>
 

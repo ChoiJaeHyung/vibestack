@@ -1,6 +1,5 @@
 "use server";
 
-import Stripe from "stripe";
 import { getAuthUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -8,21 +7,20 @@ import { createServiceClient } from "@/lib/supabase/service";
 // ─── Plan Price Config ──────────────────────────────────────────────
 
 const PLAN_PRICES: Record<string, { monthly: number }> = {
-  pro: { monthly: 1900 },
-  team: { monthly: 4900 },
+  pro: { monthly: 25000 },   // ₩25,000
+  team: { monthly: 59000 },  // ₩59,000
 };
 
 // ─── Response Types ─────────────────────────────────────────────────
 
-interface CheckoutSessionResult {
+interface PaymentRequestResult {
   success: boolean;
-  url?: string;
-  error?: string;
-}
-
-interface PortalSessionResult {
-  success: boolean;
-  url?: string;
+  data?: {
+    orderId: string;
+    amount: number;
+    orderName: string;
+    customerKey: string;
+  };
   error?: string;
 }
 
@@ -31,15 +29,40 @@ interface CurrentPlanResult {
   data?: {
     plan_type: string;
     plan_expires_at: string | null;
+    has_billing_key: boolean;
   };
+  error?: string;
+}
+
+interface CancelResult {
+  success: boolean;
+  data?: {
+    message: string;
+    expiresAt: string | null;
+  };
+  error?: string;
+}
+
+interface PaymentHistoryResult {
+  success: boolean;
+  data?: Array<{
+    id: string;
+    order_id: string;
+    plan: string;
+    amount: number;
+    status: string;
+    method: string | null;
+    is_recurring: boolean;
+    created_at: string;
+  }>;
   error?: string;
 }
 
 // ─── Server Actions ─────────────────────────────────────────────────
 
-export async function createCheckoutSession(
+export async function createPaymentRequest(
   plan: "pro" | "team",
-): Promise<CheckoutSessionResult> {
+): Promise<PaymentRequestResult> {
   try {
     const user = await getAuthUser();
 
@@ -51,23 +74,12 @@ export async function createCheckoutSession(
       return { success: false, error: "Invalid plan. Must be 'pro' or 'team'" };
     }
 
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-    if (!stripeSecretKey) {
-      return { success: false, error: "Stripe is not configured" };
-    }
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    if (!appUrl) {
-      return { success: false, error: "App URL is not configured" };
-    }
-
-    const stripe = new Stripe(stripeSecretKey);
     const serviceClient = createServiceClient();
 
-    // Fetch current user data for stripe_customer_id
+    // customerKey 조회 또는 생성
     const { data: userData, error: userError } = await serviceClient
       .from("users")
-      .select("stripe_customer_id, email")
+      .select("toss_customer_key")
       .eq("id", user.id)
       .single();
 
@@ -75,102 +87,35 @@ export async function createCheckoutSession(
       return { success: false, error: "User not found" };
     }
 
-    let customerId = userData.stripe_customer_id;
-
-    // Create or retrieve Stripe Customer
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: userData.email,
-        metadata: { user_id: user.id },
-      });
-
-      customerId = customer.id;
-
+    let customerKey = userData.toss_customer_key;
+    if (!customerKey) {
+      customerKey = `cust_${user.id}`;
       await serviceClient
         .from("users")
         .update({
-          stripe_customer_id: customerId,
+          toss_customer_key: customerKey,
           updated_at: new Date().toISOString(),
         })
         .eq("id", user.id);
     }
 
-    // Create Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      mode: "subscription",
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: { name: `VibeUniv ${plan} Plan` },
-            unit_amount: PLAN_PRICES[plan].monthly,
-            recurring: { interval: "month" },
-          },
-          quantity: 1,
-        },
-      ],
-      metadata: {
-        user_id: user.id,
-        plan,
-      },
-      success_url: `${appUrl}/settings/billing?success=true`,
-      cancel_url: `${appUrl}/settings/billing?canceled=true`,
+    const orderId = `order_${user.id}_${Date.now()}`;
+    const amount = PLAN_PRICES[plan].monthly;
+    const orderName = `VibeUniv ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`;
+
+    // 결제 레코드 미리 생성 (confirm 시 조회용)
+    await serviceClient.from("payments").insert({
+      user_id: user.id,
+      order_id: orderId,
+      plan,
+      amount,
+      status: "pending",
     });
 
-    return { success: true, url: session.url ?? undefined };
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "An unexpected error occurred";
-    return { success: false, error: message };
-  }
-}
-
-export async function createPortalSession(): Promise<PortalSessionResult> {
-  try {
-    const user = await getAuthUser();
-
-    if (!user) {
-      return { success: false, error: "Not authenticated" };
-    }
-
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-    if (!stripeSecretKey) {
-      return { success: false, error: "Stripe is not configured" };
-    }
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    if (!appUrl) {
-      return { success: false, error: "App URL is not configured" };
-    }
-
-    const serviceClient = createServiceClient();
-
-    const { data: userData, error: userError } = await serviceClient
-      .from("users")
-      .select("stripe_customer_id")
-      .eq("id", user.id)
-      .single();
-
-    if (userError || !userData) {
-      return { success: false, error: "User not found" };
-    }
-
-    if (!userData.stripe_customer_id) {
-      return {
-        success: false,
-        error: "No active subscription found. Please subscribe first.",
-      };
-    }
-
-    const stripe = new Stripe(stripeSecretKey);
-
-    const session = await stripe.billingPortal.sessions.create({
-      customer: userData.stripe_customer_id,
-      return_url: `${appUrl}/settings/billing`,
-    });
-
-    return { success: true, url: session.url };
+    return {
+      success: true,
+      data: { orderId, amount, orderName, customerKey },
+    };
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "An unexpected error occurred";
@@ -189,7 +134,7 @@ export async function getCurrentPlan(): Promise<CurrentPlanResult> {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("users")
-      .select("plan_type, plan_expires_at")
+      .select("plan_type, plan_expires_at, toss_billing_key")
       .eq("id", user.id)
       .single();
 
@@ -202,8 +147,93 @@ export async function getCurrentPlan(): Promise<CurrentPlanResult> {
       data: {
         plan_type: data.plan_type,
         plan_expires_at: data.plan_expires_at,
+        has_billing_key: !!data.toss_billing_key,
       },
     };
+  } catch {
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}
+
+export async function cancelSubscription(): Promise<CancelResult> {
+  try {
+    const user = await getAuthUser();
+
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const serviceClient = createServiceClient();
+
+    const { data: userData, error: userError } = await serviceClient
+      .from("users")
+      .select("toss_billing_key, plan_type, plan_expires_at")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData) {
+      return { success: false, error: "User not found" };
+    }
+
+    if (userData.plan_type === "free") {
+      return { success: false, error: "이미 Free 플랜입니다" };
+    }
+
+    // 빌링키 삭제 (자동결제 중단)
+    await serviceClient
+      .from("users")
+      .update({
+        toss_billing_key: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", user.id);
+
+    // plan_expires_at이 없으면 즉시 free 전환
+    if (!userData.plan_expires_at) {
+      await serviceClient
+        .from("users")
+        .update({
+          plan_type: "free",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id);
+    }
+
+    return {
+      success: true,
+      data: {
+        message: "구독이 취소되었습니다",
+        expiresAt: userData.plan_expires_at,
+      },
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "An unexpected error occurred";
+    return { success: false, error: message };
+  }
+}
+
+export async function getPaymentHistory(): Promise<PaymentHistoryResult> {
+  try {
+    const user = await getAuthUser();
+
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("payments")
+      .select("id, order_id, plan, amount, status, method, is_recurring, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (error) {
+      return { success: false, error: "Failed to fetch payment history" };
+    }
+
+    return { success: true, data: data ?? [] };
   } catch {
     return { success: false, error: "An unexpected error occurred" };
   }

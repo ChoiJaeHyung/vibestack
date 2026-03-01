@@ -46,37 +46,35 @@ export function TechChart({ data }: TechChartProps) {
         >
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="currentColor"
-            className="text-zinc-200 dark:text-zinc-800"
+            stroke="rgba(255,255,255,0.06)"
           />
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 12, fill: "currentColor" }}
-            className="text-zinc-500 dark:text-zinc-400"
+            tick={{ fontSize: 12, fill: "#a1a1aa" }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 12, fill: "currentColor" }}
-            className="text-zinc-500 dark:text-zinc-400"
+            tick={{ fontSize: 12, fill: "#a1a1aa" }}
             axisLine={false}
             tickLine={false}
             allowDecimals={false}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: "var(--tooltip-bg, #fff)",
-              border: "1px solid var(--tooltip-border, #e4e4e7)",
-              borderRadius: "8px",
+              backgroundColor: "#18181b",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: "12px",
               fontSize: "13px",
+              color: "#f4f4f5",
             }}
-            labelStyle={{ fontWeight: 600 }}
-            cursor={{ fill: "rgba(0,0,0,0.04)" }}
+            labelStyle={{ fontWeight: 600, color: "#f4f4f5" }}
+            cursor={{ fill: "rgba(255,255,255,0.04)" }}
           />
           <Bar
             dataKey="count"
             name="개수"
-            fill="#52525b"
+            fill="#8B5CF6"
             radius={[4, 4, 0, 0]}
             maxBarSize={48}
           />

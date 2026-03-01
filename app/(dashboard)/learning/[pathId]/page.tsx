@@ -8,12 +8,9 @@ import {
   FolderOpen,
   Clock,
   CheckCircle2,
-  Circle,
-  PlayCircle,
   Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { getLearningPathDetail } from "@/server/actions/learning";
 import { DIFFICULTY_STYLES } from "@/components/features/learning-path-card";
 
@@ -28,26 +25,22 @@ const MODULE_TYPE_CONFIG: Record<
   concept: {
     icon: BookOpen,
     label: "Concept",
-    className:
-      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+    className: "bg-blue-500/10 text-blue-300 border border-blue-500/20",
   },
   practical: {
     icon: Code,
     label: "Practical",
-    className:
-      "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+    className: "bg-violet-500/10 text-violet-300 border border-violet-500/20",
   },
   quiz: {
     icon: HelpCircle,
     label: "Quiz",
-    className:
-      "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
+    className: "bg-orange-500/10 text-orange-300 border border-orange-500/20",
   },
   project_walkthrough: {
     icon: FolderOpen,
     label: "Walkthrough",
-    className:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+    className: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20",
   },
 };
 
@@ -76,24 +69,30 @@ export default async function LearningPathDetailPage({ params }: PageProps) {
     ? DIFFICULTY_STYLES[path.difficulty]
     : null;
 
+  // SVG progress ring
+  const ringSize = 48;
+  const ringRadius = 18;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringOffset = ringCircumference * (1 - progressPercent / 100);
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <Link
           href="/learning"
-          className="mb-4 inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+          className="mb-4 inline-flex items-center gap-1 text-sm text-text-muted hover:text-violet-400 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Learning
         </Link>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-2xl font-bold text-text-primary">
               {path.title}
             </h1>
             {path.description && (
-              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+              <p className="mt-1 text-sm text-text-muted">
                 {path.description}
               </p>
             )}
@@ -107,113 +106,120 @@ export default async function LearningPathDetailPage({ params }: PageProps) {
           )}
         </div>
 
-        {/* Progress overview */}
-        <div className="mt-4 space-y-2">
-          <div className="flex items-center justify-between text-sm text-zinc-600 dark:text-zinc-400">
-            <span>
-              {completedCount} / {path.total_modules} 모듈 완료
-            </span>
-            <span className="font-medium">{progressPercent}%</span>
+        {/* Progress overview with mini ring */}
+        <div className="mt-4 flex items-center gap-4 rounded-2xl border border-border-default bg-bg-surface p-4">
+          {/* Mini progress ring */}
+          <div className="relative shrink-0" style={{ width: ringSize, height: ringSize }}>
+            <svg className="-rotate-90" width={ringSize} height={ringSize} viewBox={`0 0 ${ringSize} ${ringSize}`}>
+              <circle cx={ringSize / 2} cy={ringSize / 2} r={ringRadius} className="fill-none stroke-ring-track" strokeWidth={3} />
+              <circle cx={ringSize / 2} cy={ringSize / 2} r={ringRadius}
+                className={`fill-none ${progressPercent === 100 ? "stroke-green-500" : "stroke-violet-500"}`}
+                strokeWidth={3} strokeLinecap="round"
+                strokeDasharray={ringCircumference}
+                strokeDashoffset={ringOffset}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-[11px] font-bold text-text-secondary tabular-nums">{progressPercent}%</span>
+            </div>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-            <div
-              className="h-full rounded-full bg-zinc-900 transition-all dark:bg-white"
-              style={{ width: `${progressPercent}%` }}
-            />
+
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-text-tertiary">
+                {completedCount} / {path.total_modules} 모듈 완료
+              </span>
+              <span className="text-sm font-bold text-text-primary tabular-nums">{progressPercent}%</span>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-bg-surface-hover">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-500"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            {path.estimated_hours !== null && (
+              <p className="mt-1.5 flex items-center gap-1 text-xs text-text-faint">
+                <Clock className="h-3 w-3" />
+                예상 소요 시간: {path.estimated_hours}시간
+              </p>
+            )}
           </div>
-          {path.estimated_hours !== null && (
-            <p className="flex items-center gap-1 text-xs text-zinc-400 dark:text-zinc-500">
-              <Clock className="h-3 w-3" />
-              예상 소요 시간: {path.estimated_hours}시간
-            </p>
-          )}
         </div>
       </div>
 
-      {/* Module list */}
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+      {/* Timeline-style module list */}
+      <div>
+        <h2 className="text-lg font-semibold text-text-primary mb-4">
           모듈 목록
         </h2>
-        {path.modules.map((mod, idx) => {
-          const isCompleted = mod.progress?.status === "completed";
-          const isInProgress = mod.progress?.status === "in_progress";
-          const typeConfig = mod.module_type
-            ? MODULE_TYPE_CONFIG[mod.module_type]
-            : null;
-          const TypeIcon = typeConfig?.icon ?? BookOpen;
+        <div className="relative space-y-0">
+          {/* Vertical timeline line */}
+          <div className="absolute left-[19px] top-0 bottom-0 w-px bg-bg-surface-hover" />
 
-          return (
-            <Link
-              key={mod.id}
-              href={`/learning/${pathId}/${mod.id}`}
-            >
-              <Card
-                className={`transition-shadow hover:shadow-md ${
-                  isInProgress
-                    ? "ring-2 ring-zinc-900 dark:ring-white"
-                    : ""
-                }`}
+          {path.modules.map((mod, idx) => {
+            const isCompleted = mod.progress?.status === "completed";
+            const isInProgress = mod.progress?.status === "in_progress";
+            const typeConfig = mod.module_type
+              ? MODULE_TYPE_CONFIG[mod.module_type]
+              : null;
+            const TypeIcon = typeConfig?.icon ?? BookOpen;
+
+            return (
+              <Link
+                key={mod.id}
+                href={`/learning/${pathId}/${mod.id}`}
               >
-                <CardContent className="py-4">
-                  <div className="flex items-center gap-4">
-                    {/* Status icon */}
-                    <div className="flex shrink-0 items-center justify-center">
-                      {isCompleted ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                      ) : isInProgress ? (
-                        <PlayCircle className="h-5 w-5 text-zinc-900 dark:text-white" />
-                      ) : (
-                        <Circle className="h-5 w-5 text-zinc-300 dark:text-zinc-600" />
-                      )}
-                    </div>
+                <div className="group relative flex gap-4 pb-6 last:pb-0">
+                  {/* Timeline dot */}
+                  <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center">
+                    {isCompleted ? (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/20 ring-2 ring-green-500/40">
+                        <CheckCircle2 className="h-4 w-4 text-green-400" />
+                      </div>
+                    ) : isInProgress ? (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-500/20 ring-2 ring-violet-500/40 animate-pulse">
+                        <span className="text-xs font-bold text-violet-300 tabular-nums">{String(idx + 1).padStart(2, "0")}</span>
+                      </div>
+                    ) : (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input ring-1 ring-border-strong">
+                        <span className="text-xs font-medium text-text-dim tabular-nums">{String(idx + 1).padStart(2, "0")}</span>
+                      </div>
+                    )}
+                  </div>
 
-                    {/* Module info */}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500">
-                          {String(idx + 1).padStart(2, "0")}
-                        </span>
-                        <h3
-                          className={`font-medium ${
-                            isCompleted
-                              ? "text-zinc-500 line-through dark:text-zinc-500"
-                              : "text-zinc-900 dark:text-zinc-100"
-                          }`}
-                        >
+                  {/* Module card */}
+                  <div className={`flex-1 rounded-xl border p-4 transition-all ${
+                    isInProgress
+                      ? "border-violet-500/30 bg-violet-500/[0.05] shadow-[0_0_20px_rgba(139,92,246,0.06)]"
+                      : "border-border-default bg-bg-surface group-hover:border-border-hover"
+                  }`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className={`font-medium ${isCompleted ? "text-text-faint line-through" : "text-text-primary"}`}>
                           {mod.title}
                         </h3>
+                        {mod.description && (
+                          <p className="mt-0.5 text-sm text-text-faint line-clamp-1">{mod.description}</p>
+                        )}
                       </div>
-                      {mod.description && (
-                        <p className="mt-0.5 line-clamp-1 text-sm text-zinc-500 dark:text-zinc-400">
-                          {mod.description}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Badges */}
-                    <div className="flex shrink-0 items-center gap-2">
-                      {typeConfig && (
-                        <span
-                          className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${typeConfig.className}`}
-                        >
-                          <TypeIcon className="h-3 w-3" />
-                          {typeConfig.label}
-                        </span>
-                      )}
-                      {mod.estimated_minutes !== null && (
-                        <span className="flex items-center gap-1 text-xs text-zinc-400 dark:text-zinc-500">
-                          <Clock className="h-3 w-3" />
-                          {mod.estimated_minutes}분
-                        </span>
-                      )}
+                      <div className="flex shrink-0 items-center gap-2">
+                        {typeConfig && (
+                          <span className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${typeConfig.className}`}>
+                            <TypeIcon className="h-3 w-3" />
+                            {typeConfig.label}
+                          </span>
+                        )}
+                        {mod.estimated_minutes !== null && (
+                          <span className="text-xs text-text-dim tabular-nums">{mod.estimated_minutes}분</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       {/* AI Tutor button */}

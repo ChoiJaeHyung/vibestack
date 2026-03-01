@@ -63,7 +63,7 @@ export default async function ModuleDetailPage({ params }: PageProps) {
       {/* Back navigation */}
       <Link
         href={`/learning/${pathId}`}
-        className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+        className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-violet-400 transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         {path.title}

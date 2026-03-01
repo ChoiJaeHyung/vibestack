@@ -159,11 +159,11 @@ export function TutorChat({
   }
 
   return (
-    <div className="flex h-full flex-col rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="flex h-full flex-col rounded-2xl border border-border-default bg-bg-surface">
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
-        <Brain className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
-        <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+      <div className="flex items-center gap-2 border-b border-border-default px-4 py-3">
+        <Brain className="h-4 w-4 text-violet-400" />
+        <span className="text-sm font-medium text-text-primary">
           AI 튜터
         </span>
       </div>
@@ -172,19 +172,36 @@ export function TutorChat({
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {loadingHistory ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-text-muted" />
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="rounded-full bg-zinc-100 p-3 dark:bg-zinc-800">
-              <Brain className="h-6 w-6 text-zinc-400 dark:text-zinc-500" />
+          <div className="space-y-5 py-6">
+            <div className="text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/10 ring-1 ring-violet-500/20">
+                <Brain className="h-6 w-6 text-violet-400" />
+              </div>
+              <h3 className="mt-3 text-sm font-medium text-text-secondary">AI 튜터에게 질문하세요</h3>
+              <p className="mt-1 text-xs text-text-faint">프로젝트 코드를 이해하고 맥락에 맞게 답변합니다</p>
             </div>
-            <p className="mt-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              AI 튜터에게 질문해보세요
-            </p>
-            <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
-              프로젝트 코드와 학습 맥락을 이해하고 답변합니다
-            </p>
+
+            <div className="space-y-2">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-text-dim">추천 질문</p>
+              {[
+                "이 모듈에서 배운 개념을 실제 프로젝트에 어떻게 적용하나요?",
+                "이 코드가 왜 이렇게 작성되었는지 설명해 주세요",
+                "이 기술의 장단점을 알려주세요",
+              ].map((prompt, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setInput(prompt);
+                  }}
+                  className="block w-full rounded-xl border border-border-default bg-bg-surface px-4 py-2.5 text-left text-sm text-text-muted hover:border-border-hover hover:text-text-secondary transition-all"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
@@ -196,19 +213,19 @@ export function TutorChat({
                 }`}
               >
                 {msg.role === "assistant" && (
-                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
-                    <Brain className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-500/10">
+                    <Brain className="h-3.5 w-3.5 text-violet-400" />
                   </div>
                 )}
                 <div
                   className={`max-w-[80%] rounded-xl px-3 py-2 ${
                     msg.role === "user"
-                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                      : "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                      ? "bg-violet-500/20 text-text-primary"
+                      : "bg-bg-input text-text-primary"
                   }`}
                 >
                   {msg.role === "assistant" ? (
-                    <div className="prose prose-sm prose-zinc max-w-none dark:prose-invert">
+                    <div className="prose prose-sm prose-invert max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {msg.content}
                       </ReactMarkdown>
@@ -218,19 +235,23 @@ export function TutorChat({
                   )}
                 </div>
                 {msg.role === "user" && (
-                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 dark:bg-white">
-                    <User className="h-3.5 w-3.5 text-white dark:text-zinc-900" />
+                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-cyan-500">
+                    <User className="h-3.5 w-3.5 text-white" />
                   </div>
                 )}
               </div>
             ))}
             {loading && (
               <div className="flex items-center gap-2">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
-                  <Brain className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-500/10">
+                  <Brain className="h-3.5 w-3.5 text-violet-400" />
                 </div>
-                <div className="rounded-xl bg-zinc-100 px-3 py-2 dark:bg-zinc-800">
-                  <Loader2 className="h-4 w-4 animate-spin text-zinc-500 dark:text-zinc-400" />
+                <div className="rounded-xl bg-bg-input px-3 py-3">
+                  <div className="flex items-center gap-1">
+                    <div className="h-1.5 w-1.5 rounded-full bg-text-faint animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <div className="h-1.5 w-1.5 rounded-full bg-text-faint animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <div className="h-1.5 w-1.5 rounded-full bg-text-faint animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
                 </div>
               </div>
             )}
@@ -242,14 +263,14 @@ export function TutorChat({
       {/* Error */}
       {error && (
         <div className="px-4">
-          <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
+          <p className="text-xs text-red-400">{error}</p>
         </div>
       )}
 
       {/* Input */}
-      <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
+      <div className="border-t border-border-default p-3">
         {!isUnlimited && remainingChats !== null && (
-          <p className="mb-1.5 text-xs text-zinc-400 dark:text-zinc-500">
+          <p className="mb-1.5 text-xs text-text-faint">
             남은 대화: {remainingChats}회
           </p>
         )}
@@ -261,7 +282,7 @@ export function TutorChat({
             onKeyDown={handleKeyDown}
             placeholder="질문을 입력하세요... (Shift+Enter: 줄바꿈)"
             rows={1}
-            className="flex-1 resize-none rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-1 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:ring-zinc-300"
+            className="flex-1 resize-none rounded-xl border border-border-default bg-bg-input px-3 py-2 text-sm text-text-primary placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/40 transition-all duration-200"
           />
           <Button
             onClick={handleSend}
