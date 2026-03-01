@@ -73,13 +73,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 결제 기록 업데이트
+    // 결제 기록 업데이트 (secret 저장 — 웹훅 검증용)
     await serviceClient
       .from("payments")
       .update({
         payment_key: paymentKey,
         status: "done",
         method: confirmData.method ?? null,
+        toss_secret: confirmData.secret ?? null,
         updated_at: new Date().toISOString(),
       })
       .eq("order_id", orderId);

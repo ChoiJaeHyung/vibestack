@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { createHmac, timingSafeEqual } from "crypto";
+import { timingSafeEqual } from "crypto";
 
 interface TossWebhookPayload {
   eventType: string;
@@ -10,42 +10,13 @@ interface TossWebhookPayload {
     orderId: string;
     status: string;
     method?: string;
+    secret?: string;
   };
-}
-
-function verifyWebhookSignature(rawBody: string, signature: string): boolean {
-  const secret = process.env.TOSS_WEBHOOK_SECRET;
-  if (!secret) {
-    throw new Error("TOSS_WEBHOOK_SECRET environment variable is not set");
-  }
-  const computed = createHmac("sha256", secret).update(rawBody).digest("base64");
-  try {
-    return timingSafeEqual(Buffer.from(computed), Buffer.from(signature));
-  } catch {
-    return false;
-  }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const rawBody = await request.text();
-
-    // Verify webhook signature
-    const signature = request.headers.get("toss-signature");
-    if (!signature) {
-      return NextResponse.json(
-        { success: false, error: "Missing webhook signature" },
-        { status: 401 },
-      );
-    }
-    if (!verifyWebhookSignature(rawBody, signature)) {
-      return NextResponse.json(
-        { success: false, error: "Invalid webhook signature" },
-        { status: 401 },
-      );
-    }
-
-    const body = JSON.parse(rawBody) as TossWebhookPayload;
+    const body = (await request.json()) as TossWebhookPayload;
     const { eventType, data } = body;
 
     if (eventType !== "PAYMENT_STATUS_CHANGED") {
@@ -54,15 +25,43 @@ export async function POST(request: NextRequest) {
 
     const serviceClient = createServiceClient();
 
+    // orderId로 결제 레코드 조회 (secret 포함)
     const { data: payment } = await serviceClient
       .from("payments")
-      .select("id, user_id, plan")
+      .select("id, user_id, plan, toss_secret")
       .eq("order_id", data.orderId)
       .single();
 
     if (!payment) {
       console.error("[toss-webhook] Payment not found for orderId:", data.orderId);
       return NextResponse.json({ success: true, received: true });
+    }
+
+    // 토스 웹훅 검증: DB에 저장된 secret과 웹훅 body의 secret 비교
+    if (payment.toss_secret && data.secret) {
+      try {
+        const isValid = timingSafeEqual(
+          Buffer.from(payment.toss_secret),
+          Buffer.from(data.secret),
+        );
+        if (!isValid) {
+          console.error("[toss-webhook] Secret mismatch for orderId:", data.orderId);
+          return NextResponse.json(
+            { success: false, error: "Invalid webhook secret" },
+            { status: 401 },
+          );
+        }
+      } catch {
+        console.error("[toss-webhook] Secret verification failed for orderId:", data.orderId);
+        return NextResponse.json(
+          { success: false, error: "Invalid webhook secret" },
+          { status: 401 },
+        );
+      }
+    } else if (!payment.toss_secret) {
+      // secret이 아직 저장 안 된 경우 (pending 상태에서 웹훅 도착)
+      // orderId 매칭만으로 진행 (confirm 전에 웹훅이 올 수 있음)
+      console.warn("[toss-webhook] No stored secret for orderId:", data.orderId);
     }
 
     // 결제 상태 업데이트

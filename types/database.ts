@@ -655,6 +655,7 @@ export interface Database {
           status: PaymentStatus;
           method: string | null;
           is_recurring: boolean;
+          toss_secret: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -668,6 +669,7 @@ export interface Database {
           status?: PaymentStatus;
           method?: string | null;
           is_recurring?: boolean;
+          toss_secret?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -681,6 +683,7 @@ export interface Database {
           status?: PaymentStatus;
           method?: string | null;
           is_recurring?: boolean;
+          toss_secret?: string | null;
           created_at?: string;
           updated_at?: string;
         };
