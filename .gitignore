@@ -54,6 +54,10 @@ next-env.d.ts
 # mcp config (contains API keys)
 .mcp.json
 
-# mcp server dist
+# mcp server dist & build
 packages/mcp-server/dist/
 packages/mcp-server/node_modules/
+packages/mcp-server/.next/
+
+# local scripts (contain prod UUIDs, service key usage)
+scripts/*.mjs

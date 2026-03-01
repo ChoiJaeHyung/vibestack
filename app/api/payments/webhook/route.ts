@@ -38,30 +38,38 @@ export async function POST(request: NextRequest) {
     }
 
     // 토스 웹훅 검증: DB에 저장된 secret과 웹훅 body의 secret 비교
-    if (payment.toss_secret && data.secret) {
-      try {
-        const isValid = timingSafeEqual(
-          Buffer.from(payment.toss_secret),
-          Buffer.from(data.secret),
-        );
-        if (!isValid) {
-          console.error("[toss-webhook] Secret mismatch for orderId:", data.orderId);
-          return NextResponse.json(
-            { success: false, error: "Invalid webhook secret" },
-            { status: 401 },
-          );
-        }
-      } catch {
-        console.error("[toss-webhook] Secret verification failed for orderId:", data.orderId);
+    if (!payment.toss_secret) {
+      // secret이 아직 저장 안 된 경우 (confirm 전) — 위조 방지를 위해 거부
+      console.warn("[toss-webhook] Rejected: no stored secret for orderId:", data.orderId);
+      return NextResponse.json({ success: true, received: true });
+    }
+
+    if (!data.secret) {
+      console.error("[toss-webhook] Rejected: no secret in webhook payload for orderId:", data.orderId);
+      return NextResponse.json(
+        { success: false, error: "Missing webhook secret" },
+        { status: 401 },
+      );
+    }
+
+    try {
+      const isValid = timingSafeEqual(
+        Buffer.from(payment.toss_secret),
+        Buffer.from(data.secret),
+      );
+      if (!isValid) {
+        console.error("[toss-webhook] Secret mismatch for orderId:", data.orderId);
         return NextResponse.json(
           { success: false, error: "Invalid webhook secret" },
           { status: 401 },
         );
       }
-    } else if (!payment.toss_secret) {
-      // secret이 아직 저장 안 된 경우 (pending 상태에서 웹훅 도착)
-      // orderId 매칭만으로 진행 (confirm 전에 웹훅이 올 수 있음)
-      console.warn("[toss-webhook] No stored secret for orderId:", data.orderId);
+    } catch {
+      console.error("[toss-webhook] Secret verification failed for orderId:", data.orderId);
+      return NextResponse.json(
+        { success: false, error: "Invalid webhook secret" },
+        { status: 401 },
+      );
     }
 
     // 결제 상태 업데이트
