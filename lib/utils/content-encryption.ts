@@ -24,9 +24,12 @@ export function decryptContent(ciphertext: string): string {
     try {
       return decrypt(ciphertext);
     } catch {
-      // If decryption fails, treat as plaintext (data may predate encryption)
-      return ciphertext;
+      // Log a warning without exposing the ciphertext
+      console.warn("[content-encryption] Decryption failed for encrypted content — wrong key or corrupted data");
+      // The text matches the encrypted format, so returning it raw would leak ciphertext
+      return "[Decryption failed]";
     }
   }
+  // Does not match encrypted format — return as-is for backward compatibility (pre-encryption data)
   return ciphertext;
 }

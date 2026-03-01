@@ -23,18 +23,34 @@ export const getAuthUser = cache(async (): Promise<AuthUser | null> => {
   const userId = h.get("x-user-id");
   const userEmail = h.get("x-user-email");
 
+  let authUser: AuthUser | null = null;
+
   if (userId) {
-    return { id: userId, email: userEmail ?? "" };
+    authUser = { id: userId, email: userEmail ?? "" };
+  } else {
+    // Slow path: call Supabase Auth API (~500ms network round-trip)
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    if (error || !user) return null;
+    authUser = { id: user.id, email: user.email ?? "" };
   }
 
-  // Slow path: call Supabase Auth API (~500ms network round-trip)
+  // Check if user is banned
   const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) return null;
-  return { id: user.id, email: user.email ?? "" };
+  const { data } = await supabase
+    .from("users")
+    .select("is_banned")
+    .eq("id", authUser.id)
+    .single();
+
+  if (data?.is_banned) {
+    return null;
+  }
+
+  return authUser;
 });
 
 export const getUserProfile = cache(async (): Promise<UserProfile | null> => {

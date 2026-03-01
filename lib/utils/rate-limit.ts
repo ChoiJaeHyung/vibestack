@@ -1,3 +1,7 @@
+// TODO: This is an in-memory rate limiter that does NOT work across multiple
+// serverless instances (each instance has its own Map). In production, replace
+// with a distributed store such as Redis or Upstash to enforce global limits.
+
 interface RateLimitEntry {
   count: number;
   resetAt: number;

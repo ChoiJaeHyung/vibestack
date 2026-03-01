@@ -5,6 +5,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { detectFileType } from "@/lib/analysis/file-parser";
 import { generateDigest, digestToMarkdown } from "@/lib/analysis/digest-generator";
 import { encryptContent, decryptContent } from "@/lib/utils/content-encryption";
+import { MAX_FILE_CONTENT_SIZE, MAX_FILES_PER_UPLOAD } from "@/lib/utils/constants";
 import type { FileUploadRequest } from "@/types/api";
 import type { Database } from "@/types/database";
 
@@ -41,6 +42,22 @@ export async function POST(
 
     if (!body.files || !Array.isArray(body.files) || body.files.length === 0) {
       return errorResponse("files array is required and must not be empty", 400);
+    }
+
+    if (body.files.length > MAX_FILES_PER_UPLOAD) {
+      return errorResponse(
+        `Too many files: maximum ${MAX_FILES_PER_UPLOAD} files per request`,
+        400,
+      );
+    }
+
+    for (const file of body.files) {
+      if (file.content && Buffer.byteLength(file.content, "utf-8") > MAX_FILE_CONTENT_SIZE) {
+        return errorResponse(
+          `File "${file.file_name}" exceeds maximum size of ${MAX_FILE_CONTENT_SIZE / 1024}KB`,
+          400,
+        );
+      }
     }
 
     const existingHashes = new Set<string>();

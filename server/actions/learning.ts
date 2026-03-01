@@ -18,6 +18,7 @@ import { buildTutorPrompt } from "@/lib/prompts/tutor-chat";
 import { decryptContent } from "@/lib/utils/content-encryption";
 import { getKBHints } from "@/lib/knowledge";
 import { generateKBForTech, generateMissingKBs } from "@/server/actions/knowledge";
+import { rateLimit } from "@/lib/utils/rate-limit";
 import { after } from "next/server";
 import type { Database, Json } from "@/types/database";
 import type { EducationalAnalysis } from "@/types/educational-analysis";
@@ -364,6 +365,12 @@ export async function generateLearningPath(
 
     if (authError || !user) {
       return { success: false, error: "Not authenticated" };
+    }
+
+    // Rate limit: 5 learning path generations per minute per user
+    const rl = rateLimit(`learning:${user.id}`, 5);
+    if (!rl.success) {
+      return { success: false, error: "Too many requests. Please try again later." };
     }
 
     // Check usage limit
@@ -1476,6 +1483,12 @@ export async function sendTutorMessage(
 
     if (authError || !user) {
       return { success: false, error: "Not authenticated" };
+    }
+
+    // Rate limit: 20 tutor messages per minute per user
+    const rl = rateLimit(`tutor:${user.id}`, 20);
+    if (!rl.success) {
+      return { success: false, error: "Too many messages. Please try again later." };
     }
 
     // Check usage limit for new conversations
