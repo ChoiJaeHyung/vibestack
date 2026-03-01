@@ -19,7 +19,13 @@ interface TutorContextResponse {
   }>;
   learningContext?: {
     path_title: string;
+    learning_path_id: string;
     current_module: string;
+    modules: Array<{
+      id: string;
+      title: string;
+      module_order: number;
+    }>;
   };
 }
 
@@ -66,7 +72,7 @@ export async function GET(
 
     // Build learning context (replicating tutor-chat.ts lines 57-83)
     let learningContext:
-      | { path_title: string; current_module: string }
+      | { path_title: string; learning_path_id: string; current_module: string; modules: Array<{ id: string; title: string; module_order: number }> }
       | undefined;
 
     // Find the most recent active learning path for this project
@@ -83,14 +89,19 @@ export async function GET(
     if (learningPath) {
       const { data: modules } = await supabase
         .from("learning_modules")
-        .select("title")
+        .select("id, title, module_order")
         .eq("learning_path_id", learningPath.id)
-        .order("module_order", { ascending: true })
-        .limit(1);
+        .order("module_order", { ascending: true });
 
       learningContext = {
         path_title: learningPath.title,
+        learning_path_id: learningPath.id,
         current_module: modules?.[0]?.title ?? "Getting started",
+        modules: (modules ?? []).map((m) => ({
+          id: m.id,
+          title: m.title,
+          module_order: m.module_order,
+        })),
       };
     }
 

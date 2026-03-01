@@ -12,6 +12,7 @@ interface ProjectFileInput {
 interface LearningContextInput {
   path_title: string;
   current_module: string;
+  module_sections?: string;
 }
 
 export function buildTutorPrompt(
@@ -36,6 +37,14 @@ export function buildTutorPrompt(
     })
     .join("\n\n");
 
+  const moduleSectionsBlock = learningContext?.module_sections
+    ? `\n\n### Module Sections (학생이 현재 보고 있는 모듈의 섹션 목록)
+
+${learningContext.module_sections}
+
+Use these section topics to provide more targeted, context-aware answers. If the student asks about a concept covered in one of these sections, reference it directly.`
+    : "";
+
   const learningContextSection = learningContext
     ? `\n## Current Learning Context
 
@@ -43,7 +52,7 @@ The student is currently working through:
 - **Learning Path:** ${learningContext.path_title}
 - **Current Module:** ${learningContext.current_module}
 
-Relate your answers to their current module topic when relevant.`
+Relate your answers to their current module topic when relevant.${moduleSectionsBlock}`
     : "";
 
   return `You are a friendly, patient AI tutor helping a "vibe coder" understand their own project.

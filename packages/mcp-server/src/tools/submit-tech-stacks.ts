@@ -44,10 +44,9 @@ export function registerSubmitTechStacks(server: McpServer, client: VibeUnivClie
 
         const result = await client.submitTechStacks(project_id, submission);
 
-        let output = `Tech stack analysis submitted successfully!\n\n`;
-        output += `- Technologies saved: ${result.savedCount}\n`;
-        output += `- Project status: ${result.projectStatus}\n\n`;
-        output += `Next step: Use vibeuniv_generate_curriculum to create a learning curriculum.`;
+        let output = `🎉 프로젝트 연결 완료! (${result.savedCount}개 기술 저장)\n\n`;
+        output += `https://vibeuniv.com 에서 프로젝트를 확인할 수 있습니다.\n\n`;
+        output += `📚 다음: 사용자에게 난이도(beginner 초급 / intermediate 중급 / advanced 고급)를 물어본 후 vibeuniv_generate_curriculum을 호출하세요.`;
 
         return {
           content: [{ type: "text" as const, text: output }],

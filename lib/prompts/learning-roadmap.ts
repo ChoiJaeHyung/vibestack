@@ -37,8 +37,8 @@ const CONTENT_JSON_SCHEMA = `[
           "quiz_options": ["string array (if quiz_question, otherwise omit)"],
           "quiz_answer": number (0-based index of correct option, if quiz_question, otherwise omit),
           "quiz_explanation": "string (explanation of correct answer and why wrong answers are wrong, if quiz_question, otherwise omit)",
-          "challenge_starter_code": "string (skeleton code with TODO comments, if challenge, otherwise omit)",
-          "challenge_answer_code": "string (complete working solution, if challenge, otherwise omit)"
+          "challenge_starter_code": "string (fill-in-the-blank: complete code with key parts replaced by ___BLANK___ placeholders, if challenge, otherwise omit)",
+          "challenge_answer_code": "string (complete working solution with all blanks filled in, if challenge, otherwise omit)"
         }
       ]
     }
@@ -75,7 +75,11 @@ function buildLevelGuidance(level: string): string {
     return `   - Start with absolute basics ("What is X and why does it exist?")
    - Use simple analogies and everyday language
    - Avoid jargon — when you must use a technical term, define it immediately
-   - More concept and quiz modules, fewer practical modules`;
+   - More concept and quiz modules, fewer practical modules
+   - 모든 기술 개념에 최소 1개 실생활 비유 필수 (예: "API는 식당 메뉴판 같은 거예요")
+   - 개념 소개 → 즉시 학생 코드에서 해당 부분 연결 ("여러분의 코드에서는 이렇게 쓰이고 있어요")
+   - "왜 필요한지" 먼저 설명 → 그 다음 "어떻게 동작하는지"
+   - 각 섹션 끝에 "💡 핵심 포인트" 요약 박스 추가`;
   }
   if (level === "intermediate") {
     return `   - Assume basic programming knowledge
@@ -393,21 +397,38 @@ For each module listed above, generate detailed content sections. Follow these r
    - \`quiz_question\` — Multiple choice question based on the student's actual code (must include \`quiz_options\` and \`quiz_answer\` fields). For example: "\`app/layout.tsx\`에서 \`<html lang='ko'>\`를 사용하는 이유는 무엇일까요?"
    - \`challenge\` — A small, concrete coding challenge the student can try on their own project. Be specific about which file to modify and what to add. For example: "\`app/api/v1/projects/route.ts\`에 새로운 쿼리 파라미터를 추가해서 프로젝트를 상태별로 필터링하는 기능을 만들어 보세요."
    - \`reflection\` — A short "생각해보기" prompt (1-3 sentences) asking the student to pause and think. No quiz_options needed. For example: "만약 이 미들웨어가 없다면 어떤 문제가 생길까요? 한번 상상해 보세요."
-3. **Each module MUST have 5-8 sections.** Keep individual sections SHORT — explanations should be 1-3 short paragraphs max. Use bullet points over long paragraphs.
+3. **Each module MUST have 5-8 sections.** Each explanation section should be thorough — 5-8 paragraphs with step-by-step explanations. Use a mix of paragraphs and bullet points. Longer, detailed explanations are better than short, cryptic ones. Treat each explanation like a mini-lesson.
 4. **Interleave interactive sections:** After every 1-2 explanation/code_example sections, insert a quiz_question or reflection section. Never have more than 2 explanation sections in a row.
-5. **Micro-learning tone:** Use short sentences. Start sections with a question or hook ("왜 이렇게 할까요?", "이 코드를 보면..."). Prefer bullet points over prose. Each section should feel like a quick card, not a lecture.
-6. **Quiz questions** should have exactly 4 options with one correct answer (0-indexed). Always include a \`quiz_explanation\` field: explain why the correct answer is right and briefly note why the main wrong answers are incorrect (2-4 sentences).
-7. **For ${level} level:**
+5. **Friendly teacher tone:** Write like a patient, experienced friend explaining things over coffee. Use clear, simple Korean. Start sections with a hook question ("왜 이렇게 할까요?", "이 코드를 보면..."). Mix short sentences with detailed explanations. Use analogies liberally — compare programming concepts to everyday things (e.g., "API는 식당 메뉴판 같은 거예요", "컴포넌트는 레고 블록이에요"). Each section should feel like a thorough mini-lesson that the student can truly learn from.
+6. **Citations and References:** Every explanation and code_example section MUST include relevant official documentation links as markdown. At the end of each explanation section, add a '📚 더 알아보기' subsection with 2-3 clickable links to the most relevant docs:
+   - React → [React 공식 문서](https://react.dev)
+   - Next.js → [Next.js 공식 문서](https://nextjs.org/docs)
+   - JavaScript/TypeScript → [MDN Web Docs](https://developer.mozilla.org)
+   - Tailwind CSS → [Tailwind CSS 문서](https://tailwindcss.com/docs)
+   - Supabase → [Supabase 문서](https://supabase.com/docs)
+   Use specific page URLs, not just homepages.
+7. **Detailed Code Walkthroughs:** For code_example sections, do NOT just show code. After the code block, provide a line-by-line explanation in numbered list format. For example:
+   1. \`const supabase = createClient()\` — Supabase 클라이언트를 생성합니다.
+   2. \`const { data } = await supabase.from('users')...\` — users 테이블에서 데이터를 가져옵니다. await는 데이터가 올 때까지 기다리라는 뜻이에요.
+8. **Quiz questions** should have exactly 4 options with one correct answer (0-indexed). Always include a \`quiz_explanation\` field: explain why the correct answer is right and briefly note why the main wrong answers are incorrect (2-4 sentences).
+9. **For ${level} level:**
 ${buildLevelGuidance(level)}
-8. **For \`project_walkthrough\` modules:** Walk through one of the student's actual files from top to bottom. Start with the imports (각 라이브러리가 무슨 역할인지), then the main logic (핵심 로직 설명), then the exports (다른 파일에서 어떻게 사용되는지). Explain how this file connects to the rest of the project. Use the actual code from the source files above — do NOT paraphrase or abbreviate.
-9. **For \`code_example\` sections:** Use ACTUAL code snippets FROM the student's files, not invented examples. Include the file path and add Korean comments explaining what each important line does. For example:
+10. **For \`project_walkthrough\` modules:** Walk through one of the student's actual files from top to bottom. Start with the imports (각 라이브러리가 무슨 역할인지), then the main logic (핵심 로직 설명), then the exports (다른 파일에서 어떻게 사용되는지). Explain how this file connects to the rest of the project. Use the actual code from the source files above — do NOT paraphrase or abbreviate.
+11. **For \`code_example\` sections:** Use ACTUAL code snippets FROM the student's files, not invented examples. Include the file path and add Korean comments explaining what each important line does. For example:
    \`\`\`
    // app/api/auth/route.ts에서 가져온 코드
    const supabase = createClient()  // Supabase 클라이언트 생성
    const { data } = await supabase.auth.getUser()  // 현재 로그인한 사용자 정보 가져오기
    \`\`\`
-10. **For \`challenge\` sections:** Give a small, concrete task the student can try on their own project. Specify the exact file to modify, what to add or change, and what the expected result should be. Make challenges relevant to the student's actual codebase. Always include \`challenge_starter_code\` (skeleton with TODO comments showing what to fill in) and \`challenge_answer_code\` (the complete working solution).${educationalAnalysis ? `
-11. **Use the Educational Metadata above** to enrich your content. Reference gotchas as quiz questions, use teaching_notes for explanation sections, and leverage code quality observations as practical learning points. For beginner level, use the Tech Stack Metaphors to make concepts accessible.` : ""}
+12. **For \`challenge\` sections:** Use a **fill-in-the-blank** format, NOT a full rewrite. The \`challenge_starter_code\` should be the COMPLETE working code from the student's project, but with 2-4 key parts replaced by \`___BLANK___\` placeholders. The student only needs to fill in the blanks, not write everything from scratch. In the \`body\`, provide numbered hints for each blank (e.g., "1번 빈칸: 이 함수는 데이터를 가져오는 역할이에요"). The \`challenge_answer_code\` should be the complete solution with all blanks filled in. Example:
+   \`\`\`
+   // challenge_starter_code:
+   const { data } = await supabase
+     .from(___BLANK_1___)          // 힌트: 어떤 테이블에서 가져올까요?
+     .select(___BLANK_2___)        // 힌트: 어떤 컬럼이 필요할까요?
+     .eq('user_id', user.id)
+   \`\`\`${educationalAnalysis ? `
+13. **Use the Educational Metadata above** to enrich your content. Reference gotchas as quiz questions, use teaching_notes for explanation sections, and leverage code quality observations as practical learning points. For beginner level, use the Tech Stack Metaphors to make concepts accessible.` : ""}
 
 ## Important Rules
 
@@ -445,7 +466,7 @@ const ROADMAP_JSON_SCHEMA = `{
             "quiz_options": ["string array (if quiz_question, otherwise omit)"],
             "quiz_answer": number (0-based index of correct option, if quiz_question, otherwise omit),
             "quiz_explanation": "string (explanation of correct answer and why wrong answers are wrong, if quiz_question, otherwise omit)",
-            "challenge_starter_code": "string (skeleton code with TODO comments, if challenge, otherwise omit)",
+            "challenge_starter_code": "string (fill-in-the-blank: complete code with key parts replaced by ___BLANK___ placeholders, if challenge, otherwise omit)",
             "challenge_answer_code": "string (complete working solution, if challenge, otherwise omit)"
           }
         ]
