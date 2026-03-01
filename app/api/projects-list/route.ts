@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/auth";
 
 // ─── Types (exported for client components) ─────────────────────────
 
@@ -20,24 +21,21 @@ export interface ProjectsListData {
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const authUser = await getAuthUser();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!authUser) {
       return NextResponse.json(
         { success: false, error: "Not authenticated" },
         { status: 401 },
       );
     }
 
+    const supabase = await createClient();
+
     const { data, error } = await supabase
       .from("projects")
       .select("id, name, description, status, tech_summary, updated_at")
-      .eq("user_id", user.id)
+      .eq("user_id", authUser.id)
       .order("updated_at", { ascending: false });
 
     if (error) {

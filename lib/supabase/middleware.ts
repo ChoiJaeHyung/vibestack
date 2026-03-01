@@ -48,11 +48,17 @@ export async function updateSession(request: NextRequest) {
   const authPages = ["/login", "/signup"];
   const isAuthPage = authPages.includes(request.nextUrl.pathname);
 
+  // Forward auth headers to internal API routes (not /api/v1 which uses API key auth)
+  // so API handlers can use getAuthUser() fast path instead of redundant getUser() calls
+  const isInternalApi =
+    request.nextUrl.pathname.startsWith("/api/") &&
+    !request.nextUrl.pathname.startsWith("/api/v1");
+
   // Only call getUser() when the result actually matters:
-  // - protected pages (need auth check)
+  // - protected pages (need auth check + redirect)
   // - auth pages (redirect logged-in users away from login/signup)
-  // Note: landing page (/) is accessible to logged-in users (no redirect)
-  const needsAuthCheck = isProtectedPath || isAuthPage;
+  // - internal API routes (forward auth headers, no redirect)
+  const needsAuthCheck = isProtectedPath || isAuthPage || isInternalApi;
 
   if (!needsAuthCheck) {
     return supabaseResponse;
