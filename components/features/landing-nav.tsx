@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface LandingNavProps {
@@ -58,12 +58,23 @@ export function LandingNav({ userEmail }: LandingNavProps) {
         <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
           {userEmail ? (
-            <Link
-              href="/dashboard"
-              className="px-5 py-2 rounded-[10px] bg-gradient-to-br from-violet-500 to-cyan-500 text-[13px] font-semibold text-white shadow-glow-purple-sm hover:opacity-90 transition-all"
-            >
-              대시보드
-            </Link>
+            <>
+              <Link
+                href="/dashboard"
+                className="px-5 py-2 rounded-[10px] bg-gradient-to-br from-violet-500 to-cyan-500 text-[13px] font-semibold text-white shadow-glow-purple-sm hover:opacity-90 transition-all"
+              >
+                대시보드
+              </Link>
+              <form action="/api/auth/signout" method="post">
+                <button
+                  type="submit"
+                  className="flex items-center gap-1.5 text-sm font-medium text-text-muted hover:text-text-primary transition-colors"
+                  aria-label="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </form>
+            </>
           ) : (
             <>
               <Link
@@ -109,13 +120,24 @@ export function LandingNav({ userEmail }: LandingNavProps) {
           </a>
           <div className="pt-2 border-t border-border-default space-y-2">
             {userEmail ? (
-              <Link
-                href="/dashboard"
-                onClick={() => setMobileOpen(false)}
-                className="block w-full text-center px-5 py-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 text-sm font-semibold text-white"
-              >
-                대시보드
-              </Link>
+              <>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileOpen(false)}
+                  className="block w-full text-center px-5 py-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 text-sm font-semibold text-white"
+                >
+                  대시보드
+                </Link>
+                <form action="/api/auth/signout" method="post">
+                  <button
+                    type="submit"
+                    className="flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm text-text-muted hover:text-text-primary border border-border-default transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    로그아웃
+                  </button>
+                </form>
+              </>
             ) : (
               <>
                 <Link
