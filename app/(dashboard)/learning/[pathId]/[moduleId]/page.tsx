@@ -34,8 +34,9 @@ export default async function ModuleDetailPage({ params }: PageProps) {
   const mod = moduleResult.data;
   const path = pathResult.data;
 
-  // Get the project_id from the learning path
+  // Get the project_id and project name from the learning path
   let projectId = "";
+  let projectName = "";
   try {
     const supabase = await createClient();
     const { data: pathData } = await supabase
@@ -46,13 +47,23 @@ export default async function ModuleDetailPage({ params }: PageProps) {
 
     if (pathData) {
       projectId = pathData.project_id;
+      const { data: projectData } = await supabase
+        .from("projects")
+        .select("name")
+        .eq("id", pathData.project_id)
+        .single();
+      projectName = projectData?.name ?? "";
     }
   } catch {
     // Ignore
   }
 
-  // Find the next module
+  // Find the previous and next modules
   const currentIndex = path.modules.findIndex((m) => m.id === moduleId);
+  const prevModule =
+    currentIndex > 0
+      ? path.modules[currentIndex - 1]
+      : null;
   const nextModule =
     currentIndex >= 0 && currentIndex < path.modules.length - 1
       ? path.modules[currentIndex + 1]
@@ -80,6 +91,8 @@ export default async function ModuleDetailPage({ params }: PageProps) {
         progress={mod.progress}
         learningPathId={pathId}
         projectId={projectId}
+        projectName={projectName}
+        prevModuleId={prevModule?.id ?? null}
         nextModuleId={nextModule?.id ?? null}
         needsGeneration={!mod.content.sections || mod.content.sections.length === 0}
       />

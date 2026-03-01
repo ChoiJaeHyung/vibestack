@@ -8,6 +8,9 @@ import {
   AlertTriangle,
   Layers,
   ChevronRight,
+  CheckCircle2,
+  X,
+  FileUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +44,7 @@ interface ProjectAnalysisProps {
   projectId: string;
   initialStatus: string;
   initialTechStacks: TechStackItem[];
+  fileCount: number;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -128,16 +132,30 @@ function groupByCategory(
 
 const POLL_INTERVAL = 3000;
 
+function getErrorGuidance(errorMessage: string): string {
+  const lower = errorMessage.toLowerCase();
+  if (lower.includes("llm") || lower.includes("api key") || lower.includes("api 키") || lower.includes("decrypt") || lower.includes("encryption")) {
+    return "LLM API 키를 확인해주세요. 설정에서 키를 등록하거나 다시 입력해주세요.";
+  }
+  if (lower.includes("file") || lower.includes("파일") || lower.includes("no files") || lower.includes("load project files")) {
+    return "분석할 파일이 부족합니다. 프로젝트에 더 많은 파일을 업로드해주세요.";
+  }
+  return errorMessage;
+}
+
 export function ProjectAnalysis({
   projectId,
   initialStatus,
   initialTechStacks,
+  fileCount,
 }: ProjectAnalysisProps) {
   const [status, setStatus] = useState(initialStatus);
   const [techStacks, setTechStacks] = useState(initialTechStacks);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCompletionBanner, setShowCompletionBanner] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const prevStatusRef = useRef(initialStatus);
 
   const stopPolling = useCallback(() => {
     if (pollRef.current) {
@@ -158,15 +176,25 @@ export function ProjectAnalysis({
   const pollStatus = useCallback(async () => {
     const result = await getProjectStatus(projectId);
     if (result.success && result.status) {
+      const previousStatus = prevStatusRef.current;
       setStatus(result.status);
+      prevStatusRef.current = result.status;
 
       if (result.status === "analyzed" || result.status === "error") {
         stopPolling();
-        // Refresh full data when analysis completes
+
         if (result.status === "analyzed") {
+          // Show completion banner when transitioning from analyzing to analyzed
+          if (previousStatus === "analyzing") {
+            setShowCompletionBanner(true);
+          }
           invalidateCache("/api/dashboard");
           invalidateCache("/api/projects");
           await refreshProjectData();
+        }
+
+        if (result.status === "error" && result.errorMessage) {
+          setError(result.errorMessage);
         }
       }
     }
@@ -188,6 +216,18 @@ export function ProjectAnalysis({
       stopPolling();
     };
   }, [status, startPolling, stopPolling]);
+
+  // Fetch error message on mount if initial status is error
+  useEffect(() => {
+    if (initialStatus === "error" && !error) {
+      getProjectStatus(projectId).then((result) => {
+        if (result.success && result.errorMessage) {
+          setError(result.errorMessage);
+        }
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleStartAnalysis() {
     setError(null);
@@ -211,6 +251,8 @@ export function ProjectAnalysis({
 
   // Uploaded state: show start button
   if (status === "uploaded" || status === "created") {
+    const hasNoFiles = fileCount === 0;
+
     return (
       <Card>
         <CardHeader>
@@ -224,34 +266,62 @@ export function ProjectAnalysis({
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center gap-4 py-8">
-            <div className="rounded-full bg-violet-500/10 p-4">
-              <Play className="h-8 w-8 text-violet-400" />
-            </div>
-            <div className="text-center">
-              <p className="font-medium text-text-primary">
-                분석 준비 완료
-              </p>
-              <p className="mt-1 text-sm text-text-muted">
-                업로드된 파일을 기반으로 기술 스택을 분석합니다
-              </p>
-            </div>
-            {error && (
-              <p className="text-sm text-red-400">
-                {error}
-              </p>
+            {hasNoFiles ? (
+              <>
+                <div className="rounded-full bg-amber-500/10 p-4">
+                  <FileUp className="h-8 w-8 text-amber-400" />
+                </div>
+                <div className="text-center">
+                  <p className="font-medium text-text-primary">
+                    파일이 없습니다
+                  </p>
+                  <p className="mt-1 text-sm text-text-muted">
+                    분석을 시작하려면 먼저 파일을 업로드해주세요.
+                    <br />
+                    MCP 또는 API를 통해 프로젝트 파일을 전송할 수 있습니다.
+                  </p>
+                </div>
+                <Button
+                  disabled
+                  size="lg"
+                  title="파일을 먼저 업로드해주세요"
+                >
+                  <Play className="mr-2 h-4 w-4" />
+                  분석 시작
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="rounded-full bg-violet-500/10 p-4">
+                  <Play className="h-8 w-8 text-violet-400" />
+                </div>
+                <div className="text-center">
+                  <p className="font-medium text-text-primary">
+                    분석 준비 완료
+                  </p>
+                  <p className="mt-1 text-sm text-text-muted">
+                    업로드된 {fileCount}개 파일을 기반으로 기술 스택을 분석합니다
+                  </p>
+                </div>
+                {error && (
+                  <p className="text-sm text-red-400">
+                    {error}
+                  </p>
+                )}
+                <Button
+                  onClick={handleStartAnalysis}
+                  disabled={loading}
+                  size="lg"
+                >
+                  {loading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Play className="mr-2 h-4 w-4" />
+                  )}
+                  분석 시작
+                </Button>
+              </>
             )}
-            <Button
-              onClick={handleStartAnalysis}
-              disabled={loading}
-              size="lg"
-            >
-              {loading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Play className="mr-2 h-4 w-4" />
-              )}
-              분석 시작
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -296,6 +366,10 @@ export function ProjectAnalysis({
 
   // Error state: show error with retry
   if (status === "error") {
+    const displayError = error
+      ? getErrorGuidance(error)
+      : "분석 과정에서 문제가 발생했습니다. 다시 시도해주세요.";
+
     return (
       <Card>
         <CardHeader>
@@ -313,8 +387,8 @@ export function ProjectAnalysis({
               <p className="font-medium text-text-primary">
                 분석 중 오류가 발생했습니다
               </p>
-              <p className="mt-1 text-sm text-text-muted">
-                {error ?? "분석 과정에서 문제가 발생했습니다. 다시 시도해주세요."}
+              <p className="mt-1 text-sm text-text-muted max-w-md">
+                {displayError}
               </p>
             </div>
             <Button
@@ -340,6 +414,23 @@ export function ProjectAnalysis({
 
   return (
     <Card>
+      {/* Completion banner */}
+      {showCompletionBanner && (
+        <div className="flex items-center justify-between gap-3 border-b border-green-500/20 bg-green-500/10 px-4 py-3 animate-slide-up">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-green-400" />
+            <p className="text-sm font-medium text-green-300">
+              분석이 완료되었습니다!
+            </p>
+          </div>
+          <button
+            onClick={() => setShowCompletionBanner(false)}
+            className="text-green-400/60 hover:text-green-300 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

@@ -664,10 +664,10 @@ export async function generateModuleContent(
       return { success: true, data: { sections: content.sections } };
     }
 
-    // If currently generating and not stale (< 600s), tell client to wait
+    // If currently generating and not stale (< 120s), tell client to wait
     if (content._status === "generating" && content._generating_since) {
       const sinceTime = new Date(content._generating_since).getTime();
-      if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 600_000) {
+      if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 120_000) {
         return { success: true, generating: true };
       }
       // Otherwise stale or invalid timestamp — re-generate
@@ -751,10 +751,10 @@ async function _generateContentForModule(
     return { success: true, data: { sections: content.sections } };
   }
 
-  // If currently generating and not stale (< 600s), skip
+  // If currently generating and not stale (< 120s), skip
   if (content._status === "generating" && content._generating_since) {
     const sinceTime = new Date(content._generating_since).getTime();
-    if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 600_000) {
+    if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 120_000) {
       return { success: true, generating: true };
     }
   }
@@ -779,7 +779,7 @@ async function _generateContentForModule(
     if (c.sections && c.sections.length > 0) return false;
     if (c._status === "generating" && c._generating_since) {
       const sinceTime = new Date(c._generating_since).getTime();
-      if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 600_000) return false;
+      if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 120_000) return false;
     }
     return true;
   });
@@ -1067,7 +1067,7 @@ async function _generateAllModuleContentInBackground(
           if (content.sections && content.sections.length > 0) continue;
           if (content._status === "generating" && content._generating_since) {
             const sinceTime = new Date(content._generating_since).getTime();
-            if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 600_000) continue;
+            if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 120_000) continue;
           }
           try {
             await _generateContentForModule(moduleId, userId);
@@ -1127,7 +1127,7 @@ export async function prefetchNextModuleContent(
       if (nextContent.sections && nextContent.sections.length > 0) continue;
       if (nextContent._status === "generating" && nextContent._generating_since) {
         const sinceTime = new Date(nextContent._generating_since).getTime();
-        if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 600_000) continue;
+        if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 120_000) continue;
       }
 
       // Fire-and-forget: batch generation will also cover sibling modules

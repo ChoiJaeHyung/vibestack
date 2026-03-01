@@ -187,6 +187,7 @@ export default async function ProjectDetailPage({
         projectId={project.id}
         initialStatus={project.status}
         initialTechStacks={techStacks}
+        fileCount={files.length}
       />
 
       {/* Files */}

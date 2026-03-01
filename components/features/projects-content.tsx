@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Plus, FolderOpen, BookOpen, Settings } from "lucide-react";
+import { Plus, FolderOpen, BookOpen, Settings, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/features/project-card";
+import { UpgradeModal } from "@/components/features/upgrade-modal";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
 import type { ProjectsListData } from "@/app/api/projects-list/route";
+import type { UsageData } from "@/server/actions/usage";
 
 type FilterType = "all" | "analyzed" | "analyzing" | "uploaded";
 
@@ -42,6 +44,30 @@ export function ProjectsContent() {
     fetchProjects,
   );
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [isAtLimit, setIsAtLimit] = useState(false);
+
+  // Fetch usage data to check if user is at project limit
+  useEffect(() => {
+    async function fetchUsage() {
+      try {
+        const res = await fetch("/api/usage");
+        const json = await res.json();
+        if (json.success && json.data) {
+          const usage = json.data as UsageData;
+          if (
+            usage.projects.limit !== null &&
+            usage.projects.used >= usage.projects.limit
+          ) {
+            setIsAtLimit(true);
+          }
+        }
+      } catch {
+        // Ignore fetch errors
+      }
+    }
+    fetchUsage();
+  }, []);
 
   if (isLoading) {
     return (
@@ -119,14 +145,44 @@ export function ProjectsContent() {
               ))}
             </div>
           )}
-          <Link href="/guide">
-            <Button>
+          {isAtLimit ? (
+            <Button onClick={() => setShowUpgradeModal(true)}>
               <Plus className="mr-2 h-4 w-4" />
               New Project
             </Button>
-          </Link>
+          ) : (
+            <Link href="/guide">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                New Project
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
+
+      {/* Project limit banner */}
+      {isAtLimit && (
+        <button
+          onClick={() => setShowUpgradeModal(true)}
+          className="flex w-full items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-left transition-colors hover:bg-amber-500/15"
+        >
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500/10">
+            <Zap className="h-4 w-4 text-amber-400" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-300">
+              프로젝트 등록 한도에 도달했어요
+            </p>
+            <p className="mt-0.5 text-xs text-amber-400/70">
+              Pro로 업그레이드하면 무제한으로 프로젝트를 추가할 수 있어요
+            </p>
+          </div>
+          <span className="text-xs font-medium text-amber-400">
+            업그레이드
+          </span>
+        </button>
+      )}
 
       {projects.length === 0 && allProjects.length === 0 ? (
         /* Empty state */
@@ -190,6 +246,12 @@ export function ProjectsContent() {
           })}
         </div>
       )}
+
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="analysis"
+      />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import {
   CheckCircle2,
   XCircle,
+  ArrowLeft,
   ArrowRight,
   Loader2,
   Clock,
@@ -70,6 +71,8 @@ interface ModuleContentProps {
   progress: ModuleProgress | undefined;
   learningPathId: string;
   projectId: string;
+  projectName?: string;
+  prevModuleId: string | null;
   nextModuleId: string | null;
   needsGeneration?: boolean;
 }
@@ -261,12 +264,57 @@ const LazyEditor = dynamic(() => import("react-simple-code-editor"), {
   ),
 });
 
-function ChallengeSection({ section }: { section: ContentSection }) {
+function ChallengeSection({
+  section,
+  moduleId,
+  sectionIndex,
+}: {
+  section: ContentSection;
+  moduleId: string;
+  sectionIndex: number;
+}) {
+  const storageKey = `challenge-code-${moduleId}-${sectionIndex}`;
   const [completed, setCompleted] = useState(false);
-  const [code, setCode] = useState(section.challenge_starter_code ?? "");
+  const [code, setCode] = useState(() => {
+    if (typeof window === "undefined") return section.challenge_starter_code ?? "";
+    try {
+      const saved = localStorage.getItem(storageKey);
+      return saved ?? section.challenge_starter_code ?? "";
+    } catch {
+      return section.challenge_starter_code ?? "";
+    }
+  });
   const [showAnswer, setShowAnswer] = useState(false);
   const answerCode =
     section.challenge_answer_code ?? section.code ?? "";
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced localStorage save
+  const handleCodeChange = useCallback(
+    (newCode: string) => {
+      setCode(newCode);
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+      saveTimerRef.current = setTimeout(() => {
+        try {
+          localStorage.setItem(storageKey, newCode);
+        } catch {
+          // Ignore localStorage errors (quota exceeded, etc.)
+        }
+      }, 500);
+    },
+    [storageKey],
+  );
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -295,7 +343,7 @@ function ChallengeSection({ section }: { section: ContentSection }) {
         </div>
         <LazyEditor
           value={code}
-          onValueChange={setCode}
+          onValueChange={handleCodeChange}
           highlight={(c: string) => highlightCode(c)}
           padding={16}
           className="min-h-[120px] bg-zinc-900 font-mono text-sm text-zinc-100"
@@ -410,6 +458,8 @@ export function ModuleContent({
   progress,
   learningPathId,
   projectId,
+  projectName,
+  prevModuleId,
   nextModuleId,
   needsGeneration,
 }: ModuleContentProps) {
@@ -426,6 +476,7 @@ export function ModuleContent({
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [showManualGenerate, setShowManualGenerate] = useState(false);
 
   // Whether the module visually needs a loading state (before useEffect fires)
   const showGeneratingUI = needsGeneration && (!sections || sections.length === 0);
@@ -455,6 +506,18 @@ export function ModuleContent({
     }, 1000);
     return () => clearInterval(interval);
   }, [isGenerating, showGeneratingUI, localSections.length]);
+
+  // Show manual generation fallback if auto-generation doesn't start within 5 seconds
+  useEffect(() => {
+    if (!needsGeneration || localSections.length > 0 || isGenerating || generationError) {
+      setShowManualGenerate(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setShowManualGenerate(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [needsGeneration, localSections.length, isGenerating, generationError]);
 
   useEffect(() => {
     if (!needsGeneration || localSections.length > 0 || generationError) return;
@@ -546,6 +609,12 @@ export function ModuleContent({
     setPollCount(0);
   }, []);
 
+  function handlePrev() {
+    if (prevModuleId) {
+      router.push(`/learning/${learningPathId}/${prevModuleId}`);
+    }
+  }
+
   function handleNext() {
     if (nextModuleId) {
       router.push(`/learning/${learningPathId}/${nextModuleId}`);
@@ -554,12 +623,20 @@ export function ModuleContent({
     }
   }
 
-  function renderSectionContent(section: ContentSection) {
+  const handleManualGenerate = useCallback(() => {
+    setShowManualGenerate(false);
+    setGenerationError(null);
+    setIsGenerating(false);
+    setLocalSections([]);
+    setPollCount((c) => c + 1);
+  }, []);
+
+  function renderSectionContent(section: ContentSection, sectionIndex: number) {
     if (section.type === "quiz_question") {
       return <QuizSection section={section} />;
     }
     if (section.type === "challenge") {
-      return <ChallengeSection section={section} />;
+      return <ChallengeSection section={section} moduleId={moduleId} sectionIndex={sectionIndex} />;
     }
     return (
       <div className="space-y-4">
@@ -648,12 +725,31 @@ export function ModuleContent({
 
       {/* Empty state: no sections, not generating, no error */}
       {localSections.length === 0 && !isGenerating && !showGeneratingUI && !generationError && (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-border-default bg-bg-surface py-12">
-          <BookOpen className="h-8 w-8 text-text-dim" />
-          <p className="text-sm text-text-muted">
-            아직 학습 콘텐츠가 준비되지 않았습니다.
-          </p>
-        </div>
+        needsGeneration ? (
+          <div className="flex flex-col items-center gap-4 rounded-2xl border border-violet-500/20 bg-gradient-to-b from-violet-500/[0.05] to-transparent py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
+            <p className="text-sm font-medium text-text-tertiary">
+              콘텐츠를 준비하고 있습니다...
+            </p>
+            {showManualGenerate && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleManualGenerate}
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                콘텐츠 생성
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-border-default bg-bg-surface py-12">
+            <BookOpen className="h-8 w-8 text-text-dim" />
+            <p className="text-sm text-text-muted">
+              아직 학습 콘텐츠가 준비되지 않았습니다.
+            </p>
+          </div>
+        )
       )}
 
       {localSections.length > 0 && (
@@ -680,7 +776,7 @@ export function ModuleContent({
                 )}
 
                 {/* Section content */}
-                {renderSectionContent(section)}
+                {renderSectionContent(section, idx)}
               </>
             );
 
@@ -707,6 +803,7 @@ export function ModuleContent({
         <div className="h-[500px]">
           <TutorChat
             projectId={projectId}
+            projectName={projectName}
             learningPathId={learningPathId}
           />
         </div>
@@ -728,8 +825,14 @@ export function ModuleContent({
                 AI 튜터
               </Button>
 
-              {/* Right: Complete / Next */}
+              {/* Right: Prev / Complete / Next */}
               <div className="flex items-center gap-2">
+                {prevModuleId && (
+                  <Button onClick={handlePrev} variant="ghost" size="sm">
+                    <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
+                    이전 모듈
+                  </Button>
+                )}
                 {!isCompleted ? (
                   <Button onClick={handleComplete} disabled={completing} size="sm">
                     {completing ? (
