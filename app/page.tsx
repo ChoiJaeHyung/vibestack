@@ -367,12 +367,6 @@ export default async function LandingPage() {
             <span className="text-sm font-semibold text-text-faint">VibeUniv</span>
           </div>
           <div className="flex gap-6 text-[13px] text-text-dim">
-            <Link href="/terms" className="hover:text-text-tertiary transition-colors">
-              이용약관
-            </Link>
-            <Link href="/privacy" className="hover:text-text-tertiary transition-colors">
-              개인정보처리방침
-            </Link>
             <a
               href="https://github.com/vibestack"
               target="_blank"
