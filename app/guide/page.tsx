@@ -15,6 +15,8 @@ import {
   Shield,
   ExternalLink,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { LandingNav } from "@/components/features/landing-nav";
 
 export const metadata = {
   title: "시작 가이드 — 5분 만에 내 프로젝트 연결하기",
@@ -22,34 +24,22 @@ export const metadata = {
     "Claude Code, Cursor에서 MCP로 프로젝트를 연결하고 AI 맞춤 학습을 시작하는 방법. API 키 발급부터 첫 기술 스택 분석까지 따라하기만 하면 끝.",
 };
 
-export default function GuidePage() {
+export default async function GuidePage() {
+  let userEmail: string | null = null;
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    userEmail = user?.email ?? null;
+  } catch {
+    // auth 실패 시 비로그인 상태로 처리
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border-default bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <GraduationCap className="h-6 w-6 text-violet-400" />
-            <span className="text-lg font-bold text-text-primary">
-              VibeUniv
-            </span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="inline-flex h-10 items-center justify-center rounded-xl px-4 text-sm font-medium text-text-muted transition-colors hover:bg-bg-input hover:text-text-primary"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/signup"
-              className="inline-flex h-10 items-center justify-center rounded-xl bg-gradient-to-r from-violet-500 to-cyan-500 px-4 text-sm font-medium text-white transition-colors hover:shadow-glow-purple-sm"
-            >
-              Get Started
-            </Link>
-          </div>
-        </div>
-      </header>
+      <LandingNav userEmail={userEmail} />
 
       <main className="flex-1">
         {/* Hero */}

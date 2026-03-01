@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     const mappedStatus = statusMap[data.status];
     if (mappedStatus) {
-      await serviceClient
+      const { error: statusError } = await serviceClient
         .from("payments")
         .update({
           status: mappedStatus as PaymentStatus,
@@ -84,19 +84,37 @@ export async function POST(request: NextRequest) {
           method: data.method ?? null,
           updated_at: new Date().toISOString(),
         })
-        .eq("order_id", data.orderId);
+        .eq("order_id", data.orderId)
+        .select();
+
+      if (statusError) {
+        console.error("[toss-webhook] Failed to update payment status:", statusError);
+        return NextResponse.json(
+          { success: false, error: "Failed to update payment status" },
+          { status: 500 },
+        );
+      }
     }
 
     // 결제 실패/취소 시 플랜 다운그레이드
     if (data.status === "CANCELED" || data.status === "ABORTED" || data.status === "EXPIRED") {
-      await serviceClient
+      const { error: planError } = await serviceClient
         .from("users")
         .update({
           plan_type: "free",
           plan_expires_at: null,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", payment.user_id);
+        .eq("id", payment.user_id)
+        .select();
+
+      if (planError) {
+        console.error("[toss-webhook] Failed to downgrade user plan:", planError);
+        return NextResponse.json(
+          { success: false, error: "Failed to downgrade user plan" },
+          { status: 500 },
+        );
+      }
     }
 
     return NextResponse.json({ success: true, received: true });
