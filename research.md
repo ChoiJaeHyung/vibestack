@@ -135,6 +135,11 @@ vibeuniv/
 │       ├── api-key-manager.tsx        # API 키 생성/관리
 │       ├── llm-key-manager.tsx        # LLM 키 암호화 저장
 │       ├── usage-progress.tsx         # 사용량 프로그레스 바
+│       ├── celebration-modal.tsx       # 모듈 완료 축하 (confetti 애니메이션)
+│       ├── streak-widget.tsx          # 학습 스트릭 주간 캘린더 위젯
+│       ├── weekly-target-setting.tsx   # 주간 학습 목표 설정 (2/3/5/7일)
+│       ├── badge-earned-modal.tsx      # 배지 획득 알림 모달
+│       ├── badge-grid.tsx             # 배지 그리드 (전체 배지 + 잠금 상태)
 │       ├── announcement-banner.tsx    # 공지사항 배너
 │       ├── auth-state-listener.tsx    # 인증 상태 추적
 │       └── admin-*.tsx                # 어드민 컴포넌트 (6종)
@@ -206,6 +211,8 @@ vibeuniv/
 │   │   ├── usage.ts                  # 사용량 추적
 │   │   ├── billing.ts                # 토스페이먼츠 결제
 │   │   ├── dashboard.ts              # 대시보드 RPC
+│   │   ├── streak.ts                 # 학습 스트릭 (getStreak, updateStreak, updateWeeklyTarget)
+│   │   ├── badges.ts                 # 배지/업적 (getUserBadges, getAllBadges, checkAndAwardBadges)
 │   │   └── admin.ts                  # 어드민 작업
 │   └── middleware/
 │       ├── api-auth.ts               # API 키 인증 미들웨어
@@ -246,7 +253,9 @@ vibeuniv/
 │       ├── 004_educational_analysis.sql    # 교육 분석 테이블
 │       ├── 005_dashboard_rpc.sql           # get_dashboard_data() RPC
 │       ├── 006_toss_payments.sql           # 토스페이먼츠 결제
-│       └── 007_technology_knowledge.sql    # 기술 KB + 시드 데이터
+│       ├── 007_technology_knowledge.sql    # 기술 KB + 시드 데이터
+│       ├── 011_badges.sql                 # 배지/업적 시스템 (badges, user_badges)
+│       └── 012_user_streaks.sql           # 학습 스트릭 (user_streaks)
 │
 ├── scripts/                          # 유틸리티 스크립트
 ├── middleware.ts                      # Next.js 미들웨어 (세션+레이트리밋)
@@ -260,7 +269,7 @@ vibeuniv/
 
 ## 2. 데이터베이스 스키마
 
-### 2.1 테이블 목록 (18개)
+### 2.1 테이블 목록 (21개)
 
 | # | 테이블 | 설명 | 마이그레이션 |
 |---|--------|------|-------------|
@@ -282,6 +291,9 @@ vibeuniv/
 | 16 | `educational_analyses` | 교육 분석 데이터 | 004 |
 | 17 | `payments` | 결제 내역 (토스) | 006 |
 | 18 | `technology_knowledge` | 기술 KB (시드+LLM) | 007 |
+| 19 | `badges` | 배지 정의 (8종: first_step, consistent_learner 등) | 011 |
+| 20 | `user_badges` | 사용자 배지 획득 기록 | 011 |
+| 21 | `user_streaks` | 학습 스트릭 (연속 학습일, 주간 목표, 주간 활동) | 012 |
 
 ### 2.2 핵심 테이블 상세
 
@@ -790,3 +802,5 @@ interface LLMProvider {
 | 007 | technology_knowledge.sql | technology_knowledge 테이블 + 시드 데이터 5종 |
 | 008 | payments_rls.sql | payments 테이블 INSERT/UPDATE/DELETE deny 정책 + admin SELECT 정책 |
 | 009 | payments_webhook_secret.sql | payments 테이블에 toss_secret 컬럼 추가 (웹훅 검증용) |
+| 011 | badges.sql | badges, user_badges 테이블 + RLS + 시드 8종 (first_step, consistent_learner, quiz_master, code_challenger, fullstack_explorer, versatile, ai_friend, speedster) |
+| 012 | user_streaks.sql | user_streaks 테이블 (current_streak, longest_streak, weekly_target, last_active_date, week_active_days, week_start_date) + RLS |

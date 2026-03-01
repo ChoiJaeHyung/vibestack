@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { User, CreditCard, Mail } from "lucide-react";
+import { User, CreditCard, Mail, Target } from "lucide-react";
 import { ApiKeyManager } from "@/components/features/api-key-manager";
 import { LlmKeyManager } from "@/components/features/llm-key-manager";
+import { WeeklyTargetSetting } from "@/components/features/weekly-target-setting";
 import { getCurrentPlan } from "@/server/actions/billing";
+import { getStreak } from "@/server/actions/streak";
 import { getAuthUser } from "@/lib/supabase/auth";
 
 export default async function SettingsPage() {
@@ -13,6 +15,8 @@ export default async function SettingsPage() {
   ]);
   const planType = planResult.data?.plan_type ?? "free";
   const planLabel = planType.charAt(0).toUpperCase() + planType.slice(1);
+  const streakResult = authUser ? await getStreak(authUser.id) : null;
+  const weeklyTarget = streakResult?.data?.weeklyTarget ?? 3;
 
   return (
     <div className="space-y-6">
@@ -52,6 +56,26 @@ export default async function SettingsPage() {
         <ApiKeyManager />
 
         <LlmKeyManager />
+
+        {authUser && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-text-muted" />
+                <CardTitle>학습 목표</CardTitle>
+              </div>
+              <CardDescription>
+                주간 학습 목표를 설정하세요
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <WeeklyTargetSetting
+                userId={authUser.id}
+                currentTarget={weeklyTarget}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         <Link href="/settings/billing">
           <Card className="hover:border-border-hover hover:shadow-glow-card-purple transition-all cursor-pointer">

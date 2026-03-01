@@ -6,6 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+export type Locale = "ko" | "en";
 type PlanType = "free" | "pro" | "team";
 type SourceChannel = "mcp" | "api" | "cli" | "web_upload";
 type ProjectStatus = "created" | "uploaded" | "analyzing" | "analyzed" | "error";
@@ -25,10 +26,65 @@ type LlmProvider = "anthropic" | "openai" | "google" | "groq" | "mistral" | "dee
 export type UserRole = "user" | "admin" | "super_admin";
 type SettingCategory = "llm_config" | "pricing" | "announcement" | "feature_toggle" | "general";
 type AnnouncementType = "info" | "warning" | "maintenance" | "update";
+type BadgeConditionType = "module_complete_total" | "streak_days" | "quiz_perfect_streak" | "challenge_complete" | "path_complete" | "tech_variety" | "tutor_chats" | "fast_complete_minutes";
 
 export interface Database {
   public: {
     Tables: {
+      badges: {
+        Row: {
+          id: string;
+          slug: string;
+          name: string;
+          description: string;
+          icon: string;
+          condition_type: BadgeConditionType;
+          condition_value: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          slug: string;
+          name: string;
+          description: string;
+          icon: string;
+          condition_type: BadgeConditionType;
+          condition_value: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          slug?: string;
+          name?: string;
+          description?: string;
+          icon?: string;
+          condition_type?: BadgeConditionType;
+          condition_value?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      user_badges: {
+        Row: {
+          id: string;
+          user_id: string;
+          badge_id: string;
+          earned_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          badge_id: string;
+          earned_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          badge_id?: string;
+          earned_at?: string;
+        };
+        Relationships: [];
+      };
       users: {
         Row: {
           id: string;
@@ -44,6 +100,7 @@ export interface Database {
           is_banned: boolean;
           banned_at: string | null;
           ban_reason: string | null;
+          locale: Locale;
           created_at: string;
           updated_at: string;
         };
@@ -61,6 +118,7 @@ export interface Database {
           is_banned?: boolean;
           banned_at?: string | null;
           ban_reason?: string | null;
+          locale?: Locale;
           created_at?: string;
           updated_at?: string;
         };
@@ -78,6 +136,7 @@ export interface Database {
           is_banned?: boolean;
           banned_at?: string | null;
           ban_reason?: string | null;
+          locale?: Locale;
           created_at?: string;
           updated_at?: string;
         };
@@ -347,6 +406,7 @@ export interface Database {
           total_modules: number;
           llm_provider: string | null;
           status: LearningPathStatus;
+          locale: Locale;
           created_at: string;
           updated_at: string;
         };
@@ -361,6 +421,7 @@ export interface Database {
           total_modules?: number;
           llm_provider?: string | null;
           status?: LearningPathStatus;
+          locale?: Locale;
           created_at?: string;
           updated_at?: string;
         };
@@ -375,6 +436,7 @@ export interface Database {
           total_modules?: number;
           llm_provider?: string | null;
           status?: LearningPathStatus;
+          locale?: Locale;
           created_at?: string;
           updated_at?: string;
         };
@@ -714,6 +776,45 @@ export interface Database {
           user_id?: string;
           analysis_data?: Json;
           analysis_version?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      user_streaks: {
+        Row: {
+          id: string;
+          user_id: string;
+          current_streak: number;
+          longest_streak: number;
+          weekly_target: number;
+          last_active_date: string | null;
+          week_active_days: number;
+          week_start_date: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          current_streak?: number;
+          longest_streak?: number;
+          weekly_target?: number;
+          last_active_date?: string | null;
+          week_active_days?: number;
+          week_start_date?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          current_streak?: number;
+          longest_streak?: number;
+          weekly_target?: number;
+          last_active_date?: string | null;
+          week_active_days?: number;
+          week_start_date?: string | null;
           created_at?: string;
           updated_at?: string;
         };

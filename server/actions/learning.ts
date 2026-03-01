@@ -19,9 +19,25 @@ import { decryptContent } from "@/lib/utils/content-encryption";
 import { getKBHints } from "@/lib/knowledge";
 import { generateKBForTech, generateMissingKBs } from "@/server/actions/knowledge";
 import { rateLimit } from "@/lib/utils/rate-limit";
+import { checkAndAwardBadges } from "@/server/actions/badges";
+import type { NewlyEarnedBadge } from "@/server/actions/badges";
+import { updateStreak } from "@/server/actions/streak";
 import { after } from "next/server";
-import type { Database, Json } from "@/types/database";
+import type { Database, Json, Locale } from "@/types/database";
 import type { EducationalAnalysis } from "@/types/educational-analysis";
+
+// ─── Helpers ──────────────────────────────────────────────────────────
+
+/** Fetch user's preferred locale from the users table */
+async function getUserLocale(userId: string): Promise<Locale> {
+  const serviceClient = createServiceClient();
+  const { data } = await serviceClient
+    .from("users")
+    .select("locale")
+    .eq("id", userId)
+    .single();
+  return (data?.locale as Locale) ?? "ko";
+}
 
 // ─── Type Aliases ────────────────────────────────────────────────────
 
@@ -145,6 +161,7 @@ interface LearningModuleDetailResult {
 interface UpdateProgressResult {
   success: boolean;
   error?: string;
+  newBadges?: NewlyEarnedBadge[];
 }
 
 interface SendTutorMessageResult {
@@ -228,12 +245,13 @@ interface ModuleContentMeta {
   tech_name: string;
   relevant_files: string[];
   learning_objectives: string[];
+  retry_count?: number;
 }
 
 interface ModuleContentWithMeta {
   sections: ContentSection[];
   _meta?: ModuleContentMeta;
-  _status?: "generating" | "error" | "ready";
+  _status?: "generating" | "error" | "ready" | "validation_failed";
   _generating_since?: string;
   _generated_at?: string;
   _error?: string;
@@ -411,10 +429,11 @@ export async function generateLearningPath(
     }
 
     // Run remaining pre-LLM queries in parallel
-    const [llmKeyResult, digest, educationalAnalysis] = await Promise.all([
+    const [llmKeyResult, digest, educationalAnalysis, locale] = await Promise.all([
       getDefaultLlmKeyWithDiagnosis(user.id),
       buildProjectDigest(projectId),
       getEducationalAnalysis(projectId),
+      getUserLocale(user.id),
     ]);
 
     if (!llmKeyResult.data) {
@@ -439,6 +458,7 @@ export async function generateLearningPath(
       digest.raw,
       difficulty,
       educationalAnalysis ?? undefined,
+      locale,
     );
 
     const structureResult = await provider.chat({
@@ -492,6 +512,7 @@ export async function generateLearningPath(
       total_modules: structure.modules.length,
       llm_provider: provider.providerName,
       status: "active",
+      locale,
     };
 
     const { data: learningPath, error: pathError } = await serviceClient
@@ -587,6 +608,7 @@ export async function generateLearningPath(
           await generateMissingKBs(
             techNamesForKB.map((name) => ({ name, version: null })),
             provider,
+            locale,
           );
         } catch (err) {
           console.error("[learning] KB pre-generation failed:", err instanceof Error ? err.message : err);
@@ -615,6 +637,42 @@ export async function generateLearningPath(
       error instanceof Error ? error.message : "An unexpected error occurred";
     return { success: false, error: message };
   }
+}
+
+/**
+ * Validates LLM-generated sections meet minimum quality bar:
+ * - At least 3 sections (5 for beginner)
+ * - Has at least one code_example with non-empty code
+ * - Has at least one quiz_question with 4 options and numeric answer
+ * - All explanation sections have body >= 200 chars (400 for beginner)
+ */
+function _validateGeneratedSections(
+  sections: Array<{ type?: string; body?: string; code?: string; quiz_options?: unknown[]; quiz_answer?: unknown }>,
+  difficulty?: string,
+): boolean {
+  const minSections = difficulty === "beginner" ? 5 : 3;
+  const minExplanationLength = difficulty === "beginner" ? 400 : 200;
+
+  if (sections.length < minSections) return false;
+
+  const hasCode = sections.some(
+    (s) => s.type === "code_example" && typeof s.code === "string" && s.code.length > 0,
+  );
+  const hasQuiz = sections.some(
+    (s) =>
+      s.type === "quiz_question" &&
+      Array.isArray(s.quiz_options) &&
+      s.quiz_options.length === 4 &&
+      typeof s.quiz_answer === "number",
+  );
+  if (!hasCode || !hasQuiz) return false;
+
+  const hasThinExplanation = sections.some(
+    (s) => s.type === "explanation" && (!s.body || s.body.trim().length < minExplanationLength),
+  );
+  if (hasThinExplanation) return false;
+
+  return true;
 }
 
 export async function generateModuleContent(
@@ -857,7 +915,7 @@ async function _generateContentForModule(
   // Fetch learning path info
   const { data: pathData } = await serviceClient
     .from("learning_paths")
-    .select("id, project_id, difficulty")
+    .select("id, project_id, difficulty, locale")
     .eq("id", moduleData.learning_path_id)
     .single();
 
@@ -865,6 +923,8 @@ async function _generateContentForModule(
     await setBatchError("Learning path not found");
     return { success: false, error: "Learning path not found" };
   }
+
+  const pathLocale = (pathData.locale as Locale) ?? "ko";
 
   // Merge relevant_files from all batch modules, deduplicate
   const allRelevantFiles = [
@@ -899,9 +959,9 @@ async function _generateContentForModule(
     | "advanced";
 
   // Load KB hints for this technology (cache → DB → seed fallback)
-  let kbHints = await getKBHints(meta.tech_name);
+  let kbHints = await getKBHints(meta.tech_name, pathLocale);
   if (kbHints.length === 0) {
-    kbHints = await generateKBForTech(meta.tech_name, null, provider);
+    kbHints = await generateKBForTech(meta.tech_name, null, provider, pathLocale);
   }
 
   // Build prompt for batch modules
@@ -917,11 +977,12 @@ async function _generateContentForModule(
     difficulty,
     educationalAnalysis ?? undefined,
     kbHints,
+    pathLocale,
   );
 
   const llmResult = await provider.chat({
     messages: [{ role: "user", content: contentPrompt }],
-    maxTokens: Math.min(batchModules.length * 16000, 128000),
+    maxTokens: Math.min(batchModules.length * (difficulty === "beginner" ? 24000 : 16000), 128000),
   });
 
   let batchContent: ContentBatchItem[];
@@ -953,11 +1014,12 @@ async function _generateContentForModule(
       const matched = contentMap.get(normalizeTitle(m.title));
       const sections = matched?.content?.sections ?? [];
 
-      if (m.id === moduleId) {
-        requestedModuleSections = sections;
-      }
-
-      if (sections.length > 0) {
+      if (sections.length > 0 && _validateGeneratedSections(sections, difficulty)) {
+        // Set requested module sections only for validated content
+        if (m.id === moduleId) {
+          requestedModuleSections = sections;
+        }
+        // Valid content — save
         if (sections.length < 5) {
           console.warn(
             `[learning] Module "${m.title}" has only ${sections.length} sections (expected 5-8). Content may be thin.`,
@@ -974,6 +1036,40 @@ async function _generateContentForModule(
             } as unknown as Json,
           })
           .eq("id", m.id);
+      } else if (sections.length > 0) {
+        // Content exists but fails validation — track retries
+        const currentRetry = (typeof m.meta?.retry_count === "number" ? m.meta.retry_count : 0);
+        const nextRetry = currentRetry + 1;
+
+        if (nextRetry > 3) {
+          console.warn(
+            `[learning] Module "${m.title}" failed validation ${nextRetry} times. Saving as validation_failed.`,
+          );
+          await serviceClient
+            .from("learning_modules")
+            .update({
+              content: {
+                sections,
+                _meta: { ...m.meta, retry_count: nextRetry },
+                _status: "validation_failed",
+                _generated_at: now,
+              } as unknown as Json,
+            })
+            .eq("id", m.id);
+        } else {
+          console.warn(
+            `[learning] Module "${m.title}" failed validation (attempt ${nextRetry}/3). Resetting for retry.`,
+          );
+          await serviceClient
+            .from("learning_modules")
+            .update({
+              content: {
+                sections: [],
+                _meta: { ...m.meta, retry_count: nextRetry },
+              } as unknown as Json,
+            })
+            .eq("id", m.id);
+        }
       } else {
         // No match — reset status so it can be retried individually
         console.warn(
@@ -1413,17 +1509,21 @@ export async function updateLearningProgress(
     // Check if progress record already exists
     const { data: existing } = await supabase
       .from("learning_progress")
-      .select("id, attempts")
+      .select("id, attempts, score, time_spent")
       .eq("module_id", moduleId)
       .eq("user_id", user.id)
       .single();
 
     if (existing) {
-      // Update existing progress
+      // Update existing progress — keep best score, accumulate time
       const progressUpdate: LearningProgressUpdate = {
         status,
-        score: score ?? null,
-        time_spent: timeSpent ?? null,
+        score: score !== undefined
+          ? (existing.score !== null ? Math.max(score, Number(existing.score)) : score)
+          : (existing.score ?? null),
+        time_spent: timeSpent !== undefined
+          ? ((existing.time_spent ?? 0) + timeSpent)
+          : (existing.time_spent ?? null),
         attempts: existing.attempts + 1,
         completed_at: status === "completed" ? new Date().toISOString() : null,
         updated_at: new Date().toISOString(),
@@ -1458,6 +1558,25 @@ export async function updateLearningProgress(
 
       if (insertError) {
         return { success: false, error: "Failed to create progress record" };
+      }
+    }
+
+    // ── Streak + Badge check on module completion ──────────────────────
+    if (status === "completed") {
+      // Update streak (fire-and-forget, non-blocking)
+      updateStreak(user.id).catch(() => {});
+
+      try {
+        const newBadges = await checkAndAwardBadges(user.id, {
+          event: "module_complete",
+          moduleScore: score,
+          timeSpentSeconds: timeSpent,
+        });
+        if (newBadges.length > 0) {
+          return { success: true, newBadges };
+        }
+      } catch {
+        // Badge check failure should not block progress update
       }
     }
 
@@ -1530,7 +1649,7 @@ export async function sendTutorMessage(
 
     // Build learning context if a learning path ID is provided
     let learningContext:
-      | { path_title: string; current_module: string; module_sections?: string }
+      | { path_title: string; current_module: string; module_sections?: string; module_content_summary?: string }
       | undefined;
 
     if (learningPathId) {
@@ -1545,6 +1664,7 @@ export async function sendTutorMessage(
         // If moduleId is provided, fetch that specific module
         let currentModuleTitle = "Getting started";
         let moduleSections: string | undefined;
+        let moduleContentSummary: string | undefined;
 
         if (moduleId) {
           const { data: moduleData } = await supabase
@@ -1556,13 +1676,36 @@ export async function sendTutorMessage(
 
           if (moduleData) {
             currentModuleTitle = moduleData.title;
-            // Extract section titles from module content
+            // Extract section titles and content summary from module content
             const content = moduleData.content as Record<string, unknown> | null;
             if (content && Array.isArray((content as { sections?: unknown[] }).sections)) {
-              const sections = (content as { sections: Array<{ title?: string; type?: string }> }).sections;
+              const sections = (content as { sections: Array<{ title?: string; type?: string; body?: string; code?: string; quiz_options?: string[]; quiz_answer?: number }> }).sections;
               moduleSections = sections
                 .map((s) => `- [${s.type ?? "section"}] ${s.title ?? "Untitled"}`)
                 .join("\n");
+
+              // Build content summary (max 6000 chars) for tutor context
+              const contentParts: string[] = [];
+              let totalLen = 0;
+              const CONTENT_LIMIT = 6000;
+
+              for (const s of sections) {
+                if (totalLen >= CONTENT_LIMIT) break;
+                const parts: string[] = [];
+                parts.push(`[${s.type ?? "section"}] ${s.title ?? "Untitled"}`);
+                if (s.body) parts.push(s.body);
+                if (s.code) parts.push(`\`\`\`\n${s.code}\n\`\`\``);
+                if (s.quiz_options && s.quiz_answer !== undefined) {
+                  parts.push(`Quiz options: ${s.quiz_options.map((o, i) => `${i === s.quiz_answer ? "✓" : " "} ${String.fromCharCode(65 + i)}. ${o}`).join(" | ")}`);
+                }
+                const sectionText = parts.join("\n");
+                const remaining = CONTENT_LIMIT - totalLen;
+                const truncated = sectionText.slice(0, remaining);
+                contentParts.push(truncated);
+                totalLen += truncated.length;
+              }
+
+              moduleContentSummary = contentParts.join("\n\n---\n\n");
             }
           }
         } else {
@@ -1581,9 +1724,13 @@ export async function sendTutorMessage(
           path_title: pathData.title,
           current_module: currentModuleTitle,
           module_sections: moduleSections,
+          module_content_summary: moduleContentSummary,
         };
       }
     }
+
+    // Fetch user locale for tutor language
+    const tutorLocale = await getUserLocale(user.id);
 
     // Build system prompt
     const systemPrompt = buildTutorPrompt(
@@ -1602,6 +1749,7 @@ export async function sendTutorMessage(
           raw_content: decryptContent(f.raw_content),
         })),
       learningContext,
+      tutorLocale,
     );
 
     // Load existing conversation history if continuing

@@ -21,6 +21,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CelebrationModal } from "@/components/features/celebration-modal";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
@@ -476,6 +477,8 @@ export function ModuleContent({
   const [isCompleted, setIsCompleted] = useState(
     progress?.status === "completed",
   );
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationScore, setCelebrationScore] = useState<number | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const quizResultsRef = useRef<Map<number, boolean>>(new Map());
   const contentRef = useRef<HTMLDivElement>(null);
@@ -627,6 +630,8 @@ export function ModuleContent({
       );
       if (result.success) {
         setIsCompleted(true);
+        setCelebrationScore(score ?? null);
+        setShowCelebration(true);
       } else {
         alert("학습 진행 상황 저장에 실패했습니다. 다시 시도해 주세요.");
       }
@@ -949,6 +954,16 @@ export function ModuleContent({
           </div>
         </div>
       )}
+
+      {/* Celebration Modal */}
+      <CelebrationModal
+        isOpen={showCelebration}
+        onClose={() => setShowCelebration(false)}
+        moduleName={title}
+        score={celebrationScore}
+        nextModuleId={nextModuleId}
+        learningPathId={learningPathId}
+      />
     </div>
   );
 }
