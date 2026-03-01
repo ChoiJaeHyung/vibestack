@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useTheme } from "next-themes";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -15,11 +14,8 @@ import {
   Shield,
   Home,
   BookOpen,
-  Sun,
-  Moon,
-  Monitor,
-  GraduationCap as SidebarLogo,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import type { UserRole } from "@/types/database";
 
 interface SidebarProps {
@@ -36,13 +32,7 @@ const navItems = [
 
 export function Sidebar({ userEmail, userRole }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
   const pathname = usePathname();
-
-  // Hydration mismatch 방지: next-themes의 theme 값은 클라이언트에서만 확정됨
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setMounted(true), []);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -56,31 +46,33 @@ export function Sidebar({ userEmail, userRole }: SidebarProps) {
       {/* Mobile hamburger button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed top-4 left-4 z-50 rounded-lg border border-zinc-200 bg-white p-2 shadow-sm lg:hidden dark:border-zinc-800 dark:bg-zinc-950"
+        className="fixed top-4 left-4 z-50 rounded-xl border border-border-default bg-bg-elevated p-2 lg:hidden"
         aria-label="Open menu"
       >
-        <Menu className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+        <Menu className="h-5 w-5 text-text-muted" />
       </button>
 
       {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-zinc-200 bg-white transition-transform duration-200 ease-in-out lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-950 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-bg-elevated/95 backdrop-blur-xl border-r border-border-default transition-transform duration-200 ease-in-out lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Logo */}
         <div className="flex h-16 items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2">
-            <SidebarLogo className="h-6 w-6 text-zinc-900 dark:text-zinc-100" />
-            <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center text-sm font-extrabold text-white">
+              V
+            </div>
+            <span className="text-[17px] font-bold text-text-primary tracking-[-0.3px]">
               VibeUniv
             </span>
           </Link>
@@ -89,7 +81,7 @@ export function Sidebar({ userEmail, userRole }: SidebarProps) {
             className="rounded-lg p-1 lg:hidden"
             aria-label="Close menu"
           >
-            <X className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+            <X className="h-5 w-5 text-text-muted" />
           </button>
         </div>
 
@@ -103,13 +95,13 @@ export function Sidebar({ userEmail, userRole }: SidebarProps) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                   active
-                    ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
-                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+                    ? "text-text-primary bg-[rgba(139,92,246,0.12)] border border-violet-500/20 shadow-[0_0_15px_rgba(139,92,246,0.08)]"
+                    : "text-text-muted hover:text-text-primary hover:bg-bg-input border border-transparent"
                 }`}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className={`h-5 w-5 ${active ? "text-violet-400" : "text-text-faint"}`} />
                 {item.label}
               </Link>
             );
@@ -117,100 +109,57 @@ export function Sidebar({ userEmail, userRole }: SidebarProps) {
 
           {isAdmin && (
             <>
-              <div className="my-3 border-t border-zinc-200 dark:border-zinc-800" />
+              <div className="my-3 border-t border-border-default" />
               <Link
                 href="/admin"
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                   pathname.startsWith("/admin")
-                    ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
-                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+                    ? "text-text-primary bg-[rgba(139,92,246,0.12)] border border-violet-500/20 shadow-[0_0_15px_rgba(139,92,246,0.08)]"
+                    : "text-text-muted hover:text-text-primary hover:bg-bg-input border border-transparent"
                 }`}
               >
-                <Shield className="h-5 w-5" />
+                <Shield className={`h-5 w-5 ${pathname.startsWith("/admin") ? "text-violet-400" : "text-text-faint"}`} />
                 Admin
               </Link>
             </>
           )}
 
-          <div className="my-3 border-t border-zinc-200 dark:border-zinc-800" />
+          <div className="my-3 border-t border-border-default" />
           <Link
             href="/"
             onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-text-muted hover:text-text-primary hover:bg-bg-input transition-all duration-200"
           >
-            <Home className="h-5 w-5" />
-            홈페이지
+            <Home className="h-5 w-5 text-text-faint" />
+            Home
           </Link>
           <Link
             href="/guide"
             onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-text-muted hover:text-text-primary hover:bg-bg-input transition-all duration-200"
           >
-            <BookOpen className="h-5 w-5" />
-            가이드
+            <BookOpen className="h-5 w-5 text-text-faint" />
+            Guide
           </Link>
         </nav>
 
-        {/* Theme toggle */}
-        {mounted && (
-          <div className="border-t border-zinc-200 px-3 py-3 dark:border-zinc-800">
-            <div className="flex items-center rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800">
-              <button
-                type="button"
-                onClick={() => setTheme("light")}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
-                  theme === "light"
-                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
-                    : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-                }`}
-              >
-                <Sun className="h-3.5 w-3.5" />
-                Light
-              </button>
-              <button
-                type="button"
-                onClick={() => setTheme("dark")}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
-                  theme === "dark"
-                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
-                    : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-                }`}
-              >
-                <Moon className="h-3.5 w-3.5" />
-                Dark
-              </button>
-              <button
-                type="button"
-                onClick={() => setTheme("system")}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
-                  theme === "system"
-                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
-                    : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-                }`}
-              >
-                <Monitor className="h-3.5 w-3.5" />
-                Auto
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* User profile */}
-        <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
+        <div className="border-t border-border-default p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 text-sm font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 text-sm font-semibold text-white">
               {userEmail?.charAt(0).toUpperCase() ?? "U"}
             </div>
             <div className="flex-1 truncate">
-              <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              <p className="truncate text-sm font-medium text-text-primary">
                 {userEmail ?? "User"}
               </p>
             </div>
+            <ThemeToggle />
             <form action="/api/auth/signout" method="post">
               <button
                 type="submit"
-                className="rounded-lg p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                className="rounded-lg p-1 text-text-faint hover:text-text-tertiary transition-colors"
                 aria-label="Sign out"
               >
                 <LogOut className="h-4 w-4" />

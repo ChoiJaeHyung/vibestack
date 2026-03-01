@@ -16,9 +16,9 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
     "@google/generative-ai": "^0.24.1",
-    "@stripe/stripe-js": "^8.8.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.97.0",
+    "@tosspayments/tosspayments-sdk": "^2.5.0",
     "bcryptjs": "^3.0.3",
     "cohere-ai": "^7.20.0",
     "highlight.js": "^11.11.1",
@@ -29,10 +29,10 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-markdown": "^10.1.0",
+    "react-simple-code-editor": "^0.14.1",
     "recharts": "^3.7.0",
     "rehype-highlight": "^7.0.2",
-    "remark-gfm": "^4.0.1",
-    "stripe": "^20.3.1"
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -75,26 +75,23 @@ const IMPORTANCE_STYLES: Record<
 > = {
   core: {
     label: "Core",
-    className:
-      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+    className: "bg-violet-500/10 text-violet-300 border border-violet-500/20",
   },
   supporting: {
     label: "Supporting",
-    className:
-      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+    className: "bg-green-500/10 text-green-300 border border-green-500/20",
   },
   dev_dependency: {
     label: "Dev",
-    className:
-      "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+    className: "bg-zinc-500/10 text-text-muted border border-zinc-500/20",
   },
 };
 
 function getConfidenceColor(score: number): string {
-  if (score >= 0.8) return "bg-green-500 dark:bg-green-400";
-  if (score >= 0.6) return "bg-yellow-500 dark:bg-yellow-400";
-  if (score >= 0.4) return "bg-orange-500 dark:bg-orange-400";
-  return "bg-red-500 dark:bg-red-400";
+  if (score >= 0.8) return "bg-green-400";
+  if (score >= 0.6) return "bg-amber-400";
+  if (score >= 0.4) return "bg-orange-400";
+  return "bg-red-400";
 }
 
 function getConfidenceLabel(score: number): string {
@@ -218,7 +215,7 @@ export function ProjectAnalysis({
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Layers className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+            <Layers className="h-5 w-5 text-text-muted" />
             <CardTitle>기술 스택 분석</CardTitle>
           </div>
           <CardDescription>
@@ -227,19 +224,19 @@ export function ProjectAnalysis({
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center gap-4 py-8">
-            <div className="rounded-full bg-zinc-100 p-4 dark:bg-zinc-800">
-              <Play className="h-8 w-8 text-zinc-500 dark:text-zinc-400" />
+            <div className="rounded-full bg-violet-500/10 p-4">
+              <Play className="h-8 w-8 text-violet-400" />
             </div>
             <div className="text-center">
-              <p className="font-medium text-zinc-900 dark:text-zinc-100">
+              <p className="font-medium text-text-primary">
                 분석 준비 완료
               </p>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="mt-1 text-sm text-text-muted">
                 업로드된 파일을 기반으로 기술 스택을 분석합니다
               </p>
             </div>
             {error && (
-              <p className="text-sm text-red-600 dark:text-red-400">
+              <p className="text-sm text-red-400">
                 {error}
               </p>
             )}
@@ -267,28 +264,28 @@ export function ProjectAnalysis({
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Layers className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+            <Layers className="h-5 w-5 text-text-muted" />
             <CardTitle>기술 스택 분석</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center gap-4 py-8">
             <div className="relative">
-              <div className="rounded-full bg-blue-100 p-4 dark:bg-blue-900/30">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+              <div className="rounded-full bg-violet-500/10 p-4">
+                <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
               </div>
             </div>
             <div className="text-center">
-              <p className="font-medium text-zinc-900 dark:text-zinc-100">
+              <p className="font-medium text-text-primary">
                 분석 중...
               </p>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="mt-1 text-sm text-text-muted">
                 AI가 프로젝트 파일을 분석하고 있습니다. 잠시 기다려주세요.
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <div className="h-1.5 w-48 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-                <div className="h-full animate-pulse rounded-full bg-blue-500 transition-all dark:bg-blue-400" style={{ width: "60%" }} />
+              <div className="h-1.5 w-48 overflow-hidden rounded-full bg-bg-surface-hover">
+                <div className="h-full animate-pulse rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 transition-all" style={{ width: "60%" }} />
               </div>
             </div>
           </div>
@@ -303,20 +300,20 @@ export function ProjectAnalysis({
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Layers className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+            <Layers className="h-5 w-5 text-text-muted" />
             <CardTitle>기술 스택 분석</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center gap-4 py-8">
-            <div className="rounded-full bg-red-100 p-4 dark:bg-red-900/30">
-              <AlertTriangle className="h-8 w-8 text-red-600 dark:text-red-400" />
+            <div className="rounded-full bg-red-500/10 p-4">
+              <AlertTriangle className="h-8 w-8 text-red-400" />
             </div>
             <div className="text-center">
-              <p className="font-medium text-zinc-900 dark:text-zinc-100">
+              <p className="font-medium text-text-primary">
                 분석 중 오류가 발생했습니다
               </p>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="mt-1 text-sm text-text-muted">
                 {error ?? "분석 과정에서 문제가 발생했습니다. 다시 시도해주세요."}
               </p>
             </div>
@@ -346,7 +343,7 @@ export function ProjectAnalysis({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Layers className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+            <Layers className="h-5 w-5 text-text-muted" />
             <CardTitle>기술 스택 분석 결과</CardTitle>
           </div>
           <Button
@@ -369,7 +366,7 @@ export function ProjectAnalysis({
       </CardHeader>
       <CardContent className="space-y-6">
         {techStacks.length === 0 ? (
-          <p className="py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="py-4 text-center text-sm text-text-muted">
             감지된 기술 스택이 없습니다
           </p>
         ) : (
@@ -388,10 +385,10 @@ export function ProjectAnalysis({
             <div className="space-y-4">
               {Array.from(grouped.entries()).map(([category, items]) => (
                 <div key={category}>
-                  <h4 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                  <h4 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-text-tertiary">
                     <ChevronRight className="h-4 w-4" />
                     {CATEGORY_LABELS[category] ?? category}
-                    <span className="ml-1 text-xs font-normal text-zinc-400">
+                    <span className="ml-1 text-xs font-normal text-text-faint">
                       ({items.length})
                     </span>
                   </h4>
@@ -407,16 +404,16 @@ export function ProjectAnalysis({
                       return (
                         <div
                           key={tech.id}
-                          className="rounded-lg border border-zinc-100 bg-zinc-50/50 p-3 dark:border-zinc-800 dark:bg-zinc-900/50"
+                          className="rounded-xl border border-border-default bg-bg-surface p-3"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                                <span className="font-medium text-text-primary">
                                   {tech.technology_name}
                                 </span>
                                 {tech.version && (
-                                  <span className="rounded bg-zinc-200 px-1.5 py-0.5 text-xs text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400">
+                                  <span className="rounded bg-bg-surface-hover px-1.5 py-0.5 text-xs text-text-muted font-mono">
                                     v{tech.version}
                                   </span>
                                 )}
@@ -427,7 +424,7 @@ export function ProjectAnalysis({
                                 </span>
                               </div>
                               {tech.description && (
-                                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                                <p className="mt-1 text-sm text-text-muted">
                                   {tech.description}
                                 </p>
                               )}
@@ -436,7 +433,7 @@ export function ProjectAnalysis({
                           {/* Confidence bar */}
                           <div className="mt-2 flex items-center gap-3">
                             <div className="flex-1">
-                              <div className="h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+                              <div className="h-1.5 overflow-hidden rounded-full bg-bg-surface-hover">
                                 <div
                                   className={`h-full rounded-full transition-all ${getConfidenceColor(tech.confidence_score)}`}
                                   style={{
@@ -445,7 +442,7 @@ export function ProjectAnalysis({
                                 />
                               </div>
                             </div>
-                            <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
+                            <span className="shrink-0 text-xs text-text-faint">
                               {confidencePercent}% {getConfidenceLabel(tech.confidence_score)}
                             </span>
                           </div>

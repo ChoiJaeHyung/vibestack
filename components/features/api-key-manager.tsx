@@ -89,7 +89,7 @@ export function ApiKeyManager() {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Key className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+          <Key className="h-5 w-5 text-text-muted" />
           <CardTitle>API Keys</CardTitle>
         </div>
         <CardDescription>
@@ -118,17 +118,17 @@ export function ApiKeyManager() {
         </div>
 
         {error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p className="text-sm text-red-400">{error}</p>
         )}
 
         {/* Show newly created key */}
         {createdKey && (
-          <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950">
-            <p className="mb-2 text-sm font-medium text-green-800 dark:text-green-200">
+          <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-4">
+            <p className="mb-2 text-sm font-medium text-green-300">
               API 키가 생성되었습니다. 이 키는 다시 표시되지 않으니 안전한 곳에 저장하세요.
             </p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 rounded bg-green-100 px-3 py-2 font-mono text-sm text-green-900 dark:bg-green-900 dark:text-green-100">
+              <code className="flex-1 rounded-lg bg-[rgba(0,0,0,0.3)] px-3 py-2 font-mono text-sm text-green-200 border border-border-default">
                 {createdKey}
               </code>
               <Button
@@ -138,7 +138,7 @@ export function ApiKeyManager() {
                 className="shrink-0"
               >
                 {copied ? (
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="h-4 w-4 text-green-400" />
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}
@@ -146,7 +146,7 @@ export function ApiKeyManager() {
             </div>
             <button
               onClick={() => setCreatedKey(null)}
-              className="mt-2 text-xs text-green-700 underline dark:text-green-300"
+              className="mt-2 text-xs text-green-400 underline hover:text-green-300 transition-colors"
             >
               닫기
             </button>
@@ -156,14 +156,14 @@ export function ApiKeyManager() {
         {/* Key list */}
         {listLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-text-muted" />
           </div>
         ) : keys.length === 0 ? (
-          <p className="py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="py-4 text-center text-sm text-text-muted">
             생성된 API 키가 없습니다
           </p>
         ) : (
-          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <div className="divide-y divide-border-default">
             {keys.map((key) => (
               <div
                 key={key.id}
@@ -171,17 +171,17 @@ export function ApiKeyManager() {
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm text-zinc-900 dark:text-zinc-100">
+                    <span className="font-medium text-sm text-text-primary">
                       {key.name}
                     </span>
                     {!key.is_active && (
-                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700 dark:bg-red-900 dark:text-red-300">
+                      <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs text-red-400 border border-red-500/20">
                         비활성
                       </span>
                     )}
                   </div>
-                  <div className="mt-0.5 flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
-                    <code>{key.key_prefix}...****</code>
+                  <div className="mt-0.5 flex items-center gap-3 text-xs text-text-faint">
+                    <code className="font-mono">{key.key_prefix}...****</code>
                     <span>
                       생성: {new Date(key.created_at).toLocaleDateString()}
                     </span>
@@ -201,7 +201,7 @@ export function ApiKeyManager() {
                       onClick={() => handleRevoke(key.id)}
                       title="비활성화"
                     >
-                      <Ban className="h-4 w-4 text-zinc-500" />
+                      <Ban className="h-4 w-4 text-text-faint" />
                     </Button>
                   )}
                   <Button

@@ -1,6 +1,8 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { BookOpen, Code, HelpCircle, FolderOpen, Clock } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { BookOpen, Code, HelpCircle, FolderOpen, Clock, CheckCircle2, ArrowRight } from "lucide-react";
 
 type Difficulty = "beginner" | "intermediate" | "advanced";
 
@@ -22,18 +24,15 @@ const DIFFICULTY_STYLES: Record<
 > = {
   beginner: {
     label: "Beginner",
-    className:
-      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+    className: "bg-green-500/10 text-green-400 border border-green-500/20",
   },
   intermediate: {
     label: "Intermediate",
-    className:
-      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
+    className: "bg-violet-500/10 text-violet-400 border border-violet-500/20",
   },
   advanced: {
     label: "Advanced",
-    className:
-      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+    className: "bg-red-500/10 text-red-400 border border-red-500/20",
   },
 };
 
@@ -63,7 +62,6 @@ export function LearningPathCard({
   estimatedHours,
   totalModules,
   completedModules,
-  status,
   projectName,
 }: LearningPathCardProps) {
   const difficultyStyle = difficulty
@@ -71,66 +69,76 @@ export function LearningPathCard({
     : null;
   const progressPercent =
     totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
+  const isComplete = progressPercent === 100;
+
+  const [mounted, setMounted] = useState(false);
+  // Client-only mount animation — safe to setState here
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMounted(true), []);
+
+  const radius = 24;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - (mounted ? progressPercent : 0) / 100);
 
   return (
     <Link href={`/learning/${id}`}>
-      <Card className="transition-shadow hover:shadow-md">
-        <CardContent>
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <h3 className="font-medium text-zinc-900 dark:text-zinc-100">
-                {title}
-              </h3>
-              {description && (
-                <p className="mt-0.5 line-clamp-2 text-sm text-zinc-500 dark:text-zinc-400">
-                  {description}
-                </p>
-              )}
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              {difficultyStyle && (
-                <span
-                  className={`rounded-md px-2 py-0.5 text-xs font-medium ${difficultyStyle.className}`}
-                >
-                  {difficultyStyle.label}
-                </span>
-              )}
-              {status === "completed" && (
-                <span className="rounded-md bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                  Completed
-                </span>
-              )}
-            </div>
+      <div className="group flex items-center gap-5 rounded-2xl border border-border-default bg-bg-surface p-5 hover:border-border-hover hover:shadow-glow-card-purple transition-all duration-300">
+        {/* Progress Ring */}
+        <div className="relative h-14 w-14 shrink-0">
+          <svg className="-rotate-90" width={56} height={56} viewBox="0 0 56 56">
+            <circle cx={28} cy={28} r={radius} className="fill-none stroke-ring-track" strokeWidth={3} />
+            <circle cx={28} cy={28} r={radius}
+              className={`fill-none transition-all duration-700 ease-out ${isComplete ? "stroke-green-500" : "stroke-violet-500"}`}
+              strokeWidth={3} strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={offset}
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            {isComplete ? (
+              <CheckCircle2 className="h-5 w-5 text-green-400" />
+            ) : (
+              <span className="text-xs font-bold text-text-secondary tabular-nums">{progressPercent}%</span>
+            )}
           </div>
+        </div>
 
-          {/* Progress bar */}
-          <div className="mt-4">
-            <div className="mb-1 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-              <span>
-                {completedModules} / {totalModules} modules
-              </span>
-              <span>{progressPercent}%</span>
-            </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-              <div
-                className="h-full rounded-full bg-zinc-900 transition-all dark:bg-white"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Footer info */}
-          <div className="mt-3 flex items-center gap-3 text-xs text-zinc-400 dark:text-zinc-500">
-            {projectName && <span>{projectName}</span>}
-            {estimatedHours !== null && (
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {estimatedHours}h
+        {/* Info */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h3 className="text-base font-semibold text-text-primary truncate">{title}</h3>
+            {difficultyStyle && (
+              <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${difficultyStyle.className}`}>
+                {difficultyStyle.label}
               </span>
             )}
           </div>
-        </CardContent>
-      </Card>
+          {description && (
+            <p className="mt-0.5 text-sm text-text-faint line-clamp-1">{description}</p>
+          )}
+          <div className="mt-2 flex items-center gap-3 text-xs text-text-dim">
+            <span className="tabular-nums">{completedModules}/{totalModules} modules</span>
+            {estimatedHours !== null && (
+              <>
+                <span>·</span>
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {estimatedHours}h
+                </span>
+              </>
+            )}
+            {projectName && (
+              <>
+                <span>·</span>
+                <span className="truncate">{projectName}</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Hover CTA */}
+        <ArrowRight className="h-4 w-4 text-text-dim opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+      </div>
     </Link>
   );
 }

@@ -16,6 +16,7 @@ type JobType = "tech_analysis" | "learning_generation" | "full_analysis";
 type JobStatus = "pending" | "processing" | "completed" | "failed";
 type Difficulty = "beginner" | "intermediate" | "advanced";
 type LearningPathStatus = "draft" | "active" | "completed" | "archived";
+type PaymentStatus = "pending" | "done" | "canceled" | "failed";
 type ModuleType = "concept" | "practical" | "quiz" | "project_walkthrough";
 type ProgressStatus = "not_started" | "in_progress" | "completed" | "skipped";
 type ContextType = "tech_analysis" | "learning" | "general" | "project_walkthrough";
@@ -36,7 +37,8 @@ export interface Database {
           avatar_url: string | null;
           plan_type: PlanType;
           plan_expires_at: string | null;
-          stripe_customer_id: string | null;
+          toss_customer_key: string | null;
+          toss_billing_key: string | null;
           onboarding_completed: boolean;
           role: UserRole;
           is_banned: boolean;
@@ -52,7 +54,8 @@ export interface Database {
           avatar_url?: string | null;
           plan_type?: PlanType;
           plan_expires_at?: string | null;
-          stripe_customer_id?: string | null;
+          toss_customer_key?: string | null;
+          toss_billing_key?: string | null;
           onboarding_completed?: boolean;
           role?: UserRole;
           is_banned?: boolean;
@@ -68,7 +71,8 @@ export interface Database {
           avatar_url?: string | null;
           plan_type?: PlanType;
           plan_expires_at?: string | null;
-          stripe_customer_id?: string | null;
+          toss_customer_key?: string | null;
+          toss_billing_key?: string | null;
           onboarding_completed?: boolean;
           role?: UserRole;
           is_banned?: boolean;
@@ -637,6 +641,48 @@ export interface Database {
           target_id?: string | null;
           details?: Json;
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      payments: {
+        Row: {
+          id: string;
+          user_id: string;
+          order_id: string;
+          payment_key: string | null;
+          plan: "pro" | "team";
+          amount: number;
+          status: PaymentStatus;
+          method: string | null;
+          is_recurring: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          order_id: string;
+          payment_key?: string | null;
+          plan: "pro" | "team";
+          amount: number;
+          status?: PaymentStatus;
+          method?: string | null;
+          is_recurring?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          order_id?: string;
+          payment_key?: string | null;
+          plan?: "pro" | "team";
+          amount?: number;
+          status?: PaymentStatus;
+          method?: string | null;
+          is_recurring?: boolean;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };

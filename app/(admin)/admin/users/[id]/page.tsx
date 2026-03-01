@@ -25,12 +25,12 @@ export default async function AdminUserDetailPage({ params }: Props) {
       <div className="mb-6">
         <Link
           href="/admin/users"
-          className="mb-4 inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
+          className="mb-4 inline-flex items-center gap-1 text-sm text-text-muted hover:text-violet-400 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Users
         </Link>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+        <h1 className="text-2xl font-bold text-text-primary">
           {result.data.email}
         </h1>
       </div>

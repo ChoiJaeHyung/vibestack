@@ -12,7 +12,7 @@ export function Loading({ size = "md", className = "" }: LoadingProps) {
 
   return (
     <div
-      className={`animate-spin rounded-full border-zinc-300 border-t-zinc-900 dark:border-zinc-700 dark:border-t-zinc-100 ${sizes[size]} ${className}`}
+      className={`animate-spin rounded-full border-zinc-700 border-t-zinc-100 ${sizes[size]} ${className}`}
       role="status"
       aria-label="Loading"
     />

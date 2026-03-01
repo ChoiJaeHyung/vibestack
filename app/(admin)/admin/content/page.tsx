@@ -112,16 +112,16 @@ export default function AdminContentPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+      <h1 className="mb-6 text-2xl font-bold text-text-primary">
         Content Management
       </h1>
 
       {message && (
         <div
-          className={`mb-4 rounded-lg px-4 py-3 text-sm ${
+          className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
             message.type === "success"
-              ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-              : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+              ? "border-green-500/30 bg-green-500/10 text-green-400"
+              : "border-red-500/30 bg-red-500/10 text-red-400"
           }`}
         >
           {message.text}
@@ -129,15 +129,15 @@ export default function AdminContentPage() {
       )}
 
       {/* Tabs */}
-      <div className="mb-4 flex gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800">
+      <div className="mb-4 flex gap-1 rounded-xl bg-bg-input p-1 border border-border-default">
         {(["projects", "learning"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => handleTabChange(tab)}
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
               activeTab === tab
-                ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100"
-                : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                ? "bg-violet-500/10 text-violet-300"
+                : "text-text-muted hover:text-text-primary"
             }`}
           >
             {tab === "projects" ? "Projects" : "Learning Paths"}
@@ -148,60 +148,60 @@ export default function AdminContentPage() {
       {/* Search */}
       <div className="mb-4 flex gap-3">
         <div className="relative flex-1">
-          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-text-muted" />
           <input
             type="text"
             placeholder={`Search ${activeTab === "projects" ? "projects" : "learning paths"}...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && fetchData(1)}
-            className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            className="w-full rounded-xl border border-border-default bg-bg-input py-2 pl-9 pr-3 text-sm text-text-primary placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-violet-500/50"
           />
         </div>
         <button
           onClick={() => fetchData(1)}
           disabled={isPending}
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="rounded-xl bg-violet-500 px-4 py-2 text-sm font-medium text-white hover:bg-violet-600 disabled:opacity-50 transition-colors"
         >
           {isPending ? "Loading..." : "Search"}
         </button>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+      <div className="overflow-x-auto rounded-2xl border border-border-default">
         <table className="w-full text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
+          <thead className="border-b border-border-default bg-bg-surface">
             <tr>
-              <th className="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">
+              <th className="px-4 py-3 text-left font-medium text-text-muted">
                 {activeTab === "projects" ? "Name" : "Title"}
               </th>
-              <th className="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">Owner</th>
-              <th className="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">Status</th>
-              <th className="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">Created</th>
-              <th className="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">Actions</th>
+              <th className="px-4 py-3 text-left font-medium text-text-muted">Owner</th>
+              <th className="px-4 py-3 text-left font-medium text-text-muted">Status</th>
+              <th className="px-4 py-3 text-left font-medium text-text-muted">Created</th>
+              <th className="px-4 py-3 text-left font-medium text-text-muted">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <tbody className="divide-y divide-border-default">
             {activeTab === "projects" ? (
               projects.map((p) => (
-                <tr key={p.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
-                  <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{p.name}</td>
-                  <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                <tr key={p.id} className="hover:bg-bg-surface">
+                  <td className="px-4 py-3 font-medium text-text-primary">{p.name}</td>
+                  <td className="px-4 py-3 text-text-muted">
                     {p.user_email ?? p.user_id.slice(0, 8) + "..."}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                    <span className="inline-block rounded-full bg-zinc-500/10 px-2 py-0.5 text-xs font-medium text-text-muted border border-zinc-500/20">
                       {p.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                  <td className="px-4 py-3 text-text-muted">
                     {new Date(p.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => handleDeleteProject(p.id)}
                       disabled={isPending}
-                      className="rounded p-1 text-red-500 hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-900/20"
+                      className="rounded p-1 text-red-400 hover:bg-red-500/10 disabled:opacity-50"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -210,29 +210,29 @@ export default function AdminContentPage() {
               ))
             ) : (
               learningPaths.map((lp) => (
-                <tr key={lp.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
-                  <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                <tr key={lp.id} className="hover:bg-bg-surface">
+                  <td className="px-4 py-3 font-medium text-text-primary">
                     {lp.title}
-                    <span className="ml-2 text-xs text-zinc-400">
+                    <span className="ml-2 text-xs text-text-muted">
                       ({lp.total_modules} modules)
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                  <td className="px-4 py-3 text-text-muted">
                     {lp.user_email ?? lp.user_id.slice(0, 8) + "..."}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                    <span className="inline-block rounded-full bg-zinc-500/10 px-2 py-0.5 text-xs font-medium text-text-muted border border-zinc-500/20">
                       {lp.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                  <td className="px-4 py-3 text-text-muted">
                     {new Date(lp.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => handleDeletePath(lp.id)}
                       disabled={isPending}
-                      className="rounded p-1 text-red-500 hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-900/20"
+                      className="rounded p-1 text-red-400 hover:bg-red-500/10 disabled:opacity-50"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -244,7 +244,7 @@ export default function AdminContentPage() {
               (activeTab === "learning" && learningPaths.length === 0)) &&
               loaded && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">
+                  <td colSpan={5} className="px-4 py-8 text-center text-text-muted">
                     No {activeTab === "projects" ? "projects" : "learning paths"} found
                   </td>
                 </tr>
@@ -256,22 +256,22 @@ export default function AdminContentPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">{total} total</p>
+          <p className="text-sm text-text-muted">{total} total</p>
           <div className="flex items-center gap-2">
             <button
               onClick={() => fetchData(page - 1)}
               disabled={page <= 1 || isPending}
-              className="rounded-lg border border-zinc-200 p-2 text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900"
+              className="rounded-xl border border-border-default p-2 text-text-muted hover:bg-bg-input disabled:opacity-50"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-sm text-zinc-600 dark:text-zinc-400">
+            <span className="text-sm text-text-muted">
               {page} / {totalPages}
             </span>
             <button
               onClick={() => fetchData(page + 1)}
               disabled={page >= totalPages || isPending}
-              className="rounded-lg border border-zinc-200 p-2 text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900"
+              className="rounded-xl border border-border-default p-2 text-text-muted hover:bg-bg-input disabled:opacity-50"
             >
               <ChevronRight className="h-4 w-4" />
             </button>

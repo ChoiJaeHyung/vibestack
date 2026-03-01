@@ -96,10 +96,10 @@ export function AdminUserDetail({ user, currentUserRole }: AdminUserDetailProps)
     <div className="space-y-6">
       {message && (
         <div
-          className={`rounded-lg px-4 py-3 text-sm ${
+          className={`rounded-xl border px-4 py-3 text-sm ${
             message.type === "success"
-              ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-              : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+              ? "border-green-500/30 bg-green-500/10 text-green-400"
+              : "border-red-500/30 bg-red-500/10 text-red-400"
           }`}
         >
           {message.text}
@@ -107,62 +107,62 @@ export function AdminUserDetail({ user, currentUserRole }: AdminUserDetailProps)
       )}
 
       {/* User Info */}
-      <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
-        <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+      <div className="rounded-2xl border border-border-default bg-bg-surface p-6">
+        <h2 className="mb-4 text-lg font-semibold text-text-primary">
           User Information
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Email</p>
-            <p className="font-medium text-zinc-900 dark:text-zinc-100">{user.email}</p>
+            <p className="text-sm text-text-muted">Email</p>
+            <p className="font-medium text-text-primary">{user.email}</p>
           </div>
           <div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Name</p>
-            <p className="font-medium text-zinc-900 dark:text-zinc-100">
+            <p className="text-sm text-text-muted">Name</p>
+            <p className="font-medium text-text-primary">
               {user.name ?? "Not set"}
             </p>
           </div>
           <div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Joined</p>
-            <p className="font-medium text-zinc-900 dark:text-zinc-100">
+            <p className="text-sm text-text-muted">Joined</p>
+            <p className="font-medium text-text-primary">
               {new Date(user.created_at).toLocaleDateString()}
             </p>
           </div>
           <div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Last Updated</p>
-            <p className="font-medium text-zinc-900 dark:text-zinc-100">
+            <p className="text-sm text-text-muted">Last Updated</p>
+            <p className="font-medium text-text-primary">
               {new Date(user.updated_at).toLocaleDateString()}
             </p>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="mt-4 grid grid-cols-3 gap-4 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+        <div className="mt-4 grid grid-cols-3 gap-4 border-t border-border-default pt-4">
           <div className="text-center">
-            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <p className="text-2xl font-bold text-text-primary">
               {user.projectCount}
             </p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">Projects</p>
+            <p className="text-xs text-text-muted">Projects</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <p className="text-2xl font-bold text-text-primary">
               {user.learningPathCount}
             </p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">Learning Paths</p>
+            <p className="text-xs text-text-muted">Learning Paths</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <p className="text-2xl font-bold text-text-primary">
               {user.conversationCount}
             </p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">Conversations</p>
+            <p className="text-xs text-text-muted">Conversations</p>
           </div>
         </div>
       </div>
 
       {/* Role Management */}
       {isSuperAdmin && (
-        <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
-          <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+        <div className="rounded-2xl border border-border-default bg-bg-surface p-6">
+          <h2 className="mb-4 text-lg font-semibold text-text-primary">
             Role
           </h2>
           <div className="flex gap-2">
@@ -171,10 +171,10 @@ export function AdminUserDetail({ user, currentUserRole }: AdminUserDetailProps)
                 key={role}
                 onClick={() => handleRoleChange(role)}
                 disabled={isPending || user.role === role}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
                   user.role === role
-                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                    : "border border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                    ? "bg-violet-500 text-white"
+                    : "border border-border-default text-text-tertiary hover:bg-bg-input"
                 }`}
               >
                 {role}
@@ -186,8 +186,8 @@ export function AdminUserDetail({ user, currentUserRole }: AdminUserDetailProps)
 
       {/* Plan Management */}
       {isSuperAdmin && (
-        <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
-          <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+        <div className="rounded-2xl border border-border-default bg-bg-surface p-6">
+          <h2 className="mb-4 text-lg font-semibold text-text-primary">
             Plan
           </h2>
           <div className="flex gap-2">
@@ -196,10 +196,10 @@ export function AdminUserDetail({ user, currentUserRole }: AdminUserDetailProps)
                 key={plan}
                 onClick={() => handlePlanChange(plan)}
                 disabled={isPending || user.plan_type === plan}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
                   user.plan_type === plan
-                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                    : "border border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                    ? "bg-violet-500 text-white"
+                    : "border border-border-default text-text-tertiary hover:bg-bg-input"
                 }`}
               >
                 {plan.charAt(0).toUpperCase() + plan.slice(1)}
@@ -210,24 +210,24 @@ export function AdminUserDetail({ user, currentUserRole }: AdminUserDetailProps)
       )}
 
       {/* Ban Management */}
-      <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
-        <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+      <div className="rounded-2xl border border-border-default bg-bg-surface p-6">
+        <h2 className="mb-4 text-lg font-semibold text-text-primary">
           Account Status
         </h2>
 
         {user.is_banned ? (
           <div>
-            <div className="mb-4 rounded-lg bg-red-50 p-4 dark:bg-red-900/20">
-              <p className="font-medium text-red-700 dark:text-red-400">
+            <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+              <p className="font-medium text-red-400">
                 This user is banned
               </p>
               {user.ban_reason && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-500">
+                <p className="mt-1 text-sm text-red-400/80">
                   Reason: {user.ban_reason}
                 </p>
               )}
               {user.banned_at && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-500">
+                <p className="mt-1 text-sm text-red-400/80">
                   Banned at: {new Date(user.banned_at).toLocaleString()}
                 </p>
               )}
@@ -235,7 +235,7 @@ export function AdminUserDetail({ user, currentUserRole }: AdminUserDetailProps)
             <button
               onClick={handleUnban}
               disabled={isPending}
-              className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+              className="rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
             >
               {isPending ? "Processing..." : "Unban User"}
             </button>
@@ -248,20 +248,20 @@ export function AdminUserDetail({ user, currentUserRole }: AdminUserDetailProps)
                   value={banReason}
                   onChange={(e) => setBanReason(e.target.value)}
                   placeholder="Enter ban reason..."
-                  className="w-full rounded-lg border border-zinc-200 p-3 text-sm text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                  className="w-full rounded-xl border border-border-default bg-bg-input p-3 text-sm text-text-primary placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                   rows={3}
                 />
                 <div className="flex gap-2">
                   <button
                     onClick={handleBan}
                     disabled={isPending || !banReason.trim()}
-                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                    className="rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
                   >
                     {isPending ? "Processing..." : "Confirm Ban"}
                   </button>
                   <button
                     onClick={() => { setShowBanForm(false); setBanReason(""); }}
-                    className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300"
+                    className="rounded-xl border border-border-default px-4 py-2 text-sm font-medium text-text-tertiary hover:bg-bg-input"
                   >
                     Cancel
                   </button>
@@ -270,7 +270,7 @@ export function AdminUserDetail({ user, currentUserRole }: AdminUserDetailProps)
             ) : (
               <button
                 onClick={() => setShowBanForm(true)}
-                className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                className="rounded-xl border border-red-500/30 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10"
               >
                 Ban User
               </button>

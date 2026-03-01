@@ -17,33 +17,33 @@ import {
 } from "lucide-react";
 
 export const metadata = {
-  title: "시작 가이드 — VibeUniv",
+  title: "시작 가이드 — 5분 만에 내 프로젝트 연결하기",
   description:
-    "VibeUniv에 프로젝트를 연결하고, AI 분석과 맞춤 학습을 시작하는 step-by-step 가이드",
+    "Claude Code, Cursor에서 MCP로 프로젝트를 연결하고 AI 맞춤 학습을 시작하는 방법. API 키 발급부터 첫 기술 스택 분석까지 따라하기만 하면 끝.",
 };
 
 export default function GuidePage() {
   return (
-    <div className="flex min-h-screen flex-col bg-white dark:bg-zinc-950">
+    <div className="flex min-h-screen flex-col bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/80">
+      <header className="sticky top-0 z-50 border-b border-border-default bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2">
-            <GraduationCap className="h-6 w-6 text-zinc-900 dark:text-zinc-100" />
-            <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+            <GraduationCap className="h-6 w-6 text-violet-400" />
+            <span className="text-lg font-bold text-text-primary">
               VibeUniv
             </span>
           </Link>
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+              className="inline-flex h-10 items-center justify-center rounded-xl px-4 text-sm font-medium text-text-muted transition-colors hover:bg-bg-input hover:text-text-primary"
             >
               Log in
             </Link>
             <Link
               href="/signup"
-              className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-gradient-to-r from-violet-500 to-cyan-500 px-4 text-sm font-medium text-white transition-colors hover:shadow-glow-purple-sm"
             >
               Get Started
             </Link>
@@ -53,19 +53,19 @@ export default function GuidePage() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
+        <section className="border-b border-border-default bg-bg-surface">
           <div className="mx-auto max-w-4xl px-6 py-16 text-center">
             <Link
               href="/"
-              className="mb-6 inline-flex items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+              className="mb-6 inline-flex items-center gap-1.5 text-sm text-text-muted transition-colors hover:text-violet-400"
             >
               <ArrowLeft className="h-4 w-4" />
               홈으로 돌아가기
             </Link>
-            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl dark:text-zinc-100">
+            <h1 className="text-3xl font-bold tracking-tight text-text-primary sm:text-4xl">
               VibeUniv 시작 가이드
             </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-zinc-600 dark:text-zinc-400">
+            <p className="mx-auto mt-4 max-w-2xl text-text-muted">
               프로젝트를 연결하고 AI 학습을 시작하기까지, 차근차근 따라해 보세요.
               처음이라도 괜찮아요!
             </p>
@@ -107,7 +107,7 @@ export default function GuidePage() {
               <p>
                 <Link
                   href="/signup"
-                  className="font-medium text-zinc-900 underline underline-offset-4 dark:text-zinc-100"
+                  className="font-medium text-text-primary underline underline-offset-4"
                 >
                   vibeuniv.com/signup
                 </Link>
@@ -115,7 +115,7 @@ export default function GuidePage() {
                 이미 계정이 있다면{" "}
                 <Link
                   href="/login"
-                  className="font-medium text-zinc-900 underline underline-offset-4 dark:text-zinc-100"
+                  className="font-medium text-text-primary underline underline-offset-4"
                 >
                   로그인
                 </Link>
@@ -186,12 +186,12 @@ export default function GuidePage() {
                 파일 경로가 다릅니다.
               </p>
 
-              <h4 className="mt-6 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              <h4 className="mt-6 text-sm font-semibold text-text-primary">
                 Claude Code
               </h4>
               <p className="mt-1 text-sm">
                 설정 파일:{" "}
-                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                   ~/.claude/settings.json
                 </code>
               </p>
@@ -209,12 +209,12 @@ export default function GuidePage() {
 }`}
               </CodeBlock>
 
-              <h4 className="mt-6 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              <h4 className="mt-6 text-sm font-semibold text-text-primary">
                 Cursor
               </h4>
               <p className="mt-1 text-sm">
                 설정 파일:{" "}
-                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                   ~/.cursor/mcp.json
                 </code>
               </p>
@@ -232,12 +232,12 @@ export default function GuidePage() {
 }`}
               </CodeBlock>
 
-              <h4 className="mt-6 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              <h4 className="mt-6 text-sm font-semibold text-text-primary">
                 Windsurf
               </h4>
               <p className="mt-1 text-sm">
                 설정 파일:{" "}
-                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                   ~/.codeium/windsurf/mcp_config.json
                 </code>
               </p>
@@ -255,12 +255,12 @@ export default function GuidePage() {
 }`}
               </CodeBlock>
 
-              <h4 className="mt-6 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              <h4 className="mt-6 text-sm font-semibold text-text-primary">
                 Cline (VS Code 확장)
               </h4>
               <p className="mt-1 text-sm">
                 VS Code에서{" "}
-                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                   Cline &gt; MCP Servers &gt; Edit Config
                 </code>
                 를 열고 아래 내용을 추가하세요.
@@ -279,12 +279,12 @@ export default function GuidePage() {
 }`}
               </CodeBlock>
 
-              <h4 className="mt-6 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              <h4 className="mt-6 text-sm font-semibold text-text-primary">
                 Kimi Code CLI
               </h4>
               <p className="mt-1 text-sm">
                 설정 파일:{" "}
-                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                   ~/.kimi/mcp.json
                 </code>
               </p>
@@ -303,22 +303,22 @@ export default function GuidePage() {
               </CodeBlock>
               <p className="mt-2 text-sm">
                 또는 CLI에서 직접 추가할 수도 있어요:{" "}
-                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                   kimi mcp
                 </code>{" "}
                 명령으로 MCP 서버를 관리하고,{" "}
-                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                   /mcp
                 </code>{" "}
                 로 연결 상태를 확인할 수 있습니다.
               </p>
 
-              <h4 className="mt-6 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              <h4 className="mt-6 text-sm font-semibold text-text-primary">
                 OpenAI Codex CLI
               </h4>
               <p className="mt-1 text-sm">
                 설정 파일:{" "}
-                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                   ~/.codex/config.toml
                 </code>{" "}
                 (TOML 형식)
@@ -339,7 +339,7 @@ VIBEUNIV_API_KEY = "여기에_발급받은_API_키"`}
               </CodeBlock>
               <p className="mt-2 text-sm">
                 프로젝트별 설정은{" "}
-                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                   .codex/config.toml
                 </code>{" "}
                 (프로젝트 루트)에 추가하면 됩니다.
@@ -368,7 +368,7 @@ VIBEUNIV_API_KEY = "여기에_발급받은_API_키"`}
                 <li>1. AI 코딩 도구를 완전히 종료 후 다시 시작</li>
                 <li>
                   2. 프로젝트 폴더에서 AI에게{" "}
-                  <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                  <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                     vibeuniv_sync_project
                   </code>{" "}
                   를 호출하도록 요청
@@ -379,7 +379,7 @@ VIBEUNIV_API_KEY = "여기에_발급받은_API_키"`}
               </ol>
               <InfoBox>
                 동기화는 프로젝트의 설정 파일과 소스 코드 구조만 전송합니다.
-                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                   .env
                 </code>
                 , 인증서 등 민감한 파일은 자동으로 제외돼요.
@@ -400,7 +400,7 @@ VIBEUNIV_API_KEY = "여기에_발급받은_API_키"`}
                 </li>
                 <li>
                   <strong>방법 2:</strong> AI 도구에서{" "}
-                  <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                  <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                     vibeuniv_analyze
                   </code>{" "}
                   MCP 도구 호출
@@ -437,22 +437,22 @@ VIBEUNIV_API_KEY = "여기에_발급받은_API_키"`}
         </section>
 
         {/* REST API Section */}
-        <section className="border-t border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
+        <section className="border-t border-border-default bg-bg-surface">
           <div className="mx-auto max-w-4xl px-6 py-16">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700">
-                <Terminal className="h-5 w-5 text-zinc-700 dark:text-zinc-300" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-500/10">
+                <Terminal className="h-5 w-5 text-violet-400" />
               </div>
-              <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-2xl font-bold text-text-primary">
                 MCP 없이 REST API로 연결하기
               </h2>
             </div>
-            <p className="mt-4 text-zinc-600 dark:text-zinc-400">
+            <p className="mt-4 text-text-muted">
               MCP를 사용할 수 없는 환경이라면, REST API로 직접 프로젝트를 전송할
               수 있어요. API 키만 있으면 됩니다.
             </p>
 
-            <h3 className="mt-8 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h3 className="mt-8 text-sm font-semibold text-text-primary">
               1. 프로젝트 생성
             </h3>
             <CodeBlock>
@@ -462,7 +462,7 @@ VIBEUNIV_API_KEY = "여기에_발급받은_API_키"`}
   -d '{"name": "my-awesome-app"}'`}
             </CodeBlock>
 
-            <h3 className="mt-6 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h3 className="mt-6 text-sm font-semibold text-text-primary">
               2. 파일 업로드
             </h3>
             <CodeBlock>
@@ -478,7 +478,7 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
   }'`}
             </CodeBlock>
 
-            <h3 className="mt-6 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h3 className="mt-6 text-sm font-semibold text-text-primary">
               3. 기술 스택 분석 요청
             </h3>
             <CodeBlock>
@@ -486,7 +486,7 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
   -H "Authorization: Bearer YOUR_VIBEUNIV_API_KEY"`}
             </CodeBlock>
 
-            <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-4 text-sm text-text-muted">
               분석이 완료되면 대시보드에서 결과를 확인하고, 학습 로드맵을 생성할
               수 있어요.
             </p>
@@ -494,13 +494,13 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
         </section>
 
         {/* Troubleshooting Section */}
-        <section className="border-t border-zinc-200 dark:border-zinc-800">
+        <section className="border-t border-border-default">
           <div className="mx-auto max-w-4xl px-6 py-16">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700">
-                <AlertTriangle className="h-5 w-5 text-zinc-700 dark:text-zinc-300" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10">
+                <AlertTriangle className="h-5 w-5 text-amber-400" />
               </div>
-              <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-2xl font-bold text-text-primary">
                 트러블슈팅
               </h2>
             </div>
@@ -513,14 +513,14 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
                     등)
                   </li>
                   <li>
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       VIBEUNIV_API_KEY
                     </code>
                     값이 정확한지 확인하세요
                   </li>
                   <li>
                     Node.js가 설치되어 있는지 확인하세요 (
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       npx
                     </code>
                     가 필요합니다)
@@ -532,7 +532,7 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
               <TroubleshootItem title="프로젝트가 대시보드에 나타나지 않아요">
                 <ul className="space-y-1.5">
                   <li>
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       vibeuniv_sync_project
                     </code>
                     를 다시 호출해 보세요
@@ -550,11 +550,11 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
                 <ul className="space-y-1.5">
                   <li>
                     프로젝트에{" "}
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       package.json
                     </code>
                     이나{" "}
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       requirements.txt
                     </code>{" "}
                     같은 의존성 파일이 있는지 확인
@@ -573,14 +573,14 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
                 <ul className="space-y-1.5">
                   <li>
                     기존{" "}
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       VIBESTACK_API_KEY
                     </code>
                     는 그대로 작동합니다 (하위호환)
                   </li>
                   <li>
                     시간이 될 때{" "}
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       VIBEUNIV_API_KEY
                     </code>
                     로 변경하는 것을 권장해요
@@ -592,64 +592,64 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
         </section>
 
         {/* Security Section */}
-        <section className="border-t border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
+        <section className="border-t border-border-default bg-bg-surface">
           <div className="mx-auto max-w-4xl px-6 py-16">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700">
-                <Shield className="h-5 w-5 text-zinc-700 dark:text-zinc-300" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/10">
+                <Shield className="h-5 w-5 text-green-400" />
               </div>
-              <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-2xl font-bold text-text-primary">
                 보안 안내
               </h2>
             </div>
 
             <div className="mt-8 grid gap-8 sm:grid-cols-2">
               <div>
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                <h3 className="text-sm font-semibold text-text-primary">
                   수집되는 파일
                 </h3>
-                <ul className="mt-3 space-y-1.5 text-sm text-zinc-600 dark:text-zinc-400">
+                <ul className="mt-3 space-y-1.5 text-sm text-text-muted">
                   <li>
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       package.json
                     </code>
                     ,{" "}
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       requirements.txt
                     </code>
                     {" "}등 의존성 파일
                   </li>
                   <li>
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       tsconfig.json
                     </code>
                     ,{" "}
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       next.config.ts
                     </code>
                     {" "}등 설정 파일
                   </li>
                   <li>
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       CLAUDE.md
                     </code>
                     ,{" "}
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       .cursorrules
                     </code>
                     {" "}등 AI 프로젝트 파일
                   </li>
                   <li>
                     소스 코드 (
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       .ts
                     </code>
                     ,{" "}
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       .tsx
                     </code>
                     ,{" "}
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       .py
                     </code>
                     {" "}등 — 최대 50개 파일)
@@ -657,54 +657,54 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
                 </ul>
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                <h3 className="text-sm font-semibold text-text-primary">
                   자동으로 제외되는 파일
                 </h3>
-                <ul className="mt-3 space-y-1.5 text-sm text-zinc-600 dark:text-zinc-400">
+                <ul className="mt-3 space-y-1.5 text-sm text-text-muted">
                   <li>
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       .env
                     </code>
                     ,{" "}
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       .env.*
                     </code>
                     {" "}— 환경변수 파일
                   </li>
                   <li>
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       *.pem
                     </code>
                     ,{" "}
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       *.key
                     </code>
                     ,{" "}
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       id_rsa*
                     </code>
                     {" "}— 인증서/키 파일
                   </li>
                   <li>
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       credentials.json
                     </code>
                     ,{" "}
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       secrets.*
                     </code>
                     {" "}— 인증 정보
                   </li>
                   <li>
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       node_modules/
                     </code>
                     ,{" "}
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       .git/
                     </code>
                     ,{" "}
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
                       dist/
                     </code>
                     {" "}— 빌드/의존성
@@ -722,18 +722,18 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
         </section>
 
         {/* CTA */}
-        <section className="border-t border-zinc-200 dark:border-zinc-800">
+        <section className="border-t border-border-default">
           <div className="mx-auto max-w-4xl px-6 py-16 text-center">
-            <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h2 className="text-2xl font-bold text-text-primary">
               준비되셨나요?
             </h2>
-            <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-text-muted">
               프로젝트를 연결하고, 내 코드로 학습을 시작하세요.
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Link
                 href="/signup"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-zinc-900 px-6 text-base font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-cyan-500 px-6 text-base font-medium text-white transition-all hover:shadow-glow-purple"
               >
                 시작하기
                 <ExternalLink className="h-4 w-4" />
@@ -744,25 +744,25 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-200 dark:border-zinc-800">
+      <footer className="border-t border-border-default">
         <div className="mx-auto max-w-6xl px-6 py-12">
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
             <div className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
-              <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+              <GraduationCap className="h-5 w-5 text-violet-400" />
+              <span className="font-semibold text-text-primary">
                 VibeUniv
               </span>
             </div>
-            <div className="flex items-center gap-6 text-sm text-zinc-500 dark:text-zinc-400">
+            <div className="flex items-center gap-6 text-sm text-text-muted">
               <Link
                 href="/terms"
-                className="transition-colors hover:text-zinc-900 dark:hover:text-zinc-100"
+                className="transition-colors hover:text-text-primary"
               >
                 이용약관
               </Link>
               <Link
                 href="/privacy"
-                className="transition-colors hover:text-zinc-900 dark:hover:text-zinc-100"
+                className="transition-colors hover:text-text-primary"
               >
                 개인정보처리방침
               </Link>
@@ -770,13 +770,13 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
                 href="https://github.com/vibestack"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="transition-colors hover:text-zinc-900 dark:hover:text-zinc-100"
+                className="transition-colors hover:text-text-primary"
               >
                 GitHub
               </a>
             </div>
           </div>
-          <div className="mt-8 text-center text-sm text-zinc-400 dark:text-zinc-500">
+          <div className="mt-8 text-center text-sm text-text-faint">
             &copy; 2026 VibeUniv. All rights reserved.
           </div>
         </div>
@@ -801,16 +801,16 @@ function StepSection({
   return (
     <div className="relative pl-14">
       {/* Step badge */}
-      <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-sm font-bold text-white dark:bg-zinc-100 dark:text-zinc-900">
+      <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 text-sm font-bold text-white">
         {step}
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-zinc-500 dark:text-zinc-400">{icon}</span>
-        <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+        <span className="text-text-muted">{icon}</span>
+        <h3 className="text-xl font-semibold text-text-primary">
           {title}
         </h3>
       </div>
-      <div className="mt-4 space-y-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+      <div className="mt-4 space-y-3 text-sm leading-relaxed text-text-muted">
         {children}
       </div>
     </div>
@@ -819,8 +819,8 @@ function StepSection({
 
 function CheckItem({ children }: { children: React.ReactNode }) {
   return (
-    <li className="flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-      <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
+    <li className="flex items-start gap-2 text-sm text-text-muted">
+      <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-400" />
       <span>{children}</span>
     </li>
   );
@@ -828,7 +828,7 @@ function CheckItem({ children }: { children: React.ReactNode }) {
 
 function CodeBlock({ children }: { children: React.ReactNode }) {
   return (
-    <pre className="mt-3 overflow-x-auto rounded-lg bg-zinc-100 p-4 text-xs leading-relaxed text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200">
+    <pre className="mt-3 overflow-x-auto rounded-xl bg-[rgba(0,0,0,0.3)] border border-border-default p-4 text-xs leading-relaxed text-text-secondary font-mono">
       {children}
     </pre>
   );
@@ -843,10 +843,10 @@ function InfoBox({
 }) {
   return (
     <div
-      className={`mt-4 rounded-lg border p-4 text-sm ${
+      className={`mt-4 rounded-xl border p-4 text-sm ${
         variant === "warning"
-          ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800/50 dark:bg-amber-900/20 dark:text-amber-200"
-          : "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-400"
+          ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+          : "border-border-default bg-bg-input text-text-muted"
       }`}
     >
       {children}
@@ -862,9 +862,9 @@ function TroubleshootItem({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-      <h3 className="font-medium text-zinc-900 dark:text-zinc-100">{title}</h3>
-      <div className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+    <div className="rounded-2xl border border-border-default bg-bg-surface p-5">
+      <h3 className="font-medium text-text-primary">{title}</h3>
+      <div className="mt-3 text-sm text-text-muted">
         {children}
       </div>
     </div>

@@ -9,12 +9,12 @@ export default async function AdminSettingsPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+        <h1 className="text-2xl font-bold text-text-primary">
           System Settings
         </h1>
         <Link
           href="/admin/settings/announcements"
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+          className="inline-flex items-center gap-2 rounded-xl border border-border-default px-4 py-2 text-sm font-medium text-text-tertiary hover:bg-bg-input"
         >
           <Megaphone className="h-4 w-4" />
           Announcements

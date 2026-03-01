@@ -62,11 +62,11 @@ export function AdminUserTable({
   const roleBadgeClass = (role: string) => {
     switch (role) {
       case "super_admin":
-        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+        return "bg-red-500/10 text-red-300 border border-red-500/20";
       case "admin":
-        return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+        return "bg-amber-500/10 text-amber-300 border border-amber-500/20";
       default:
-        return "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
+        return "bg-zinc-500/10 text-text-muted border border-zinc-500/20";
     }
   };
 
@@ -75,69 +75,69 @@ export function AdminUserTable({
       {/* Filters */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
-          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-text-muted" />
           <input
             type="text"
             placeholder="Search by email or name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            className="w-full rounded-xl border border-border-default bg-bg-input py-2 pl-9 pr-3 text-sm text-text-primary placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/40 transition-all duration-200"
           />
         </div>
         <select
           value={roleFilter}
           onChange={(e) => { setRoleFilter(e.target.value); }}
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+          className="rounded-xl border border-border-default bg-bg-input px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-violet-500/50"
         >
-          <option value="">All Roles</option>
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-          <option value="super_admin">Super Admin</option>
+          <option value="" className="bg-bg-elevated">All Roles</option>
+          <option value="user" className="bg-bg-elevated">User</option>
+          <option value="admin" className="bg-bg-elevated">Admin</option>
+          <option value="super_admin" className="bg-bg-elevated">Super Admin</option>
         </select>
         <select
           value={planFilter}
           onChange={(e) => { setPlanFilter(e.target.value); }}
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+          className="rounded-xl border border-border-default bg-bg-input px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-violet-500/50"
         >
-          <option value="">All Plans</option>
-          <option value="free">Free</option>
-          <option value="pro">Pro</option>
-          <option value="team">Team</option>
+          <option value="" className="bg-bg-elevated">All Plans</option>
+          <option value="free" className="bg-bg-elevated">Free</option>
+          <option value="pro" className="bg-bg-elevated">Pro</option>
+          <option value="team" className="bg-bg-elevated">Team</option>
         </select>
         <button
           onClick={handleSearch}
           disabled={isPending}
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="rounded-xl bg-violet-500 px-4 py-2 text-sm font-medium text-white hover:bg-violet-600 disabled:opacity-50 transition-colors"
         >
           {isPending ? "Loading..." : "Search"}
         </button>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+      <div className="overflow-x-auto rounded-2xl border border-border-default">
         <table className="w-full text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
+          <thead className="border-b border-border-default bg-bg-surface">
             <tr>
-              <th className="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">User</th>
-              <th className="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">Role</th>
-              <th className="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">Plan</th>
-              <th className="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">Status</th>
-              <th className="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">Joined</th>
+              <th className="px-4 py-3 text-left font-medium text-text-muted">User</th>
+              <th className="px-4 py-3 text-left font-medium text-text-muted">Role</th>
+              <th className="px-4 py-3 text-left font-medium text-text-muted">Plan</th>
+              <th className="px-4 py-3 text-left font-medium text-text-muted">Status</th>
+              <th className="px-4 py-3 text-left font-medium text-text-muted">Joined</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <tbody className="divide-y divide-border-default">
             {users.map((user) => (
-              <tr key={user.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+              <tr key={user.id} className="hover:bg-bg-surface">
                 <td className="px-4 py-3">
                   <Link
                     href={`/admin/users/${user.id}`}
-                    className="font-medium text-zinc-900 hover:underline dark:text-zinc-100"
+                    className="font-medium text-text-primary hover:text-violet-400 hover:underline"
                   >
                     {user.email}
                   </Link>
                   {user.name && (
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">{user.name}</p>
+                    <p className="text-xs text-text-muted">{user.name}</p>
                   )}
                 </td>
                 <td className="px-4 py-3">
@@ -146,27 +146,27 @@ export function AdminUserTable({
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="text-zinc-700 dark:text-zinc-300">{user.plan_type}</span>
+                  <span className="text-text-tertiary">{user.plan_type}</span>
                 </td>
                 <td className="px-4 py-3">
                   {user.is_banned ? (
-                    <span className="inline-block rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                    <span className="inline-block rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-400 border border-red-500/20">
                       Banned
                     </span>
                   ) : (
-                    <span className="inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    <span className="inline-block rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-400 border border-green-500/20">
                       Active
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                <td className="px-4 py-3 text-text-muted">
                   {new Date(user.created_at).toLocaleDateString()}
                 </td>
               </tr>
             ))}
             {users.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">
+                <td colSpan={5} className="px-4 py-8 text-center text-text-muted">
                   No users found
                 </td>
               </tr>
@@ -178,24 +178,24 @@ export function AdminUserTable({
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-text-muted">
             {total} user{total !== 1 ? "s" : ""} total
           </p>
           <div className="flex items-center gap-2">
             <button
               onClick={() => fetchUsers(page - 1)}
               disabled={page <= 1 || isPending}
-              className="rounded-lg border border-zinc-200 p-2 text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900"
+              className="rounded-xl border border-border-default p-2 text-text-muted hover:bg-bg-input disabled:opacity-50"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-sm text-zinc-600 dark:text-zinc-400">
+            <span className="text-sm text-text-muted">
               {page} / {totalPages}
             </span>
             <button
               onClick={() => fetchUsers(page + 1)}
               disabled={page >= totalPages || isPending}
-              className="rounded-lg border border-zinc-200 p-2 text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900"
+              className="rounded-xl border border-border-default p-2 text-text-muted hover:bg-bg-input disabled:opacity-50"
             >
               <ChevronRight className="h-4 w-4" />
             </button>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import {
   CheckCircle2,
   XCircle,
@@ -14,7 +15,9 @@ import {
   FolderOpen,
   Target,
   RefreshCw,
-  MessageSquare,
+  Eye,
+  Brain,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
@@ -22,6 +25,18 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import { updateLearningProgress, generateModuleContent, prefetchNextModuleContent } from "@/server/actions/learning";
 import { TutorChat } from "@/components/features/tutor-chat";
+import hljs from "highlight.js/lib/core";
+import javascript from "highlight.js/lib/languages/javascript";
+import typescript from "highlight.js/lib/languages/typescript";
+import xml from "highlight.js/lib/languages/xml";
+import css from "highlight.js/lib/languages/css";
+import json from "highlight.js/lib/languages/json";
+
+hljs.registerLanguage("javascript", javascript);
+hljs.registerLanguage("typescript", typescript);
+hljs.registerLanguage("xml", xml);
+hljs.registerLanguage("css", css);
+hljs.registerLanguage("json", json);
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -32,6 +47,9 @@ interface ContentSection {
   code?: string;
   quiz_options?: string[];
   quiz_answer?: number;
+  challenge_starter_code?: string;
+  challenge_answer_code?: string;
+  quiz_explanation?: string;
 }
 
 interface ModuleProgress {
@@ -111,7 +129,7 @@ function QuizSection({
   return (
     <div className="space-y-4">
       {/* Quiz body */}
-      <div className="prose prose-sm prose-zinc max-w-none dark:prose-invert">
+      <div className="prose prose-sm prose-invert max-w-none">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {section.body ?? ""}
         </ReactMarkdown>
@@ -122,19 +140,19 @@ function QuizSection({
         <div className="space-y-2">
           {options.map((option, optIdx) => {
             let optionStyle =
-              "border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700";
+              "border-border-default bg-bg-surface hover:border-border-hover";
 
             if (showAnswer) {
               if (optIdx === correctAnswer) {
                 optionStyle =
-                  "border-green-500 bg-green-50 dark:border-green-500 dark:bg-green-900/20";
+                  "border-green-500/40 bg-green-500/10";
               } else if (optIdx === selectedOption && !isCorrect) {
                 optionStyle =
-                  "border-red-500 bg-red-50 dark:border-red-500 dark:bg-red-900/20";
+                  "border-red-500/40 bg-red-500/10";
               }
             } else if (selectedOption === optIdx) {
               optionStyle =
-                "border-zinc-900 bg-zinc-50 dark:border-white dark:bg-zinc-900";
+                "border-violet-500/40 bg-violet-500/10";
             }
 
             return (
@@ -147,12 +165,12 @@ function QuizSection({
                   }
                 }}
                 disabled={showAnswer}
-                className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-sm transition-colors ${optionStyle}`}
+                className={`flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors ${optionStyle}`}
               >
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-current text-xs font-medium">
                   {String.fromCharCode(65 + optIdx)}
                 </span>
-                <span className="text-zinc-900 dark:text-zinc-100">
+                <span className="text-text-primary">
                   {option}
                 </span>
               </button>
@@ -174,29 +192,43 @@ function QuizSection({
       )}
 
       {/* Answer feedback */}
-      {showAnswer && (
-        <div
-          className={`flex items-center gap-2 rounded-lg p-3 ${
-            isCorrect
-              ? "bg-green-50 dark:bg-green-900/20"
-              : "bg-red-50 dark:bg-red-900/20"
-          }`}
-        >
-          {isCorrect ? (
-            <>
-              <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-              <span className="text-sm font-medium text-green-700 dark:text-green-300">
-                정답입니다!
+      {showAnswer && isCorrect && (
+        <div className="flex items-center gap-3 rounded-xl bg-green-500/10 border border-green-500/20 p-4">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/20">
+            <CheckCircle2 className="h-5 w-5 text-green-400" />
+          </div>
+          <div>
+            <span className="text-sm font-semibold text-green-300">정답입니다!</span>
+            {section.quiz_explanation && (
+              <p className="mt-1 text-sm text-text-muted">{section.quiz_explanation}</p>
+            )}
+          </div>
+        </div>
+      )}
+      {showAnswer && !isCorrect && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 rounded-xl bg-red-500/10 border border-red-500/20 p-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-500/20">
+              <XCircle className="h-5 w-5 text-red-400" />
+            </div>
+            <div>
+              <span className="text-sm font-semibold text-red-300">
+                틀렸습니다. 정답은 {String.fromCharCode(65 + correctAnswer)}번입니다.
               </span>
-            </>
-          ) : (
-            <>
-              <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
-              <span className="text-sm font-medium text-red-700 dark:text-red-300">
-                틀렸습니다. 정답은{" "}
-                {String.fromCharCode(65 + correctAnswer)}번입니다.
-              </span>
-            </>
+            </div>
+          </div>
+
+          {section.quiz_explanation && (
+            <div className="rounded-xl border border-border-default bg-bg-input p-4">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-text-faint">
+                해설
+              </p>
+              <div className="prose prose-sm prose-invert max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {section.quiz_explanation}
+                </ReactMarkdown>
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -206,37 +238,162 @@ function QuizSection({
 
 // ─── Challenge Section Component ────────────────────────────────────
 
+function highlightCode(code: string): string {
+  try {
+    const result = hljs.highlightAuto(code, [
+      "javascript",
+      "typescript",
+      "xml",
+      "css",
+      "json",
+    ]);
+    return result.value;
+  } catch {
+    // hljs 실패 시 raw text (HTML 이스케이프)
+    return code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+}
+
+const LazyEditor = dynamic(() => import("react-simple-code-editor"), {
+  ssr: false,
+  loading: () => (
+    <pre className="min-h-[120px] bg-zinc-900 p-4 font-mono text-sm text-zinc-100" />
+  ),
+});
+
 function ChallengeSection({ section }: { section: ContentSection }) {
   const [completed, setCompleted] = useState(false);
+  const [code, setCode] = useState(section.challenge_starter_code ?? "");
+  const [showAnswer, setShowAnswer] = useState(false);
+  const answerCode =
+    section.challenge_answer_code ?? section.code ?? "";
 
   return (
     <div className="space-y-4">
-      <div className="prose prose-sm prose-zinc max-w-none dark:prose-invert">
+      <div className="prose prose-sm prose-invert max-w-none">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {section.body ?? ""}
         </ReactMarkdown>
       </div>
-      {section.code && (
-        <div className="overflow-x-auto rounded-lg bg-zinc-900 dark:bg-zinc-800">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeHighlight]}
-          >
-            {"```\n" + section.code + "\n```"}
-          </ReactMarkdown>
+
+      {/* Code Editor */}
+      <div className="overflow-hidden rounded-xl border border-zinc-700">
+        <div className="flex items-center justify-between bg-zinc-800 px-4 py-2">
+          <span className="text-xs font-medium text-zinc-400">
+            코드 에디터
+          </span>
+          {answerCode && (
+            <button
+              type="button"
+              onClick={() => setShowAnswer(!showAnswer)}
+              className="flex items-center gap-1.5 rounded-lg bg-zinc-700 px-2.5 py-1 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-600 hover:text-zinc-100"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              {showAnswer ? "답 숨기기" : "답 확인"}
+            </button>
+          )}
+        </div>
+        <LazyEditor
+          value={code}
+          onValueChange={setCode}
+          highlight={(c: string) => highlightCode(c)}
+          padding={16}
+          className="min-h-[120px] bg-zinc-900 font-mono text-sm text-zinc-100"
+          style={{
+            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+          }}
+        />
+      </div>
+
+      {/* Answer panel */}
+      {showAnswer && answerCode && (
+        <div className="overflow-hidden rounded-xl border border-zinc-700">
+          <div className="bg-zinc-800 px-4 py-2">
+            <span className="text-xs font-medium text-zinc-400">
+              정답 코드
+            </span>
+          </div>
+          <div className="overflow-x-auto bg-zinc-900 p-4">
+            <pre className="text-sm">
+              <code
+                className="hljs text-zinc-100"
+                dangerouslySetInnerHTML={{
+                  __html: highlightCode(answerCode),
+                }}
+              />
+            </pre>
+          </div>
         </div>
       )}
+
       <label className="flex cursor-pointer items-center gap-2">
         <input
           type="checkbox"
           checked={completed}
           onChange={(e) => setCompleted(e.target.checked)}
-          className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:border-zinc-600 dark:text-white dark:focus:ring-zinc-300"
+          className="h-4 w-4 rounded border-zinc-600 text-violet-500 focus:ring-violet-500/50"
         />
-        <span className="text-sm text-zinc-700 dark:text-zinc-300">
+        <span className="text-sm text-text-tertiary">
           완료
         </span>
       </label>
+    </div>
+  );
+}
+
+// ─── 3-Step Generation Progress UI ──────────────────────────────────
+
+const GENERATION_STEPS = [
+  { icon: Code, label: "프로젝트 코드 분석 중...", threshold: 10 },
+  { icon: Brain, label: "맞춤 콘텐츠 생성 중...", threshold: 25 },
+  { icon: Sparkles, label: "최종 검수 및 최적화 중...", threshold: 40 },
+];
+
+function GeneratingStepsUI({ elapsedSeconds }: { elapsedSeconds: number }) {
+  const currentStep = GENERATION_STEPS.findIndex((s) => elapsedSeconds < s.threshold);
+  const activeStep = currentStep === -1 ? GENERATION_STEPS.length - 1 : currentStep;
+
+  return (
+    <div className="flex flex-col items-center gap-6 rounded-2xl border border-violet-500/20 bg-gradient-to-b from-violet-500/[0.05] to-transparent py-16">
+      {/* Steps */}
+      <div className="flex items-center gap-6 sm:gap-8">
+        {GENERATION_STEPS.map((step, idx) => {
+          const StepIcon = step.icon;
+          const isActive = idx === activeStep;
+          const isDone = idx < activeStep;
+
+          return (
+            <div key={idx} className="flex flex-col items-center gap-2">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-full transition-all ${
+                isDone
+                  ? "bg-green-500/20 ring-2 ring-green-500/40"
+                  : isActive
+                    ? "bg-violet-500/20 ring-2 ring-violet-500/40 animate-pulse"
+                    : "bg-bg-input ring-1 ring-border-strong"
+              }`}>
+                {isDone ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-400" />
+                ) : (
+                  <StepIcon className={`h-5 w-5 ${isActive ? "text-violet-400" : "text-text-dim"}`} />
+                )}
+              </div>
+              <span className={`text-xs ${isActive ? "text-text-tertiary" : "text-text-dim"}`}>
+                Step {idx + 1}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-sm font-medium text-text-tertiary">
+        {GENERATION_STEPS[activeStep].label}
+      </p>
+
+      <div className="flex items-center gap-2 text-xs text-text-dim">
+        <span className="tabular-nums">{elapsedSeconds}초 경과</span>
+        <span>·</span>
+        <span>보통 30~60초 소요</span>
+      </div>
     </div>
   );
 }
@@ -406,7 +563,7 @@ export function ModuleContent({
     }
     return (
       <div className="space-y-4">
-        <div className="prose prose-sm prose-zinc max-w-none dark:prose-invert">
+        <div className="prose prose-sm prose-invert max-w-none">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeHighlight]}
@@ -415,7 +572,7 @@ export function ModuleContent({
           </ReactMarkdown>
         </div>
         {section.code && (
-          <div className="overflow-x-auto rounded-lg">
+          <div className="overflow-x-auto rounded-xl">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeHighlight]}
@@ -434,67 +591,47 @@ export function ModuleContent({
       <div>
         <div className="flex items-center gap-2">
           {typeConfig && (
-            <span className="flex items-center gap-1 rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-
+            <span className="flex items-center gap-1 rounded-lg bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-300">
               <TypeIcon className="h-3 w-3" />
               {typeConfig.label}
             </span>
           )}
           {estimatedMinutes !== null && (
-            <span className="flex items-center gap-1 text-xs text-zinc-400 dark:text-zinc-500">
+            <span className="flex items-center gap-1 text-xs text-text-faint">
               <Clock className="h-3 w-3" />
               {estimatedMinutes}분
             </span>
           )}
           {isCompleted && (
-            <span className="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
+            <span className="flex items-center gap-1 text-xs font-medium text-green-400">
               <CheckCircle2 className="h-3 w-3" />
               완료됨
             </span>
           )}
         </div>
-        <h1 className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+        <h1 className="mt-2 text-2xl font-bold text-text-primary">
           {title}
         </h1>
         {description && (
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-text-muted">
             {description}
           </p>
         )}
       </div>
 
-      {/* On-demand content generation states */}
+      {/* On-demand content generation states — 3-step progress */}
       {(isGenerating || showGeneratingUI) && localSections.length === 0 && !generationError && (
-        <div className="flex flex-col items-center gap-4 rounded-lg border border-zinc-200 bg-zinc-50 py-12 dark:border-zinc-800 dark:bg-zinc-900/50">
-          <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
-          <div className="text-center">
-            <p className="font-medium text-zinc-700 dark:text-zinc-300">
-              학습 콘텐츠를 생성하고 있습니다...
-            </p>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              {elapsedSeconds < 10
-                ? "프로젝트 코드를 분석하고 있어요"
-                : elapsedSeconds < 25
-                  ? "AI가 맞춤 콘텐츠를 작성하고 있어요"
-                  : "거의 다 됐어요, 조금만 기다려 주세요"}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-zinc-400 dark:text-zinc-500">
-            <span>{elapsedSeconds}초 경과</span>
-            <span>·</span>
-            <span>보통 30~60초 소요</span>
-          </div>
-        </div>
+        <GeneratingStepsUI elapsedSeconds={elapsedSeconds} />
       )}
 
       {generationError && localSections.length === 0 && (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-red-200 bg-red-50 py-12 dark:border-red-900/50 dark:bg-red-900/20">
-          <XCircle className="h-8 w-8 text-red-500 dark:text-red-400" />
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 py-12">
+          <XCircle className="h-8 w-8 text-red-400" />
           <div className="text-center">
-            <p className="font-medium text-red-700 dark:text-red-300">
+            <p className="font-medium text-red-300">
               콘텐츠 생성에 실패했습니다
             </p>
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            <p className="mt-1 text-sm text-red-400">
               {generationError}
             </p>
           </div>
@@ -511,16 +648,16 @@ export function ModuleContent({
 
       {/* Empty state: no sections, not generating, no error */}
       {localSections.length === 0 && !isGenerating && !showGeneratingUI && !generationError && (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 py-12 dark:border-zinc-800 dark:bg-zinc-900/50">
-          <BookOpen className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-border-default bg-bg-surface py-12">
+          <BookOpen className="h-8 w-8 text-text-dim" />
+          <p className="text-sm text-text-muted">
             아직 학습 콘텐츠가 준비되지 않았습니다.
           </p>
         </div>
       )}
 
       {localSections.length > 0 && (
-        <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+        <div className="divide-y divide-border-default">
           {localSections.map((section, idx) => {
             const config = SECTION_CONFIG[section.type] ?? DEFAULT_SECTION_CONFIG;
             const SectionIcon = config.icon;
@@ -529,15 +666,15 @@ export function ModuleContent({
               <>
                 {/* Section type label */}
                 <div className="mb-3 flex items-center gap-1.5">
-                  <SectionIcon className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
-                  <span className="text-[11px] font-medium uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+                  <SectionIcon className="h-3.5 w-3.5 text-text-faint" />
+                  <span className="text-[11px] font-medium uppercase tracking-widest text-text-faint">
                     {config.label}
                   </span>
                 </div>
 
                 {/* Section title */}
                 {section.title && (
-                  <h2 className="mb-2 text-[17px] font-semibold text-zinc-900 dark:text-zinc-100">
+                  <h2 className="mb-2 text-[17px] font-semibold text-text-primary">
                     {section.title}
                   </h2>
                 )}
@@ -553,7 +690,7 @@ export function ModuleContent({
                 className="py-8 first:pt-0 last:pb-0"
               >
                 {config.callout ? (
-                  <div className="rounded-lg border border-zinc-200/70 bg-zinc-50 p-5 dark:border-zinc-700/50 dark:bg-zinc-800/50">
+                  <div className="rounded-xl border border-border-default bg-bg-input p-5">
                     {sectionInner}
                   </div>
                 ) : (
@@ -577,43 +714,39 @@ export function ModuleContent({
 
       {/* Sticky bottom action bar */}
       {localSections.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 bg-white/80 backdrop-blur-sm lg:left-64 dark:border-zinc-800 dark:bg-zinc-950/80">
-          <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowChat(!showChat)}
-            >
-              <MessageSquare className="mr-1.5 h-4 w-4" />
-              {showChat ? "채팅 닫기" : "AI 튜터"}
-            </Button>
+        <div className="fixed bottom-0 left-0 right-0 z-40 lg:left-64">
+          <div className="border-t border-border-default bg-background/90 backdrop-blur-xl backdrop-saturate-150">
+            <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-2.5">
+              {/* Left: AI Tutor */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowChat(!showChat)}
+                className={showChat ? "text-violet-400" : ""}
+              >
+                <Brain className="mr-1.5 h-4 w-4" />
+                AI 튜터
+              </Button>
 
-            {!isCompleted ? (
-              <Button onClick={handleComplete} disabled={completing} size="sm">
-                {completing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    저장 중...
-                  </>
+              {/* Right: Complete / Next */}
+              <div className="flex items-center gap-2">
+                {!isCompleted ? (
+                  <Button onClick={handleComplete} disabled={completing} size="sm">
+                    {completing ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    완료
+                  </Button>
                 ) : (
-                  <>
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    학습 완료
-                  </>
+                  <Button onClick={handleNext} size="sm">
+                    {nextModuleId ? "다음 모듈" : "경로로 돌아가기"}
+                    {nextModuleId && <ArrowRight className="ml-1.5 h-3.5 w-3.5" />}
+                  </Button>
                 )}
-              </Button>
-            ) : (
-              <Button onClick={handleNext} size="sm">
-                {nextModuleId ? (
-                  <>
-                    다음 모듈
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </>
-                ) : (
-                  "학습 경로로 돌아가기"
-                )}
-              </Button>
-            )}
+              </div>
+            </div>
           </div>
         </div>
       )}

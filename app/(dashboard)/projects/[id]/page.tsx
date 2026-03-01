@@ -20,11 +20,11 @@ const fileTypeIcons: Record<string, React.ComponentType<{ className?: string }>>
 };
 
 const statusLabels: Record<string, { label: string; color: string }> = {
-  created: { label: "Created", color: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300" },
-  uploaded: { label: "Uploaded", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200" },
-  analyzing: { label: "Analyzing", color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" },
-  analyzed: { label: "Analyzed", color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" },
-  error: { label: "Error", color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" },
+  created: { label: "Created", color: "bg-zinc-500/10 text-text-tertiary border border-zinc-500/20" },
+  uploaded: { label: "Uploaded", color: "bg-amber-500/10 text-amber-300 border border-amber-500/20" },
+  analyzing: { label: "Analyzing", color: "bg-violet-500/10 text-violet-300 border border-violet-500/20" },
+  analyzed: { label: "Analyzed", color: "bg-green-500/10 text-green-300 border border-green-500/20" },
+  error: { label: "Error", color: "bg-red-500/10 text-red-300 border border-red-500/20" },
 };
 
 export default async function ProjectDetailPage({
@@ -127,7 +127,7 @@ export default async function ProjectDetailPage({
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-2xl font-bold text-text-primary">
               {project.name}
             </h1>
             <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusInfo.color}`}>
@@ -138,7 +138,7 @@ export default async function ProjectDetailPage({
             </div>
           </div>
           {project.description && (
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-sm text-text-muted">
               {project.description}
             </p>
           )}
@@ -153,26 +153,26 @@ export default async function ProjectDetailPage({
         <CardContent>
           <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
             <div>
-              <dt className="text-zinc-500 dark:text-zinc-400">소스</dt>
-              <dd className="mt-1 font-medium text-zinc-900 dark:text-zinc-100">
+              <dt className="text-text-muted">소스</dt>
+              <dd className="mt-1 font-medium text-text-primary">
                 {project.source_platform ?? "-"}
               </dd>
             </div>
             <div>
-              <dt className="text-zinc-500 dark:text-zinc-400">채널</dt>
-              <dd className="mt-1 font-medium text-zinc-900 dark:text-zinc-100">
+              <dt className="text-text-muted">채널</dt>
+              <dd className="mt-1 font-medium text-text-primary">
                 {project.source_channel ?? "-"}
               </dd>
             </div>
             <div>
-              <dt className="text-zinc-500 dark:text-zinc-400">생성일</dt>
-              <dd className="mt-1 font-medium text-zinc-900 dark:text-zinc-100">
+              <dt className="text-text-muted">생성일</dt>
+              <dd className="mt-1 font-medium text-text-primary">
                 {new Date(project.created_at).toLocaleDateString()}
               </dd>
             </div>
             <div>
-              <dt className="text-zinc-500 dark:text-zinc-400">마지막 동기화</dt>
-              <dd className="mt-1 font-medium text-zinc-900 dark:text-zinc-100">
+              <dt className="text-text-muted">마지막 동기화</dt>
+              <dd className="mt-1 font-medium text-text-primary">
                 {project.last_synced_at
                   ? new Date(project.last_synced_at).toLocaleDateString()
                   : "-"}
@@ -198,11 +198,11 @@ export default async function ProjectDetailPage({
         </CardHeader>
         <CardContent>
           {files.length === 0 ? (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-text-muted">
               업로드된 파일이 없습니다
             </p>
           ) : (
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <div className="divide-y divide-border-default">
               {files.map((file) => {
                 const Icon = fileTypeIcons[file.file_type] ?? FileText;
                 return (
@@ -210,19 +210,19 @@ export default async function ProjectDetailPage({
                     key={file.id}
                     className="flex items-center gap-3 py-2.5"
                   >
-                    <Icon className="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400" />
+                    <Icon className="h-4 w-4 shrink-0 text-text-muted" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      <p className="truncate text-sm font-medium text-text-primary">
                         {file.file_name}
                       </p>
                       {file.file_path && (
-                        <p className="truncate text-xs text-zinc-400 dark:text-zinc-500">
+                        <p className="truncate text-xs text-text-faint">
                           {file.file_path}
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-zinc-400 dark:text-zinc-500">
-                      <span className="rounded bg-zinc-100 px-1.5 py-0.5 dark:bg-zinc-800">
+                    <div className="flex items-center gap-3 text-xs text-text-faint">
+                      <span className="rounded bg-bg-surface-hover px-1.5 py-0.5 font-mono">
                         {file.file_type}
                       </span>
                       {file.file_size && (

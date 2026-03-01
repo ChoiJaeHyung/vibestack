@@ -42,7 +42,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       <AuthStateListener />
       <Sidebar userEmail={userEmail} userRole={userRole} />
       <main className="lg:pl-64">
