@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { successResponse, errorResponse } from "@/lib/utils/api-response";
+import { decrypt } from "@/lib/utils/encryption";
 
 const PLAN_PRICES: Record<string, number> = {
   pro: 25000,
@@ -53,12 +54,14 @@ export async function POST(request: NextRequest) {
       return errorResponse("빌링키가 등록되지 않았습니다. 먼저 카드를 등록해주세요.", 400);
     }
 
+    const decryptedBillingKey = decrypt(userData.toss_billing_key);
+
     const orderId = `sub_${user.id}_${Date.now()}`;
     const amount = PLAN_PRICES[plan];
 
     // 빌링키로 자동결제 실행
     const billingResponse = await fetch(
-      `https://api.tosspayments.com/v1/billing/${userData.toss_billing_key}`,
+      `https://api.tosspayments.com/v1/billing/${decryptedBillingKey}`,
       {
         method: "POST",
         headers: {
@@ -84,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 결제 기록 저장
-    await serviceClient.from("payments").insert({
+    const { error: insertError } = await serviceClient.from("payments").insert({
       user_id: user.id,
       order_id: orderId,
       payment_key: billingData.paymentKey,
@@ -95,18 +98,29 @@ export async function POST(request: NextRequest) {
       is_recurring: true,
     });
 
+    if (insertError) {
+      console.error("[payments/subscribe] Failed to insert payment:", insertError);
+      return errorResponse("결제는 완료되었으나 기록 저장에 실패했습니다. 고객센터에 문의해주세요.", 500);
+    }
+
     // plan_expires_at 갱신
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + 1);
 
-    await serviceClient
+    const { error: planError } = await serviceClient
       .from("users")
       .update({
         plan_type: plan,
         plan_expires_at: expiresAt.toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .eq("id", user.id);
+      .eq("id", user.id)
+      .select();
+
+    if (planError) {
+      console.error("[payments/subscribe] Failed to update user plan:", planError);
+      return errorResponse("결제는 완료되었으나 플랜 업데이트에 실패했습니다. 고객센터에 문의해주세요.", 500);
+    }
 
     return successResponse({ status: "done", plan });
   } catch (error) {

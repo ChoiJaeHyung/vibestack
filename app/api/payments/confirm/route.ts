@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 결제 기록 업데이트 (secret 저장 — 웹훅 검증용)
-    await serviceClient
+    const { error: paymentError } = await serviceClient
       .from("payments")
       .update({
         payment_key: paymentKey,
@@ -83,20 +83,32 @@ export async function POST(request: NextRequest) {
         toss_secret: confirmData.secret ?? null,
         updated_at: new Date().toISOString(),
       })
-      .eq("order_id", orderId);
+      .eq("order_id", orderId)
+      .select();
+
+    if (paymentError) {
+      console.error("[payments/confirm] Failed to update payment:", paymentError);
+      return errorResponse("결제는 완료되었으나 기록 저장에 실패했습니다. 고객센터에 문의해주세요.", 500);
+    }
 
     // 사용자 플랜 업데이트
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + 1);
 
-    await serviceClient
+    const { error: planError } = await serviceClient
       .from("users")
       .update({
         plan_type: pendingPayment.plan,
         plan_expires_at: expiresAt.toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .eq("id", user.id);
+      .eq("id", user.id)
+      .select();
+
+    if (planError) {
+      console.error("[payments/confirm] Failed to update user plan:", planError);
+      return errorResponse("결제는 완료되었으나 플랜 업데이트에 실패했습니다. 고객센터에 문의해주세요.", 500);
+    }
 
     return successResponse({ status: "done", plan: pendingPayment.plan });
   } catch (error) {
