@@ -781,6 +781,31 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
           </div>
         </div>
       </footer>
+
+      {/* BreadcrumbList JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: "https://vibeuniv.com",
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "시작 가이드",
+                item: "https://vibeuniv.com/guide",
+              },
+            ],
+          }),
+        }}
+      />
     </div>
   );
 }

@@ -1,5 +1,4 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
 @import "tailwindcss";
 
 /* ── Light mode (default) ──────────────────────── */
@@ -118,7 +117,7 @@
   --color-text-ghost: var(--text-ghost);
   --color-ring-track: var(--ring-track);
   --font-sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-mono: var(--font-jetbrains-mono), 'Fira Code', monospace;
 }
 
 body {

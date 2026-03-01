@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
+import { JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import "./globals.css";
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://vibeuniv.com"),
@@ -35,12 +43,21 @@ export const metadata: Metadata = {
     siteName: "VibeUniv",
     type: "website",
     locale: "ko_KR",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "VibeUniv — AI로 만든 앱, 내 코드로 제대로 배우기",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "AI로 앱 만들었다면? 내 코드로 배우는 맞춤 학습 | VibeUniv",
     description:
       "Cursor, Claude Code로 만든 프로젝트를 연결하면 AI가 기술 스택을 분석하고, 내 코드를 교재로 학습 로드맵을 만들어 드려요.",
+    images: ["/twitter-image"],
   },
   robots: {
     index: true,
@@ -59,7 +76,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" suppressHydrationWarning>
+    <html lang="ko" suppressHydrationWarning className={jetbrainsMono.variable}>
       <body className="font-sans antialiased">
         <script
           type="application/ld+json"
@@ -80,6 +97,19 @@ export default function RootLayout({
                 priceCurrency: "KRW",
                 description: "무료 플랜으로 시작 가능",
               },
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "VibeUniv",
+              url: "https://vibeuniv.com",
+              logo: "https://vibeuniv.com/icon.png",
+              sameAs: ["https://github.com/ChoiJaeHyung/vibestack"],
             }),
           }}
         />
