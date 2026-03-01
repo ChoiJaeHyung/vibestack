@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/auth";
 
 // ─── Types (exported for client components) ─────────────────────────
 
@@ -36,19 +37,16 @@ export interface LearningPathsData {
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const authUser = await getAuthUser();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!authUser) {
       return NextResponse.json(
         { success: false, error: "Not authenticated" },
         { status: 401 },
       );
     }
+
+    const supabase = await createClient();
 
     // ── Parallel: fetch paths + analyzed projects ───────────────────
     const [pathsResult, analyzedProjectsResult] = await Promise.all([
@@ -57,12 +55,12 @@ export async function GET() {
         .select(
           "id, title, description, difficulty, estimated_hours, total_modules, status, created_at, project_id, projects(name)",
         )
-        .eq("user_id", user.id)
+        .eq("user_id", authUser.id)
         .order("updated_at", { ascending: false }),
       supabase
         .from("projects")
         .select("id, name, status")
-        .eq("user_id", user.id)
+        .eq("user_id", authUser.id)
         .eq("status", "analyzed")
         .order("updated_at", { ascending: false }),
     ]);
@@ -106,7 +104,7 @@ export async function GET() {
         const { data: completed } = await supabase
           .from("learning_progress")
           .select("module_id")
-          .eq("user_id", user.id)
+          .eq("user_id", authUser.id)
           .in("module_id", allModuleIds)
           .eq("status", "completed");
 
