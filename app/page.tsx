@@ -376,7 +376,8 @@ export default async function LandingPage() {
             </a>
           </div>
           <div className="text-xs text-text-ghost">
-            &copy; 2026 VibeUniv. All rights reserved.
+            <div>&copy; 2026 VibeUniv. All rights reserved.</div>
+            <div className="mt-1">상호명: VibeUniv.Inc | 대표: 최재형 | 사업자등록번호: 257-37-01450</div>
           </div>
         </div>
       </footer>
