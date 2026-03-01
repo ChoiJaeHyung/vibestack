@@ -153,8 +153,8 @@ NEXT_PUBLIC_APP_URL=
 | **Server Actions** | `server/actions/` | 핵심 비즈니스 로직 |
 | **LLM 어댑터** | `lib/llm/` | 멀티 LLM Provider 팩토리 |
 | **파일 분석** | `lib/analysis/` | 파일 파싱, 다이제스트 생성, tech-stack upsert 유틸 |
-| **학습 시스템** | `lib/learning/`, `lib/prompts/` | 커리큘럼 생성 (2-Phase), 상세 콘텐츠 + 인용 링크 |
-| **AI 튜터 패널** | `components/features/tutor-panel*.tsx`, `dashboard-main.tsx` | 우측 슬라이드 패널, 텍스트 선택→AI 질문 |
+| **학습 시스템** | `lib/learning/`, `lib/prompts/` | 커리큘럼 생성 (2-Phase), 상세 콘텐츠 + 인용 링크, 퀴즈 점수 추적(최고점 유지), 콘텐츠 검증 + retry |
+| **AI 튜터 패널** | `components/features/tutor-panel*.tsx`, `tutor-search.tsx`, `dashboard-main.tsx` | 우측 슬라이드 패널 (채팅/검색 탭), 텍스트 선택→AI 질문, Google 검색 |
 | **KB 시스템** | `lib/knowledge/` | 3-Tier 지식 베이스 |
 | **프롬프트** | `lib/prompts/` | LLM 프롬프트 템플릿 |
 | **보안** | `lib/utils/encryption.ts`, `content-encryption.ts` | AES-256-GCM 암호화, 콘텐츠 복호화 |
@@ -176,13 +176,14 @@ NEXT_PUBLIC_APP_URL=
 
 ### 핵심 데이터 플로우
 
-1. **프로젝트 분석 (웹)**: 파일 업로드 → file-parser → digest-generator → LLM 분석 → tech_stacks 저장
+1. **프로젝트 분석 (웹)**: 파일 업로드 → file-parser → digest-generator(`after()` 백그라운드) → LLM 분석 → tech_stacks 저장
 2. **프로젝트 분석 (MCP, Local-First)**: analyze → 서버에서 파일 fetch → 로컬 AI 분석 → submit_tech_stacks → 서버 저장 (서버 LLM 0)
-3. **커리큘럼 생성 (2-Phase)**: Phase 1: 구조 생성(LLM) → Phase 2: 기술별 콘텐츠 생성(LLM+KB)
-4. **AI 튜터 (웹)**: 프로젝트 파일 + 기술 스택 → 시스템 프롬프트 → LLM 대화
-5. **AI 튜터 (MCP, Local-First)**: tutor-context → 로컬 AI가 직접 답변 (서버 LLM 0)
-6. **결제**: createPaymentRequest → 토스 결제 → confirm (금액 검증 + secret 저장) → plan_type 업데이트
-7. **웹훅**: 토스 웹훅 → secret 비교 검증 → 결제 상태 동기화
+3. **커리큘럼 생성 (2-Phase, 웹)**: Phase 1: 구조 생성(LLM) → Phase 2: 기술별 콘텐츠 생성(LLM+KB) → 콘텐츠 검증(`_validateGeneratedSections(sections, difficulty)`: beginner→최소 5섹션, 400자↑ / 그 외→최소 3섹션, 200자↑, code+quiz 필수) → 실패 시 최대 3회 retry 후 `validation_failed`. beginner maxTokens 24000*n (1.5배)
+4. **커리큘럼 생성 (MCP, Local-First)**: curriculum-context API(tech stacks+KB+edu analysis+파일 소스코드 20개/8000자) → 로컬 AI 생성(최소 15모듈, 프로젝트 기능 중심) → submit_curriculum(검증: 최소 10모듈, beginner→5섹션/모듈+400자↑ / 그 외→3섹션/모듈+200자↑, code+quiz 각각 필수, quiz_explanation 필수, challenge starter/answer_code 필수)
+5. **AI 튜터 (웹)**: 프로젝트 파일 + 기술 스택 + 현재 모듈 콘텐츠 서머리(6000자) → 시스템 프롬프트(해요체) → LLM 대화
+6. **AI 튜터 (MCP, Local-First)**: tutor-context → 로컬 AI가 직접 답변 (서버 LLM 0)
+7. **결제**: createPaymentRequest → 토스 결제 → confirm (금액 검증 + secret 저장) → plan_type 업데이트
+8. **웹훅**: 토스 웹훅 → secret 비교 검증 → 결제 상태 동기화
 
 ### LLM Provider (11개)
 
@@ -324,3 +325,6 @@ Anthropic, OpenAI, Google, Groq, Mistral, DeepSeek, Cohere, Together, Fireworks,
 - [x] 보안 감사 + 14개 취약점 수정 (PR #48)
 - [x] 토스 웹훅 검증 방식 수정: HMAC → secret 비교 (PR #49)
 - [x] 학습 콘텐츠 품질 개선 (프롬프트: 상세 설명, 인용 링크, 코드 라인별 설명) + AI 튜터 우측 슬라이드 패널 + 텍스트 선택→AI 질문
+- [x] 프로젝트 연동 속도 개선 (파일 업로드 다이제스트 `after()` 백그라운드) + 커리큘럼 컨텍스트에 소스코드 추가 + 커리큘럼 지시문/검증 강화 (최소 10모듈, 3섹션/모듈, code/quiz 필수)
+- [x] 학습 콘텐츠 품질 대폭 강화: 라이트모드 렌더링 수정, 퀴즈 점수 DB 저장(최고점 유지+시간 누적), MCP/웹 콘텐츠 검증 강화(explanation 200자↑, code+quiz 각각 필수, retry 최대 3회), MCP JSON 스키마 포맷 개선, AI 튜터에 모듈 콘텐츠 서머리 전달(6000자), 전체 프롬프트 해요체 톤 강화
+- [x] 초급(beginner) 콘텐츠 "5~6세 수준" 강화: 3단계 개념 쪼개기(비유→정의→코드), before/after 비교, 코드 우리말 번역, 비유 퀴즈 50%+, beginner 검증 강화(5섹션↑/400자↑), maxTokens 1.5배(24000*n), MCP 지시문 동적화

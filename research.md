@@ -124,7 +124,8 @@ vibeuniv/
 │       ├── learning-generator.tsx     # 학습 경로 생성 UI
 │       ├── module-content.tsx         # 모듈 학습 (섹션 렌더링, 텍스트 선택→AI질문)
 │       ├── tutor-chat.tsx             # AI 튜터 채팅 인터페이스
-│       ├── tutor-panel.tsx            # AI 튜터 우측 슬라이드 패널
+│       ├── tutor-search.tsx           # 튜터 패널 Google 검색 탭
+│       ├── tutor-panel.tsx            # AI 튜터 우측 슬라이드 패널 (채팅/검색 탭)
 │       ├── tutor-panel-context.tsx    # 튜터 패널 상태 Context Provider
 │       ├── dashboard-main.tsx         # 대시보드 main 래퍼 (패널 push 효과)
 │       ├── billing-manager.tsx        # 구독 관리
@@ -382,8 +383,8 @@ id              UUID PK
 user_id         UUID FK → users ON DELETE CASCADE
 module_id       UUID FK → learning_modules ON DELETE CASCADE
 status          TEXT DEFAULT 'not_started' CHECK ('not_started','in_progress','completed','skipped')
-score           DECIMAL(5,2)
-time_spent      INTEGER        -- 초
+score           DECIMAL(5,2)   -- 퀴즈 점수 0-100, 최고점 유지(Math.max)
+time_spent      INTEGER        -- 초, 누적 합산
 attempts        INTEGER DEFAULT 0
 completed_at    TIMESTAMPTZ
 UNIQUE(user_id, module_id)
@@ -492,6 +493,7 @@ auth.users ─┬→ users
 2. POST /api/v1/projects/:id/files — 파일 업로드
    - file-parser.ts: detectFileType() → 파일 분류
    - extractTechHints() → 의존성/설정에서 기술 힌트 추출
+   - after(): 다이제스트 생성을 백그라운드로 처리 (응답 비블로킹)
        │
        ▼
 3. POST /api/v1/projects/:id/analyze — 분석 시작
@@ -522,16 +524,21 @@ Phase 1: 구조 생성
    - learning_paths + learning_modules 저장 (content 비어있음)
        │
        ▼
-Phase 2: 콘텐츠 생성 (기술별 배치, maxTokens: 16000*n, cap 128K)
+Phase 2: 콘텐츠 생성 (기술별 배치, maxTokens: beginner 24000*n / 그 외 16000*n, cap 128K)
    - 각 tech_name 그룹별로:
      - knowledge/index.ts: getKBHints() → KB 힌트 조회
      - 관련 소스 파일 필터링
      - learning-roadmap.ts: buildContentBatchPrompt() → LLM에 콘텐츠 요청
-       - 프롬프트 규칙: 5-8 paragraphs per explanation, friendly teacher tone
+       - beginner: 7-12섹션, 8-12문단, 400자↑, 5~6세 수준 설명 (3단계 개념 쪼개기, before/after 비교, 우리말 번역, 비유 퀴즈)
+       - intermediate/advanced: 5-8섹션, 5-8문단, 200자↑
        - 📚 더 알아보기 (공식 문서 인용 링크) 필수
        - 코드 라인별 설명 (numbered list) 필수
-       - beginner: 실생활 비유, 💡 핵심 포인트 요약 박스
      - LLM 응답: { modules[]: { content: { sections[] } } }
+     - _validateGeneratedSections(sections, difficulty) 검증:
+       - beginner: 최소 5섹션, explanation 400자↑ / 그 외: 최소 3섹션, 200자↑
+       - code_example + quiz_question 각각 필수
+       - 실패 시 최대 3회 retry (meta.retry_count 추적)
+       - 3회 초과 시 validation_failed 상태로 저장
      - learning_modules.content 업데이트
        │
        ▼
@@ -560,21 +567,23 @@ Section = {
 1. 사용량 확인 (Free: 월 20회)
 2. 프로젝트 파일 로드 (최대 10개)
 3. 기술 스택 로드
-4. moduleId가 있으면 해당 모듈의 title + section titles를 학습 컨텍스트에 포함
+4. moduleId가 있으면 해당 모듈의 title + section titles + content summary(6000자)를 학습 컨텍스트에 포함
 5. tutor-chat.ts: buildTutorPrompt() → 시스템 프롬프트
    - 학생의 실제 코드를 참조
-   - 간단하게 설명, 전문용어 자제
+   - 해요체 톤 (친절한 선배 개발자), 비유 활용, 격려 필수
    - ~500 단어 제한
    - module_sections 블록: 학생이 보고 있는 모듈 섹션 목록 포함
+   - module_content_summary 블록: 모듈 본문/코드/퀴즈 서머리(6000자 제한)
 6. LLM 호출 → 응답
 7. ai_conversations에 저장 (messages JSONB)
 8. 토큰 사용량 추적
 ```
 
 **UI 구조:**
-- 우측 슬라이드 패널 (420px, `tutor-panel.tsx`)
+- 우측 슬라이드 패널 (420px, `tutor-panel.tsx`), 2개 탭: 채팅(`tutor-chat.tsx`) / 검색(`tutor-search.tsx`)
 - `TutorPanelProvider` (Context) → `DashboardMain` (push 효과) → `TutorPanel`
-- 텍스트 선택 시 플로팅 "AI 튜터에게 물어보기" 툴팁 → 클릭 시 패널 열림 + 질문 자동 입력
+- 텍스트 선택 시 플로팅 "AI 튜터에게 물어보기" 툴팁 → 클릭 시 패널 열림 + 질문 자동 입력 + 채팅 탭 전환
+- 검색 탭: Google 검색 새 탭 열기, 추천 검색어(모듈명 기반), 최근 검색어(localStorage, 최대 5개)
 - 모바일: 전체화면 오버레이 + 배경 터치 닫기
 
 ### 3.6 결제 플로우 (토스페이먼츠)
@@ -613,8 +622,8 @@ Section = {
 | `vibeuniv_ask_tutor` | AI 튜터 (로컬) | 서버에서 컨텍스트 fetch → 로컬 AI에 튜터 지침 반환 (서버 LLM 호출 0) |
 | `vibeuniv_log_session` | 세션 로그 | 개발 세션 메타데이터 기록 |
 | `vibeuniv_submit_analysis` | 교육 분석 제출 | 수동 분석 데이터 저장 |
-| `vibeuniv_generate_curriculum` | 커리큘럼 생성 (로컬) | 통합 API 1회로 컨텍스트 fetch → 로컬 AI에 지침 반환 |
-| `vibeuniv_submit_curriculum` | 커리큘럼 제출 | 편집된 커리큘럼 저장 |
+| `vibeuniv_generate_curriculum` | 커리큘럼 생성 (로컬) | 통합 API 1회로 컨텍스트 fetch (tech stacks + KB + edu analysis + 파일 소스코드 20개) → 로컬 AI에 지침 반환 (최소 15 모듈, 프로젝트 기능 중심) |
+| `vibeuniv_submit_curriculum` | 커리큘럼 제출 | 편집된 커리큘럼 저장 (검증: 최소 10 모듈, 모듈당 최소 3 섹션, code_example/quiz 필수) |
 
 > **Local-First 패턴 (v0.3.0)**: `analyze`, `ask_tutor`, `generate_curriculum`은 서버 LLM을 호출하지 않고, 서버에서 데이터만 fetch한 뒤 로컬 AI(Claude Code 등)에게 분석/튜터링/생성 지침을 반환한다. 결과는 companion 도구(`submit_tech_stacks`, `submit_curriculum`)로 서버에 저장한다.
 

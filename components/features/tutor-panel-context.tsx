@@ -13,6 +13,7 @@ interface TutorPanelProps {
   projectName?: string;
   learningPathId: string;
   moduleId: string;
+  moduleName?: string;
 }
 
 interface TutorPanelContextValue {
