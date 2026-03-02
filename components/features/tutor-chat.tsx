@@ -12,6 +12,8 @@ import {
   ChevronDown,
   MessageSquare,
   AlertTriangle,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UpgradeModal } from "@/components/features/upgrade-modal";
@@ -23,6 +25,12 @@ import {
   listConversations,
 } from "@/server/actions/learning";
 import { invalidateCache } from "@/lib/hooks/use-cached-fetch";
+import {
+  submitTutorFeedback,
+  removeTutorFeedback,
+  getFeedbackForConversation,
+} from "@/server/actions/tutor-feedback";
+import type { TutorFeedbackRating } from "@/types/database";
 import type { UsageData } from "@/server/actions/usage";
 
 interface ChatMessage {
@@ -53,6 +61,11 @@ interface TutorChatProps {
  * Map English LLM error messages to translation keys.
  */
 function getErrorTranslationKey(msg: string): { key: string; params?: Record<string, string> } | null {
+  // Server-side error codes (error:xxx format)
+  if (msg === "error:tokenBudget") {
+    return { key: "error.tokenBudget" };
+  }
+
   const lower = msg.toLowerCase();
 
   if (lower.includes("rate limit")) {
@@ -102,6 +115,9 @@ export function TutorChat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Feedback state
+  const [feedback, setFeedback] = useState<Record<number, TutorFeedbackRating>>({});
+
   // Conversation history panel state
   const [showHistory, setShowHistory] = useState(false);
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
@@ -115,14 +131,20 @@ export function TutorChat({
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  // Load existing conversation history
+  // Load existing conversation history + feedback
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId) {
+      setFeedback({});
+      return;
+    }
 
     async function loadHistory() {
       setLoadingHistory(true);
       try {
-        const result = await getChatHistory(conversationId as string);
+        const [result, fb] = await Promise.all([
+          getChatHistory(conversationId as string),
+          getFeedbackForConversation(conversationId as string),
+        ]);
         if (result.success && result.data) {
           const chatMessages = result.data.filter(
             (m): m is ChatMessage =>
@@ -130,6 +152,7 @@ export function TutorChat({
           );
           setMessages(chatMessages);
         }
+        setFeedback(fb);
       } catch {
         // Ignore load errors
       } finally {
@@ -216,6 +239,24 @@ export function TutorChat({
     setMessages([]);
     setError(null);
     setShowHistory(false);
+  }
+
+  async function handleFeedback(messageIndex: number, rating: TutorFeedbackRating) {
+    if (!conversationId) return;
+    const current = feedback[messageIndex];
+    if (current === rating) {
+      // Toggle off
+      setFeedback((prev) => {
+        const next = { ...prev };
+        delete next[messageIndex];
+        return next;
+      });
+      await removeTutorFeedback(conversationId, messageIndex);
+    } else {
+      // Set or switch
+      setFeedback((prev) => ({ ...prev, [messageIndex]: rating }));
+      await submitTutorFeedback(conversationId, messageIndex, rating);
+    }
   }
 
   async function handleSend() {
@@ -421,23 +462,50 @@ export function TutorChat({
                     <Brain className="h-3.5 w-3.5 text-violet-400" />
                   </div>
                 )}
-                <div
-                  className={`max-w-[80%] rounded-xl px-3 py-2 ${
-                    msg.role === "user"
-                      ? "bg-violet-500/20 text-text-primary"
-                      : "bg-bg-input text-text-primary"
-                  }`}
-                >
-                  {msg.role === "assistant" ? (
-                    <div className="prose prose-sm prose-invert max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {msg.content}
-                      </ReactMarkdown>
+                {msg.role === "assistant" ? (
+                  <div className="max-w-[80%]">
+                    <div className="rounded-xl bg-bg-input px-3 py-2 text-text-primary">
+                      <div className="prose prose-sm prose-invert max-w-none">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {msg.content}
+                        </ReactMarkdown>
+                      </div>
                     </div>
-                  ) : (
+                    {/* Feedback buttons */}
+                    {conversationId && (
+                      <div className="mt-1 flex items-center gap-1 pl-1">
+                        <button
+                          type="button"
+                          onClick={() => handleFeedback(idx, "positive")}
+                          className={`flex h-6 w-6 items-center justify-center rounded-md transition-colors ${
+                            feedback[idx] === "positive"
+                              ? "bg-emerald-500/15 text-emerald-400"
+                              : "text-text-faint hover:text-text-muted hover:bg-bg-input"
+                          }`}
+                          title={t('chat.feedbackHelpful')}
+                        >
+                          <ThumbsUp className="h-3 w-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleFeedback(idx, "negative")}
+                          className={`flex h-6 w-6 items-center justify-center rounded-md transition-colors ${
+                            feedback[idx] === "negative"
+                              ? "bg-red-500/15 text-red-400"
+                              : "text-text-faint hover:text-text-muted hover:bg-bg-input"
+                          }`}
+                          title={t('chat.feedbackNotHelpful')}
+                        >
+                          <ThumbsDown className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="max-w-[80%] rounded-xl bg-violet-500/20 px-3 py-2 text-text-primary">
                     <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
-                  )}
-                </div>
+                  </div>
+                )}
                 {msg.role === "user" && (
                   <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-cyan-500">
                     <User className="h-3.5 w-3.5 text-white" />

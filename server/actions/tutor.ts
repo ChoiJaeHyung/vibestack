@@ -5,10 +5,11 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { createLLMProvider } from "@/lib/llm/factory";
 import { getDefaultLlmKeyWithDiagnosis } from "@/server/actions/llm-keys";
 import { llmKeyErrorMessage } from "@/lib/utils/llm-key-errors";
-import { checkUsageLimit } from "@/lib/utils/usage-limits";
+import { checkUsageLimit, checkTokenBudget } from "@/lib/utils/usage-limits";
 import { buildTutorPrompt } from "@/lib/prompts/tutor-chat";
 import { decryptContent } from "@/lib/utils/content-encryption";
 import { rateLimit } from "@/lib/utils/rate-limit";
+import { logLlmCall } from "@/lib/utils/llm-metrics";
 import { getUserLocale } from "@/server/actions/learning-utils";
 import type { Json } from "@/types/database";
 
@@ -23,6 +24,7 @@ interface CachedPrompt {
 }
 
 const PROMPT_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+const PROMPT_CACHE_MAX_SIZE = 200;
 const promptCache = new Map<string, CachedPrompt>();
 
 function getCachedStaticPrompt(conversationId: string, moduleId?: string): string | null {
@@ -32,21 +34,87 @@ function getCachedStaticPrompt(conversationId: string, moduleId?: string): strin
     promptCache.delete(conversationId);
     return null;
   }
-  // Invalidate if module changed (different learning context)
   if (cached.moduleId !== moduleId) {
     promptCache.delete(conversationId);
     return null;
   }
+  // LRU promotion: delete + re-set moves entry to end of Map insertion order
+  promptCache.delete(conversationId);
+  promptCache.set(conversationId, cached);
   return cached.staticPrompt;
 }
 
 function setCachedStaticPrompt(conversationId: string, staticPrompt: string, moduleId?: string): void {
-  // Evict oldest entries if cache grows too large (prevent memory leak)
-  if (promptCache.size > 500) {
-    const oldest = promptCache.entries().next().value;
-    if (oldest) promptCache.delete(oldest[0]);
+  // Evict LRU (oldest = first key in Map insertion order)
+  if (promptCache.size >= PROMPT_CACHE_MAX_SIZE) {
+    const lruKey = promptCache.keys().next().value;
+    if (lruKey) promptCache.delete(lruKey);
   }
   promptCache.set(conversationId, { staticPrompt, moduleId, createdAt: Date.now() });
+}
+
+// ─── File Priority Selection ─────────────────────────────────────────
+// Selects the most relevant project files within a total character budget.
+
+const FILE_TYPE_PRIORITY: Record<string, number> = {
+  dependency: 1,
+  build_config: 2,
+  ai_config: 3,
+  source_code: 4,
+  other: 5,
+};
+
+const SOURCE_PATH_PATTERNS: Array<{ pattern: RegExp; priority: number }> = [
+  { pattern: /\/(pages?|app)\//, priority: 1 },       // pages/routes
+  { pattern: /\/(layout|middleware)\b/, priority: 2 }, // layout/middleware
+  { pattern: /\/components?\//, priority: 3 },         // components
+  { pattern: /\/(lib|utils?|hooks?)\//, priority: 4 }, // lib/utils
+];
+
+function getSourcePathPriority(filePath: string | null): number {
+  if (!filePath) return 5;
+  for (const { pattern, priority } of SOURCE_PATH_PATTERNS) {
+    if (pattern.test(filePath)) return priority;
+  }
+  return 5;
+}
+
+const TOTAL_CHAR_BUDGET = 30_000;
+
+interface RawProjectFile {
+  file_name: string;
+  file_type: string;
+  file_path: string | null;
+  raw_content: string;
+}
+
+function selectPriorityFiles(
+  files: RawProjectFile[],
+): Array<{ file_name: string; raw_content: string }> {
+  // Sort by file_type priority, then by source path priority for source_code
+  const sorted = [...files].sort((a, b) => {
+    const aPri = FILE_TYPE_PRIORITY[a.file_type] ?? 5;
+    const bPri = FILE_TYPE_PRIORITY[b.file_type] ?? 5;
+    if (aPri !== bPri) return aPri - bPri;
+    if (a.file_type === "source_code" && b.file_type === "source_code") {
+      return getSourcePathPriority(a.file_path) - getSourcePathPriority(b.file_path);
+    }
+    return 0;
+  });
+
+  const result: Array<{ file_name: string; raw_content: string }> = [];
+  let totalChars = 0;
+
+  for (const f of sorted) {
+    const content = decryptContent(f.raw_content);
+    const remaining = TOTAL_CHAR_BUDGET - totalChars;
+    if (remaining <= 0) break;
+    const truncated = content.length > remaining ? content.slice(0, remaining) + "\n... [truncated]" : content;
+    result.push({ file_name: f.file_name, raw_content: truncated });
+    totalChars += truncated.length;
+  }
+
+  return result;
 }
 
 // ─── Response Types ──────────────────────────────────────────────────
@@ -126,6 +194,15 @@ export async function sendTutorMessage(
       }
     }
 
+    // Check monthly token budget (applies to every message)
+    const tokenBudget = await checkTokenBudget(user.id);
+    if (!tokenBudget.allowed) {
+      return {
+        success: false,
+        error: "error:tokenBudget",
+      };
+    }
+
     // Verify project belongs to user
     const { data: project, error: projectError } = await supabase
       .from("projects")
@@ -152,10 +229,10 @@ export async function sendTutorMessage(
       const [filesResult, techResult, localeResult, pathAndModuleResult] = await Promise.all([
         supabase
           .from("project_files")
-          .select("file_name, raw_content")
+          .select("file_name, file_type, file_path, raw_content")
           .eq("project_id", projectId)
           .not("raw_content", "is", null)
-          .limit(5),
+          .limit(20),
         supabase
           .from("tech_stacks")
           .select("technology_name, category, description")
@@ -164,7 +241,11 @@ export async function sendTutorMessage(
         buildLearningContext(supabase, user.id, learningPathId, moduleId),
       ]);
 
-      const projectFiles = filesResult.data ?? [];
+      const rawFiles = (filesResult.data ?? []).filter(
+        (f): f is typeof f & { raw_content: string } =>
+          f.raw_content !== null,
+      );
+      const prioritizedFiles = selectPriorityFiles(rawFiles);
       const techStacks = techResult.data ?? [];
       const tutorLocale = localeResult;
       const learningContext = pathAndModuleResult;
@@ -175,15 +256,7 @@ export async function sendTutorMessage(
           category: t.category,
           description: t.description,
         })),
-        projectFiles
-          .filter(
-            (f): f is { file_name: string; raw_content: string } =>
-              f.raw_content !== null,
-          )
-          .map((f) => ({
-            file_name: f.file_name,
-            raw_content: decryptContent(f.raw_content),
-          })),
+        prioritizedFiles,
         learningContext ?? undefined,
         tutorLocale,
       );
@@ -197,7 +270,7 @@ export async function sendTutorMessage(
       conversationId
         ? supabase
             .from("ai_conversations")
-            .select("messages")
+            .select("messages, total_tokens")
             .eq("id", conversationId)
             .eq("user_id", user.id)
             .single()
@@ -206,9 +279,11 @@ export async function sendTutorMessage(
 
     let existingMessages: ChatMessage[] = [];
     let existingConversationId: string | null = conversationId ?? null;
+    let existingTotalTokens = 0;
 
     if (existingMessagesResult && "data" in existingMessagesResult && existingMessagesResult.data) {
       existingMessages = existingMessagesResult.data.messages as unknown as ChatMessage[];
+      existingTotalTokens = existingMessagesResult.data.total_tokens as number ?? 0;
     }
 
     // Combine static prompt + dynamic learner profile
@@ -238,11 +313,38 @@ export async function sendTutorMessage(
     }
     const llmKeyData = llmKeyResult.data;
 
-    // Create LLM provider and call chat
+    // Create LLM provider and call chat (with metrics)
     const provider = createLLMProvider(llmKeyData.provider, llmKeyData.apiKey);
-    const chatResult = await provider.chat({
-      messages: allMessages,
-    });
+    const llmStart = Date.now();
+    let chatResult: { content: string; input_tokens: number; output_tokens: number };
+    try {
+      chatResult = await provider.chat({
+        messages: allMessages,
+      });
+      logLlmCall({
+        user_id: user.id,
+        conversation_id: existingConversationId,
+        project_id: projectId,
+        provider: llmKeyData.provider,
+        input_tokens: chatResult.input_tokens,
+        output_tokens: chatResult.output_tokens,
+        latency_ms: Date.now() - llmStart,
+        success: true,
+      });
+    } catch (llmError) {
+      logLlmCall({
+        user_id: user.id,
+        conversation_id: existingConversationId,
+        project_id: projectId,
+        provider: llmKeyData.provider,
+        input_tokens: 0,
+        output_tokens: 0,
+        latency_ms: Date.now() - llmStart,
+        success: false,
+        error_message: llmError instanceof Error ? llmError.message : "Unknown LLM error",
+      });
+      throw llmError;
+    }
 
     const totalTokens = chatResult.input_tokens + chatResult.output_tokens;
 
@@ -261,7 +363,7 @@ export async function sendTutorMessage(
         .from("ai_conversations")
         .update({
           messages: updatedMessages as unknown as Json,
-          total_tokens: totalTokens,
+          total_tokens: existingTotalTokens + totalTokens,
           updated_at: new Date().toISOString(),
         })
         .eq("id", existingConversationId);
