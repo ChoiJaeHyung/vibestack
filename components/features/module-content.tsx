@@ -17,9 +17,11 @@ import {
   FolderOpen,
   Target,
   RefreshCw,
+  RotateCcw,
   Eye,
   Brain,
   Sparkles,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CelebrationModal } from "@/components/features/celebration-modal";
@@ -27,6 +29,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import { updateLearningProgress, generateModuleContent, prefetchNextModuleContent } from "@/server/actions/learning";
+import { regenerateModuleContent } from "@/server/actions/curriculum";
+import type { RegenerationReason } from "@/server/actions/curriculum";
 import { useTutorPanel } from "@/components/features/tutor-panel-context";
 import { translateError } from "@/lib/utils/translate-error";
 import hljs from "highlight.js/lib/core";
@@ -78,7 +82,19 @@ interface ModuleContentProps {
   prevModuleId: string | null;
   nextModuleId: string | null;
   needsGeneration?: boolean;
+  planType?: "free" | "pro" | "team";
+  regenerationCount?: number;
+  maxRegenerationCount?: number;
 }
+
+// ─── Regeneration Reasons ───────────────────────────────────────────
+
+const REGENERATION_REASONS: RegenerationReason[] = [
+  "too_difficult",
+  "too_easy",
+  "need_more_code",
+  "not_relevant",
+];
 
 // ─── Module Type Config ─────────────────────────────────────────────
 
@@ -475,6 +491,8 @@ export function ModuleContent({
   prevModuleId,
   nextModuleId,
   needsGeneration,
+  regenerationCount = 0,
+  maxRegenerationCount = 1,
 }: ModuleContentProps) {
   const router = useRouter();
   const t = useTranslations('Learning');
@@ -525,6 +543,14 @@ export function ModuleContent({
       updateLearningProgress(moduleId, "in_progress");
     }
   }, [moduleId, progress?.status]);
+
+  // Regeneration state
+  const [showRegenDialog, setShowRegenDialog] = useState(false);
+  const [selectedReason, setSelectedReason] = useState<RegenerationReason | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [localRegenCount, setLocalRegenCount] = useState(regenerationCount);
+  const canRegenerate = localRegenCount < maxRegenerationCount && localSections.length > 0;
+  const remainingRegens = Math.max(0, maxRegenerationCount - localRegenCount);
 
   // On-demand content generation
   const [pollCount, setPollCount] = useState(0);
@@ -657,6 +683,40 @@ export function ModuleContent({
     setPollCount(0);
   }, []);
 
+  const handleRegenerate = useCallback(async () => {
+    if (!canRegenerate) return;
+
+    setIsRegenerating(true);
+    setShowRegenDialog(false);
+    setLocalSections([]);
+    setIsCompleted(false);
+    setElapsedSeconds(0);
+
+    try {
+      const result = await regenerateModuleContent(moduleId, selectedReason ?? undefined);
+
+      if (result.generating) {
+        // Poll for completion
+        setIsGenerating(true);
+        setPollCount((c) => c + 1);
+      } else if (result.success && result.data) {
+        setLocalSections(result.data.sections);
+        setLocalRegenCount((c) => c + 1);
+        quizResultsRef.current.clear();
+        startTimeRef.current = Date.now();
+      } else {
+        setGenerationError(
+          result.error ? translateError(result.error, te) : t('generation.defaultError'),
+        );
+      }
+    } catch {
+      setGenerationError(t('generation.unknownError'));
+    } finally {
+      setIsRegenerating(false);
+      setSelectedReason(null);
+    }
+  }, [canRegenerate, moduleId, selectedReason, t, te]);
+
   function handlePrev() {
     if (prevModuleId) {
       router.push(`/learning/${learningPathId}/${prevModuleId}`);
@@ -783,24 +843,43 @@ export function ModuleContent({
 
       {/* Module header */}
       <div>
-        <div className="flex items-center gap-2">
-          {typeConfig && (
-            <span className="flex items-center gap-1 rounded-lg bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-300">
-              <TypeIcon className="h-3 w-3" />
-              {typeConfig.label}
-            </span>
-          )}
-          {estimatedMinutes !== null && (
-            <span className="flex items-center gap-1 text-xs text-text-faint">
-              <Clock className="h-3 w-3" />
-              {t('module.minutes', { minutes: estimatedMinutes })}
-            </span>
-          )}
-          {isCompleted && (
-            <span className="flex items-center gap-1 text-xs font-medium text-green-400">
-              <CheckCircle2 className="h-3 w-3" />
-              {t('module.completed')}
-            </span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {typeConfig && (
+              <span className="flex items-center gap-1 rounded-lg bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-300">
+                <TypeIcon className="h-3 w-3" />
+                {typeConfig.label}
+              </span>
+            )}
+            {estimatedMinutes !== null && (
+              <span className="flex items-center gap-1 text-xs text-text-faint">
+                <Clock className="h-3 w-3" />
+                {t('module.minutes', { minutes: estimatedMinutes })}
+              </span>
+            )}
+            {isCompleted && (
+              <span className="flex items-center gap-1 text-xs font-medium text-green-400">
+                <CheckCircle2 className="h-3 w-3" />
+                {t('module.completed')}
+              </span>
+            )}
+          </div>
+          {/* Regenerate button */}
+          {localSections.length > 0 && !isGenerating && !isRegenerating && (
+            <button
+              type="button"
+              onClick={() => canRegenerate ? setShowRegenDialog(true) : undefined}
+              disabled={!canRegenerate}
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
+                canRegenerate
+                  ? "text-text-muted hover:text-text-primary hover:bg-bg-input"
+                  : "text-text-dim cursor-not-allowed"
+              }`}
+              title={!canRegenerate ? t('regenerate.limitReachedPaid') : t('regenerate.button')}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              {t('regenerate.button')}
+            </button>
           )}
         </div>
         <h1 className="mt-2 text-2xl font-bold text-text-primary">
@@ -812,6 +891,71 @@ export function ModuleContent({
           </p>
         )}
       </div>
+
+      {/* Regeneration dialog */}
+      {showRegenDialog && (
+        <div className="rounded-2xl border border-border-default bg-bg-surface p-5 space-y-4">
+          <h3 className="text-sm font-semibold text-text-primary">
+            {t('regenerate.title')}
+          </h3>
+
+          <div className="space-y-2">
+            {REGENERATION_REASONS.map((reason) => (
+              <button
+                key={reason}
+                type="button"
+                onClick={() => setSelectedReason(selectedReason === reason ? null : reason)}
+                className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
+                  selectedReason === reason
+                    ? "border-violet-500/40 bg-violet-500/10 text-text-primary"
+                    : "border-border-default bg-bg-input text-text-muted hover:border-border-hover"
+                }`}
+              >
+                <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                  selectedReason === reason
+                    ? "border-violet-500 bg-violet-500"
+                    : "border-text-dim"
+                }`}>
+                  {selectedReason === reason && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                  )}
+                </span>
+                {t(`regenerate.reason_${reason}` as Parameters<typeof t>[0])}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-start gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 p-3">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
+            <div className="text-xs text-amber-300 space-y-1">
+              <p>{t('regenerate.warning')}</p>
+              <p className="text-text-dim">{t('regenerate.remaining', { count: remainingRegens })}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { setShowRegenDialog(false); setSelectedReason(null); }}
+            >
+              {t('regenerate.cancel')}
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleRegenerate}
+            >
+              <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+              {t('regenerate.confirm')}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Regenerating state */}
+      {isRegenerating && localSections.length === 0 && !generationError && (
+        <GeneratingStepsUI elapsedSeconds={elapsedSeconds} />
+      )}
 
       {/* On-demand content generation states — 3-step progress */}
       {(isGenerating || showGeneratingUI) && localSections.length === 0 && !generationError && (

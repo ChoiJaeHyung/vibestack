@@ -1,7 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { getSystemSetting } from "@/lib/utils/system-settings";
 
-type UsageAction = "analysis" | "learning" | "chat";
+type UsageAction = "analysis" | "learning" | "chat" | "challenge";
 
 interface UsageLimitResult {
   allowed: boolean;
@@ -21,12 +21,14 @@ export const FREE_LIMITS = {
   analysis: 3,
   learning: 1,
   chat: 20,
+  challenge: 3,
 } as const;
 
 const DEFAULT_FREE_TIER_LIMITS: Record<UsageAction, number> = {
   analysis: FREE_LIMITS.analysis,
   learning: FREE_LIMITS.learning,
   chat: FREE_LIMITS.chat,
+  challenge: FREE_LIMITS.challenge,
 };
 
 const UPGRADE_MESSAGES: Record<UsageAction, string> = {
@@ -36,6 +38,8 @@ const UPGRADE_MESSAGES: Record<UsageAction, string> = {
     "You've reached the free tier limit of 1 learning roadmap per month. Upgrade to Pro for unlimited roadmaps.",
   chat:
     "You've reached the free tier limit of 20 AI conversations per month. Upgrade to Pro for unlimited conversations.",
+  challenge:
+    "You've reached the free tier limit of 3 refactoring challenges per month. Upgrade to Pro for unlimited challenges.",
 };
 
 async function getFreeTierLimits(): Promise<Record<UsageAction, number>> {
@@ -45,6 +49,7 @@ async function getFreeTierLimits(): Promise<Record<UsageAction, number>> {
       analysis: dynamic.analysis ?? DEFAULT_FREE_TIER_LIMITS.analysis,
       learning: dynamic.learning ?? DEFAULT_FREE_TIER_LIMITS.learning,
       chat: dynamic.chat ?? DEFAULT_FREE_TIER_LIMITS.chat,
+      challenge: dynamic.challenge ?? DEFAULT_FREE_TIER_LIMITS.challenge,
     };
   }
   return DEFAULT_FREE_TIER_LIMITS;
@@ -190,7 +195,70 @@ async function getCurrentUsageCount(
 
       return count ?? 0;
     }
+
+    case "challenge": {
+      // Count refactoring challenges created this month
+      const startOfMonth = getStartOfMonth();
+      const { count } = await supabase
+        .from("refactoring_challenges")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .gte("created_at", startOfMonth);
+
+      return count ?? 0;
+    }
   }
+}
+
+/**
+ * Check if a user can regenerate module content.
+ * BYOK or Pro/Team → 3 per module, Free (non-BYOK) → 1 per module.
+ */
+export async function checkRegenerationLimit(
+  userId: string,
+  currentRegenerationCount: number,
+): Promise<{ allowed: boolean; maxCount: number }> {
+  const supabase = createServiceClient();
+
+  const { data: user } = await supabase
+    .from("users")
+    .select("plan_type")
+    .eq("id", userId)
+    .single();
+
+  if (!user) return { allowed: false, maxCount: 0 };
+
+  const isPaid = user.plan_type === "pro" || user.plan_type === "team";
+
+  const { count: keyCount } = await supabase
+    .from("user_llm_keys")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("is_valid", true);
+
+  const isByok = (keyCount ?? 0) > 0;
+
+  const maxCount = isByok || isPaid ? 3 : 1;
+
+  return {
+    allowed: currentRegenerationCount < maxCount,
+    maxCount,
+  };
+}
+
+/**
+ * Check if user has at least one valid BYOK LLM key.
+ */
+export async function hasValidByokKey(userId: string): Promise<boolean> {
+  const supabase = createServiceClient();
+
+  const { count } = await supabase
+    .from("user_llm_keys")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("is_valid", true);
+
+  return (count ?? 0) > 0;
 }
 
 function getStartOfMonth(): string {

@@ -1994,3 +1994,6 @@ export async function listConversations(
     return { success: false, error: "An unexpected error occurred" };
   }
 }
+
+// NOTE: regenerateModuleContent → import from "@/server/actions/curriculum"
+// NOTE: resetModuleProgress → import from "@/server/actions/learning-progress"
