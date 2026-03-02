@@ -7,6 +7,7 @@ import {
 } from "@/server/actions/learning";
 import { ModuleContent } from "@/components/features/module-content";
 import { createClient } from "@/lib/supabase/server";
+import { checkRegenerationLimit } from "@/lib/utils/usage-limits";
 
 interface PageProps {
   params: Promise<{ pathId: string; moduleId: string }>;
@@ -34,29 +35,38 @@ export default async function ModuleDetailPage({ params }: PageProps) {
   const mod = moduleResult.data;
   const path = pathResult.data;
 
-  // Get the project_id and project name from the learning path
+  // Get the project_id, project name, and regeneration limit from the learning path
   let projectId = "";
   let projectName = "";
+  let maxRegenerationCount = 1;
   try {
     const supabase = await createClient();
     const { data: pathData } = await supabase
       .from("learning_paths")
-      .select("project_id")
+      .select("project_id, user_id")
       .eq("id", pathId)
       .single();
 
     if (pathData) {
       projectId = pathData.project_id;
-      const { data: projectData } = await supabase
-        .from("projects")
-        .select("name")
-        .eq("id", pathData.project_id)
-        .single();
-      projectName = projectData?.name ?? "";
+      const [projectResult, regenResult] = await Promise.all([
+        supabase
+          .from("projects")
+          .select("name")
+          .eq("id", pathData.project_id)
+          .single(),
+        checkRegenerationLimit(pathData.user_id, 0),
+      ]);
+      projectName = projectResult.data?.name ?? "";
+      maxRegenerationCount = regenResult.maxCount;
     }
   } catch {
     // Ignore
   }
+
+  // Extract regeneration count from module content
+  const contentJson = mod.content as unknown as Record<string, unknown>;
+  const regenerationCount = (typeof contentJson._regeneration_count === "number" ? contentJson._regeneration_count : 0);
 
   // Find the previous and next modules
   const currentIndex = path.modules.findIndex((m) => m.id === moduleId);
@@ -95,6 +105,8 @@ export default async function ModuleDetailPage({ params }: PageProps) {
         prevModuleId={prevModule?.id ?? null}
         nextModuleId={nextModule?.id ?? null}
         needsGeneration={!mod.content.sections || mod.content.sections.length === 0}
+        regenerationCount={regenerationCount}
+        maxRegenerationCount={maxRegenerationCount}
       />
     </div>
   );
