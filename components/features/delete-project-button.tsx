@@ -18,9 +18,11 @@ export function DeleteProjectButton({ projectId, projectName }: DeleteProjectBut
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleDelete() {
     setIsDeleting(true);
+    setError(null);
 
     try {
       const result = await deleteProject(projectId);
@@ -30,11 +32,11 @@ export function DeleteProjectButton({ projectId, projectName }: DeleteProjectBut
         invalidateCache("/api/projects");
         router.push("/projects");
       } else {
-        setShowModal(false);
+        setError(t('delete.error'));
         setIsDeleting(false);
       }
     } catch {
-      setShowModal(false);
+      setError(t('delete.error'));
       setIsDeleting(false);
     }
   }
@@ -74,12 +76,15 @@ export function DeleteProjectButton({ projectId, projectName }: DeleteProjectBut
                 <br />
                 {t('delete.warning')}
               </p>
+              {error && (
+                <p className="mt-2 text-sm text-red-400">{error}</p>
+              )}
             </div>
             <div className="mt-6 flex gap-3">
               <Button
                 variant="secondary"
                 className="flex-1"
-                onClick={() => setShowModal(false)}
+                onClick={() => { setShowModal(false); setError(null); }}
                 disabled={isDeleting}
               >
                 {t('delete.cancel')}

@@ -66,7 +66,8 @@
     "confirmWithName": "Delete <b>{name}</b>?",
     "confirmGeneric": "Delete this project?",
     "warning": "All files, analysis results, and learning data will be permanently deleted.",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "error": "Failed to delete project. Please try again."
   },
   "chart": {
     "framework": "Framework",
