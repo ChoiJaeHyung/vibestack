@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { extractTechHints } from "@/lib/analysis/file-parser";
@@ -88,22 +89,30 @@ export async function deleteProject(
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return { success: false, error: "Not authenticated" };
+      return { success: false, error: "NOT_AUTHENTICATED" };
     }
 
-    const { error: deleteError } = await supabase
+    const { data: deleted, error: deleteError } = await supabase
       .from("projects")
       .delete()
       .eq("id", projectId)
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .select("id");
 
     if (deleteError) {
-      return { success: false, error: "Failed to delete project" };
+      return { success: false, error: "DELETE_FAILED" };
     }
+
+    if (!deleted || deleted.length === 0) {
+      return { success: false, error: "DELETE_NO_ROWS" };
+    }
+
+    revalidatePath("/projects");
+    revalidatePath("/");
 
     return { success: true };
   } catch {
-    return { success: false, error: "An unexpected error occurred" };
+    return { success: false, error: "UNEXPECTED_ERROR" };
   }
 }
 
