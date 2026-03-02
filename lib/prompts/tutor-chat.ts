@@ -31,14 +31,9 @@ export function buildTutorPrompt(
     })
     .join("\n");
 
+  // File content is already budget-managed by selectPriorityFiles in tutor.ts
   const fileSection = projectFiles
-    .map((f) => {
-      const truncatedContent =
-        f.raw_content.length > 6000
-          ? f.raw_content.slice(0, 6000) + "\n... [truncated]"
-          : f.raw_content;
-      return `### ${f.file_name}\n\`\`\`\n${truncatedContent}\n\`\`\``;
-    })
+    .map((f) => `### ${f.file_name}\n\`\`\`\n${f.raw_content}\n\`\`\``)
     .join("\n\n");
 
   const moduleSectionsBlock = learningContext?.module_sections

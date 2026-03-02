@@ -261,6 +261,54 @@ export async function hasValidByokKey(userId: string): Promise<boolean> {
   return (count ?? 0) > 0;
 }
 
+const DEFAULT_MONTHLY_TOKEN_BUDGET_FREE = 500_000;
+
+/**
+ * Check if a Free (non-BYOK) user is within their monthly token budget.
+ * Pro/Team/BYOK → unlimited. Free → admin-configurable budget (default 500K).
+ */
+export async function checkTokenBudget(
+  userId: string,
+): Promise<{ allowed: boolean; budget: number | null; used: number }> {
+  const supabase = createServiceClient();
+
+  const { data: user } = await supabase
+    .from("users")
+    .select("plan_type")
+    .eq("id", userId)
+    .single();
+
+  if (!user) return { allowed: false, budget: 0, used: 0 };
+
+  const isPaid = user.plan_type === "pro" || user.plan_type === "team";
+  if (isPaid) return { allowed: true, budget: null, used: 0 };
+
+  // Check BYOK
+  const { count: keyCount } = await supabase
+    .from("user_llm_keys")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("is_valid", true);
+
+  if ((keyCount ?? 0) > 0) return { allowed: true, budget: null, used: 0 };
+
+  // Free non-BYOK: check budget from admin settings
+  const adminBudget = await getSystemSetting<number>("monthly_token_budget_free");
+  const budget = adminBudget ?? DEFAULT_MONTHLY_TOKEN_BUDGET_FREE;
+
+  // Sum total_tokens for this month
+  const startOfMonth = getStartOfMonth();
+  const { data: tokenData } = await supabase
+    .from("ai_conversations")
+    .select("total_tokens")
+    .eq("user_id", userId)
+    .gte("created_at", startOfMonth);
+
+  const used = (tokenData ?? []).reduce((sum, r) => sum + (r.total_tokens ?? 0), 0);
+
+  return { allowed: used < budget, budget, used };
+}
+
 function getStartOfMonth(): string {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();

@@ -33,6 +33,7 @@ type ChallengeDifficulty = "beginner" | "intermediate" | "advanced";
 type ChallengeStatus = "pending" | "in_progress" | "submitted" | "completed" | "skipped";
 type KBSource = "seed" | "llm_generated";
 type KBGenerationStatus = "ready" | "generating" | "failed";
+export type TutorFeedbackRating = "positive" | "negative";
 
 export interface Database {
   public: {
@@ -1249,6 +1250,33 @@ export interface Database {
           purchased_at?: string;
           expires_at?: string | null;
           is_used?: boolean;
+        };
+        Relationships: [];
+      };
+      tutor_feedback: {
+        Row: {
+          id: string;
+          user_id: string;
+          conversation_id: string;
+          message_index: number;
+          rating: TutorFeedbackRating;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          conversation_id: string;
+          message_index: number;
+          rating: TutorFeedbackRating;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          conversation_id?: string;
+          message_index?: number;
+          rating?: TutorFeedbackRating;
+          created_at?: string;
         };
         Relationships: [];
       };

@@ -154,7 +154,9 @@ NEXT_PUBLIC_APP_URL=
 | **LLM 어댑터** | `lib/llm/` | 멀티 LLM Provider 팩토리 |
 | **파일 분석** | `lib/analysis/` | 파일 파싱, 다이제스트 생성, tech-stack upsert 유틸 |
 | **학습 시스템** | `lib/learning/`, `lib/prompts/` | 커리큘럼 생성 (2-Phase), 상세 콘텐츠 + 인용 링크, 퀴즈 점수 추적(최고점 유지), 콘텐츠 검증 + retry |
-| **AI 튜터 패널** | `components/features/tutor-panel*.tsx`, `tutor-search.tsx`, `dashboard-main.tsx` | 우측 슬라이드 패널 (채팅/검색 탭), 텍스트 선택→AI 질문, Google 검색 |
+| **AI 튜터 패널** | `components/features/tutor-panel*.tsx`, `tutor-chat.tsx`, `tutor-search.tsx`, `dashboard-main.tsx` | 우측 슬라이드 패널 (채팅/검색 탭), 텍스트 선택→AI 질문, Google 검색, 메시지 피드백(👍👎) |
+| **튜터 피드백** | `server/actions/tutor-feedback.ts` | 메시지별 피드백 UPSERT/삭제/조회 |
+| **LLM 메트릭** | `lib/utils/llm-metrics.ts` | 구조화 JSON 로깅 (Vercel log drain) |
 | **게이미피케이션** | `components/features/celebration-modal.tsx`, `streak-widget.tsx`, `badge-*.tsx`, `server/actions/streak.ts`, `server/actions/badges.ts` | 모듈 완료 축하(confetti), 학습 스트릭(주간 캘린더), 배지/업적, 넛지 배너 |
 | **KB 시스템** | `lib/knowledge/` | 3-Tier 지식 베이스 |
 | **프롬프트** | `lib/prompts/` | LLM 프롬프트 템플릿 |
@@ -164,15 +166,19 @@ NEXT_PUBLIC_APP_URL=
 | **MCP 서버** | `packages/mcp-server/src/` | 10개 MCP 도구 (v0.3.0, Local-First) |
 | **DB 타입** | `types/database.ts` | Supabase 전체 스키마 타입 |
 | **i18n** | `i18n/request.ts`, `messages/{ko,en}/*.json`, `lib/utils/translate-error.ts` | next-intl 설정, 13개 네임스페이스(ko/en), 서버 에러 코드 번역 |
-| **마이그레이션** | `supabase/migrations/` | 001~012 SQL (010: locale 지원) |
+| **마이그레이션** | `supabase/migrations/` | 001~017 SQL (010: locale, 017: tutor_feedback+token_budget) |
 
-### DB 테이블 (21개)
+### DB 테이블 (32개)
 
-**사용자**: `users`, `user_api_keys`, `user_llm_keys`
+**사용자**: `users` (+ `nickname`), `user_api_keys`, `user_llm_keys`
 **프로젝트**: `projects`, `project_files`, `tech_stacks`, `analysis_jobs`, `educational_analyses`
 **학습**: `learning_paths`, `learning_modules`, `learning_progress`
+**지식 그래프**: `user_concept_mastery`
+**아키텍처**: `architecture_challenges`
+**코드 건강/챌린지**: `code_health_scores`, `challenge_templates`, `refactoring_challenges`
 **게이미피케이션**: `user_streaks`, `badges`, `user_badges`
-**AI/MCP**: `ai_conversations`, `mcp_sessions`
+**포인트 시스템**: `user_points`, `point_transactions`, `daily_point_summary`, `rewards`, `user_rewards`
+**AI/MCP**: `ai_conversations`, `mcp_sessions`, `tutor_feedback`
 **어드민**: `system_settings`, `announcements`, `admin_audit_log`
 **결제**: `payments`
 **KB**: `technology_knowledge`
@@ -183,7 +189,7 @@ NEXT_PUBLIC_APP_URL=
 2. **프로젝트 분석 (MCP, Local-First)**: analyze → 서버에서 파일 fetch → 로컬 AI 분석 → submit_tech_stacks → 서버 저장 (서버 LLM 0)
 3. **커리큘럼 생성 (2-Phase, 웹)**: users.locale 조회 → Phase 1: 구조 생성(LLM, locale 분기) → Phase 2: 기술별 콘텐츠 생성(LLM+KB, locale 분기) → 콘텐츠 검증(`_validateGeneratedSections(sections, difficulty)`: beginner→최소 5섹션, 400자↑ / 그 외→최소 3섹션, 200자↑, code+quiz 필수) → 실패 시 최대 3회 retry 후 `validation_failed`. beginner maxTokens 24000*n (1.5배)
 4. **커리큘럼 생성 (MCP, Local-First)**: curriculum-context API(tech stacks+KB+edu analysis+파일 소스코드 20개/8000자+locale) → 로컬 AI 생성(최소 15모듈, 프로젝트 기능 중심, locale에 따라 ko/en 지시문) → submit_curriculum(검증: 최소 10모듈, beginner→5섹션/모듈+400자↑ / 그 외→3섹션/모듈+200자↑, code+quiz 각각 필수, quiz_explanation 필수, challenge starter/answer_code 필수)
-5. **AI 튜터 (웹)**: 프로젝트 파일 + 기술 스택 + 현재 모듈 콘텐츠 서머리(6000자) → 시스템 프롬프트(locale에 따라 해요체/영어) → LLM 대화
+5. **AI 튜터 (웹)**: 우선순위 기반 파일 선택(file_type/file_path 정렬, 30K 총 예산) + 기술 스택 + 현재 모듈 콘텐츠 서머리(6000자) → 시스템 프롬프트(LRU 캐시, locale에 따라 해요체/영어) → LLM 대화(메트릭 로깅) → 토큰 누적 추적 + 월간 예산 체크(Free 500K/월, admin 조정 가능) → 메시지별 피드백(👍👎)
 6. **AI 튜터 (MCP, Local-First)**: tutor-context → `/api/v1/user/locale` 캐시 조회 → locale 기반 ko/en 지시문 → 로컬 AI가 직접 답변 (서버 LLM 0)
 7. **결제**: createPaymentRequest → 토스 결제 → confirm (금액 검증 + secret 저장) → plan_type 업데이트
 8. **웹훅**: 토스 웹훅 → secret 비교 검증 → 결제 상태 동기화

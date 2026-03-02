@@ -15,13 +15,17 @@
     "remainingChats": "Remaining chats: {count}",
     "placeholder": "Ask a question... (Shift+Enter: new line)",
     "sendError": "Failed to send message",
-    "unknownError": "An unknown error occurred"
+    "unknownError": "An unknown error occurred",
+    "feedbackHelpful": "Helpful",
+    "feedbackNotHelpful": "Not helpful",
+    "feedbackThanks": "Thanks for your feedback!"
   },
   "error": {
     "rateLimit": "Too many requests. Please try again shortly.",
     "apiKey": "Invalid API key. Please check your settings.",
     "timeout": "Response timed out. Please try again.",
     "contextLength": "Message is too long. Please shorten it.",
+    "tokenBudget": "You've used all your AI tokens for this month. Upgrade to Pro for unlimited usage.",
     "generic": "An error occurred: {message}"
   },
   "panel": {
