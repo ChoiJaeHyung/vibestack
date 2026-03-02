@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 
 interface BadgeEarnedModalProps {
@@ -14,6 +15,8 @@ export function BadgeEarnedModal({
   onClose,
   badges,
 }: BadgeEarnedModalProps) {
+  const t = useTranslations("Dashboard");
+  const tc = useTranslations("Common");
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -60,7 +63,7 @@ export function BadgeEarnedModal({
 
         {/* Title */}
         <h2 className="text-center text-lg font-bold text-text-primary mb-5">
-          새 배지 획득!
+          {t("badge.earned")}
         </h2>
 
         {/* Badge list */}
@@ -85,7 +88,7 @@ export function BadgeEarnedModal({
           onClick={onClose}
           className="mt-6 w-full rounded-xl bg-violet-600 py-2.5 text-sm font-medium text-white hover:bg-violet-500 transition-colors"
         >
-          확인
+          {tc("confirm")}
         </button>
       </div>
     </div>

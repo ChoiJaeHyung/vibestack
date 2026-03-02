@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Plus, FolderOpen, BookOpen, Settings, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/features/project-card";
@@ -39,6 +40,7 @@ async function fetchProjects(): Promise<ProjectsListData> {
 }
 
 export function ProjectsContent() {
+  const t = useTranslations('Projects');
   const { data, isLoading } = useCachedFetch(
     "/api/projects-list",
     fetchProjects,
@@ -120,10 +122,10 @@ export function ProjectsContent() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">
-            Projects
+            {t('list.title')}
           </h1>
           <p className="mt-1 text-sm text-text-faint">
-            {allProjects.length}개 프로젝트
+            {t('list.projectCount', { count: allProjects.length })}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -148,13 +150,13 @@ export function ProjectsContent() {
           {isAtLimit ? (
             <Button onClick={() => setShowUpgradeModal(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              New Project
+              {t('list.newProject')}
             </Button>
           ) : (
             <Link href="/guide">
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
-                New Project
+                {t('list.newProject')}
               </Button>
             </Link>
           )}
@@ -172,14 +174,14 @@ export function ProjectsContent() {
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-amber-300">
-              프로젝트 등록 한도에 도달했어요
+              {t('limit.title')}
             </p>
             <p className="mt-0.5 text-xs text-amber-400/70">
-              Pro로 업그레이드하면 무제한으로 프로젝트를 추가할 수 있어요
+              {t('limit.description')}
             </p>
           </div>
           <span className="text-xs font-medium text-amber-400">
-            업그레이드
+            {t('limit.upgrade')}
           </span>
         </button>
       )}
@@ -194,33 +196,33 @@ export function ProjectsContent() {
             <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-cyan-500/30 animate-pulse" />
             <div className="absolute -bottom-1 -left-1 h-2 w-2 rounded-full bg-violet-500/40 animate-pulse" style={{ animationDelay: "150ms" }} />
           </div>
-          <h3 className="mt-5 text-base font-semibold text-text-secondary">첫 프로젝트를 추가하세요</h3>
-          <p className="mt-1.5 text-sm text-text-faint max-w-xs text-center">
-            Claude Code, Cursor 등에서 MCP로 연결하거나<br />직접 프로젝트를 업로드하세요
+          <h3 className="mt-5 text-base font-semibold text-text-secondary">{t('empty.title')}</h3>
+          <p className="mt-1.5 text-sm text-text-faint max-w-xs text-center whitespace-pre-line">
+            {t('empty.description')}
           </p>
           <div className="mt-5 flex items-center gap-3">
             <Link href="/guide">
               <Button variant="secondary" size="sm">
                 <BookOpen className="mr-1.5 h-3.5 w-3.5" />
-                가이드 보기
+                {t('empty.viewGuide')}
               </Button>
             </Link>
             <Link href="/settings">
               <Button variant="primary" size="sm">
                 <Settings className="mr-1.5 h-3.5 w-3.5" />
-                MCP 설정
+                {t('empty.mcpSetup')}
               </Button>
             </Link>
           </div>
         </div>
       ) : projects.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border-default py-12">
-          <p className="text-sm text-text-muted">해당 상태의 프로젝트가 없습니다</p>
+          <p className="text-sm text-text-muted">{t('filter.noResults')}</p>
           <button
             onClick={() => setActiveFilter("all")}
             className="mt-2 text-xs text-violet-400 hover:text-violet-300 transition-colors"
           >
-            전체 보기
+            {t('filter.showAll')}
           </button>
         </div>
       ) : (

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/ui/theme-provider";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -70,13 +72,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+  const t = await getTranslations("Metadata");
+
   return (
-    <html lang="ko" suppressHydrationWarning className={jetbrainsMono.variable}>
+    <html lang={locale} suppressHydrationWarning className={jetbrainsMono.variable}>
       <head>
         <script
           async
@@ -94,15 +100,14 @@ export default function RootLayout({
               name: "VibeUniv",
               url: "https://vibeuniv.com",
               logo: "https://vibeuniv.com/icon.png",
-              description:
-                "AI 코딩 도구로 만든 프로젝트의 기술 스택을 분석하고, 내 코드를 교재로 맞춤 학습 로드맵을 제공하는 바이브 코더 전용 학습 플랫폼",
+              description: t("jsonLd.appDescription"),
               applicationCategory: "EducationalApplication",
               operatingSystem: "Web",
               offers: {
                 "@type": "Offer",
                 price: "0",
-                priceCurrency: "KRW",
-                description: "무료 플랜으로 시작 가능",
+                priceCurrency: locale === "ko" ? "KRW" : "USD",
+                description: t("jsonLd.offerDescription"),
               },
             }),
           }}
@@ -120,7 +125,9 @@ export default function RootLayout({
             }),
           }}
         />
-        <ThemeProvider>{children}</ThemeProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <ThemeProvider>{children}</ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

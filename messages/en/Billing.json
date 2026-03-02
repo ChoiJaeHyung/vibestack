@@ -1,0 +1,110 @@
+{
+  "backToSettings": "Settings",
+  "title": "Subscription Plan",
+  "subtitle": "Manage your plan and billing information",
+  "success": {
+    "title": "Subscription activated!",
+    "description": "Your new plan is now active. Thank you!"
+  },
+  "canceled": {
+    "title": "Payment canceled",
+    "description": "You can subscribe again anytime."
+  },
+  "currentPlan": "Current Plan",
+  "expiresAt": "Expires",
+  "usageStatus": "Usage Overview",
+  "usageLabel": {
+    "projects": "Projects",
+    "learningPaths": "Learning Paths (this month)",
+    "aiChats": "AI Chats (this month)"
+  },
+  "plan": {
+    "perMonth": "/mo",
+    "currentPlan": "Current Plan",
+    "popular": "Popular",
+    "free": {
+      "cta": "Get started free",
+      "features": {
+        "projects": "3 projects",
+        "analysis": "Basic tech stack analysis",
+        "learningPaths": "1 learning path/month",
+        "aiChats": "20 AI chats/month"
+      }
+    },
+    "pro": {
+      "cta": "Start Pro",
+      "downgrade": "Downgrade",
+      "features": {
+        "projects": "Unlimited projects",
+        "analysis": "Advanced analysis",
+        "learningPaths": "Unlimited learning paths",
+        "aiChats": "Unlimited AI chats",
+        "byok": "BYOK (your own LLM key)"
+      }
+    },
+    "team": {
+      "cta": "Start Team",
+      "features": {
+        "pro": "All Pro features",
+        "share": "Team project sharing",
+        "dashboard": "Team learning dashboard",
+        "support": "Priority support"
+      }
+    }
+  },
+  "subscriptionManagement": {
+    "title": "Subscription Management",
+    "autoPayment": "Auto-payment registered",
+    "cancelSubscription": "Cancel subscription",
+    "noAutoPayment": "No auto-payment registered. Your plan will switch to Free after expiration.",
+    "cancelWarning": {
+      "title": "Switching to Free will apply these limits:",
+      "projects": "3 projects",
+      "learningPaths": "1 learning path/month",
+      "aiChats": "20 AI chats/month",
+      "notice": "Your current plan will remain active until the end of the billing period."
+    }
+  },
+  "paymentHistory": {
+    "title": "Payment History",
+    "noHistory": "No payment history.",
+    "autoPayment": "Auto-payment"
+  },
+  "error": {
+    "paymentRequest": "Unable to create payment request.",
+    "paymentConfig": "Payment configuration is invalid.",
+    "paymentWindow": "Unable to open payment window.",
+    "cancelFailed": "Failed to cancel subscription.",
+    "unexpected": "An unexpected error occurred."
+  },
+  "upgrade": {
+    "title": "Upgrade required",
+    "feature": {
+      "analysis": "You've reached the project limit",
+      "learning": "You've reached the learning path limit this month",
+      "chat": "You've reached the AI chat limit this month"
+    },
+    "benefits": {
+      "analysis": "Unlimited project analysis",
+      "learningPaths": "Unlimited learning paths",
+      "aiChats": "Unlimited AI chats",
+      "report": "Advanced analysis reports",
+      "byok": "BYOK (your own LLM key)"
+    },
+    "processing": "Processing...",
+    "cta": "Start Pro — ₩25,000/mo",
+    "later": "Maybe later"
+  },
+  "confirm": {
+    "processing": "Confirming your payment...",
+    "success": {
+      "title": "Payment complete!",
+      "description": "The page will refresh shortly."
+    },
+    "error": {
+      "title": "Payment confirmation failed",
+      "default": "Payment confirmation failed",
+      "processing": "An error occurred during payment confirmation"
+    }
+  }
+}

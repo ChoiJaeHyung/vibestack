@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     if (!confirmResponse.ok) {
       return errorResponse(
-        confirmData.message ?? "결제 승인에 실패했습니다",
+        confirmData.message ?? "payment_confirm_failed",
         confirmResponse.status,
       );
     }
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
 
     if (paymentError) {
       console.error("[payments/confirm] Failed to update payment:", paymentError);
-      return errorResponse("결제는 완료되었으나 기록 저장에 실패했습니다. 고객센터에 문의해주세요.", 500);
+      return errorResponse("payment_record_save_failed", 500);
     }
 
     // 사용자 플랜 업데이트
@@ -107,13 +107,13 @@ export async function POST(request: NextRequest) {
 
     if (planError) {
       console.error("[payments/confirm] Failed to update user plan:", planError);
-      return errorResponse("결제는 완료되었으나 플랜 업데이트에 실패했습니다. 고객센터에 문의해주세요.", 500);
+      return errorResponse("plan_update_failed", 500);
     }
 
     return successResponse({ status: "done", plan: pendingPayment.plan });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "결제 승인 중 오류가 발생했습니다";
+      error instanceof Error ? error.message : "payment_confirm_error";
     return errorResponse(message, 500);
   }
 }

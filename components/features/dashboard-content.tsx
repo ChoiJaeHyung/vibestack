@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { DashboardUpgradeBanner } from "@/components/features/dashboard-upgrade-banner";
 import {
@@ -23,26 +24,6 @@ import { StreakWidget } from "@/components/features/streak-widget";
 import type { DashboardData } from "@/app/api/dashboard/route";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
-
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 6) return "새벽에도 열심히!";
-  if (hour < 12) return "좋은 아침이에요";
-  if (hour < 18) return "좋은 오후에요";
-  return "좋은 저녁이에요";
-}
-
-function formatRelativeTime(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "방금 전";
-  if (minutes < 60) return `${minutes}분 전`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}시간 전`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}일 전`;
-  return new Date(dateStr).toLocaleDateString();
-}
 
 async function fetchDashboard(): Promise<DashboardData> {
   const res = await fetch("/api/dashboard");
@@ -88,6 +69,7 @@ function ProgressRing({
   label,
   used,
   limit,
+  unlimitedLabel,
 }: {
   percent: number;
   size?: number;
@@ -95,6 +77,7 @@ function ProgressRing({
   label: string;
   used: number;
   limit: number | null;
+  unlimitedLabel: string;
 }) {
   const [mounted, setMounted] = useState(false);
   // Client-only mount animation — safe to setState here
@@ -137,7 +120,7 @@ function ProgressRing({
       <div className="min-w-0">
         <p className="text-xs text-text-faint">{label}</p>
         <p className="text-sm font-medium text-text-secondary tabular-nums">
-          {limit === null ? "무제한" : `${used} / ${limit}`}
+          {limit === null ? unlimitedLabel : `${used} / ${limit}`}
         </p>
       </div>
     </div>
@@ -222,11 +205,13 @@ function CompactProjectRow({
   name,
   status,
   updatedAt,
+  formatRelativeTime,
 }: {
   id: string;
   name: string;
   status: string;
   updatedAt: string;
+  formatRelativeTime: (dateStr: string) => string;
 }) {
   const statusStyles: Record<string, string> = {
     analyzed: "bg-green-500/10 text-green-400",
@@ -268,11 +253,33 @@ function CompactProjectRow({
 // ─── Main Component ─────────────────────────────────────────────────
 
 export function DashboardContent() {
+  const t = useTranslations("Dashboard");
+  const tc = useTranslations("Common");
   const { data, isLoading } = useCachedFetch<DashboardData>(
     "/api/dashboard",
     fetchDashboard,
   );
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
+
+  function getGreeting(): string {
+    const hour = new Date().getHours();
+    if (hour < 6) return t("greeting.dawn");
+    if (hour < 12) return t("greeting.morning");
+    if (hour < 18) return t("greeting.afternoon");
+    return t("greeting.evening");
+  }
+
+  function formatRelativeTime(dateStr: string): string {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return tc("timeAgo.justNow");
+    if (minutes < 60) return tc("timeAgo.minutesAgo", { count: minutes });
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return tc("timeAgo.hoursAgo", { count: hours });
+    const days = Math.floor(hours / 24);
+    if (days < 30) return tc("timeAgo.daysAgo", { count: days });
+    return new Date(dateStr).toLocaleDateString();
+  }
 
   if (isLoading && !data) {
     return <DashboardSkeleton />;
@@ -307,10 +314,10 @@ export function DashboardContent() {
       {/* Header: greeting */}
       <div>
         <h1 className="text-2xl font-bold text-text-primary">
-          {getGreeting()}, {userEmail.split("@")[0]}님
+          {getGreeting()}, {t("greeting.suffix", { name: userEmail.split("@")[0] })}
         </h1>
         <p className="mt-1 text-sm text-text-faint">
-          오늘도 프로젝트로 배워볼까요?
+          {t("subtitle")}
         </p>
       </div>
 
@@ -328,15 +335,15 @@ export function DashboardContent() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-text-primary">
-                프로젝트 분석이 완료되었어요! 맞춤 학습을 시작해보세요
+                {t("learningCta.title")}
               </p>
               <p className="mt-0.5 text-xs text-text-faint">
-                AI가 프로젝트 기술 스택에 맞는 학습 로드맵을 생성해드려요
+                {t("learningCta.description")}
               </p>
             </div>
             <Link href="/learning">
               <Button variant="primary" size="sm" className="shrink-0">
-                학습 시작
+                {t("learningCta.button")}
                 <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
               </Button>
             </Link>
@@ -353,13 +360,13 @@ export function DashboardContent() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-text-primary">
-                오늘 아직 학습을 시작하지 않았어요!
+                {t("nudge.title")}
               </p>
               <Link
                 href={`/learning/${stats.currentLearning.pathId}/${stats.currentLearning.moduleId}`}
                 className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-violet-400 transition-colors hover:text-violet-300"
               >
-                이어서 학습하기
+                {t("nudge.continueLearning")}
                 <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
@@ -376,10 +383,10 @@ export function DashboardContent() {
 
       {/* 4 Stat Cards */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={FolderOpen} label="총 프로젝트" value={totalProjects} />
-        <StatCard icon={Code} label="감지된 기술" value={uniqueTech} />
-        <StatCard icon={GraduationCap} label="학습 진행률" value={learningPercent} suffix="%" />
-        <StatCard icon={MessageCircle} label="AI 대화" value={monthlyChats} />
+        <StatCard icon={FolderOpen} label={t("stats.totalProjects")} value={totalProjects} />
+        <StatCard icon={Code} label={t("stats.detectedTech")} value={uniqueTech} />
+        <StatCard icon={GraduationCap} label={t("stats.learningProgress")} value={learningPercent} suffix="%" />
+        <StatCard icon={MessageCircle} label={t("stats.aiChats")} value={monthlyChats} />
       </div>
 
       {/* Streak Widget */}
@@ -398,7 +405,7 @@ export function DashboardContent() {
         {/* Continue Learning */}
         <div className="rounded-2xl border border-border-default bg-bg-surface p-5">
           <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">
-            학습 현황
+            {t("section.learningStatus")}
           </h2>
           {stats?.currentLearning ? (
             <div className="flex items-start gap-4">
@@ -424,7 +431,7 @@ export function DashboardContent() {
                 </h3>
                 <Link href={`/learning/${stats.currentLearning.pathId}/${stats.currentLearning.moduleId}`}>
                   <Button variant="primary" size="sm" className="mt-3">
-                    이어서 학습하기
+                    {t("continueLearning")}
                     <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                   </Button>
                 </Link>
@@ -434,9 +441,9 @@ export function DashboardContent() {
             <div className="flex items-center gap-3 text-sm text-text-faint">
               <GraduationCap className="h-5 w-5 text-text-dim" />
               <div>
-                <p>진행 중인 학습이 없습니다</p>
+                <p>{t("noLearning.title")}</p>
                 <Link href="/learning" className="text-violet-400 hover:text-violet-300 transition-colors text-xs">
-                  학습 시작하기 →
+                  {t("noLearning.start")}
                 </Link>
               </div>
             </div>
@@ -447,33 +454,36 @@ export function DashboardContent() {
         {usageData ? (
           <div className="rounded-2xl border border-border-default bg-bg-surface p-5">
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">
-              사용량
+              {t("section.usage")}
             </h2>
             <div className="space-y-4">
               <ProgressRing
-                label="프로젝트"
+                label={t("usage.projects")}
                 percent={usageData.projects.limit ? Math.min((usageData.projects.used / usageData.projects.limit) * 100, 100) : 0}
                 used={usageData.projects.used}
                 limit={usageData.projects.limit}
+                unlimitedLabel={t("usage.unlimited")}
               />
               <ProgressRing
-                label="학습 로드맵 (이번 달)"
+                label={t("usage.learningPaths")}
                 percent={usageData.learningPaths.limit ? Math.min((usageData.learningPaths.used / usageData.learningPaths.limit) * 100, 100) : 0}
                 used={usageData.learningPaths.used}
                 limit={usageData.learningPaths.limit}
+                unlimitedLabel={t("usage.unlimited")}
               />
               <ProgressRing
-                label="AI 대화 (이번 달)"
+                label={t("usage.aiChats")}
                 percent={usageData.aiChats.limit ? Math.min((usageData.aiChats.used / usageData.aiChats.limit) * 100, 100) : 0}
                 used={usageData.aiChats.used}
                 limit={usageData.aiChats.limit}
+                unlimitedLabel={t("usage.unlimited")}
               />
             </div>
           </div>
         ) : (
           <div className="rounded-2xl border border-border-default bg-bg-surface p-5">
-            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">사용량</h2>
-            <p className="text-sm text-text-faint">데이터를 불러오는 중...</p>
+            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">{t("section.usage")}</h2>
+            <p className="text-sm text-text-faint">{t("usage.loading")}</p>
           </div>
         )}
       </div>
@@ -484,11 +494,11 @@ export function DashboardContent() {
         <div className="rounded-2xl border border-border-default bg-bg-surface p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider">
-              최근 프로젝트
+              {t("section.recentProjects")}
             </h2>
             <Link href="/projects">
               <Button variant="ghost" size="sm" className="text-xs">
-                전체 보기
+                {t("viewAll")}
                 <ArrowRight className="ml-1 h-3 w-3" />
               </Button>
             </Link>
@@ -502,6 +512,7 @@ export function DashboardContent() {
                   name={project.name}
                   status={project.status}
                   updatedAt={project.updated_at}
+                  formatRelativeTime={formatRelativeTime}
                 />
               ))}
             </div>
@@ -514,16 +525,16 @@ export function DashboardContent() {
         {stats && stats.techDistribution.length > 0 ? (
           <div className="rounded-2xl border border-border-default bg-bg-surface p-5">
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-3">
-              기술 분포
+              {t("section.techDistribution")}
             </h2>
             <TechDistributionInline data={stats.techDistribution} />
           </div>
         ) : (
           <div className="rounded-2xl border border-border-default bg-bg-surface p-5">
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-3">
-              기술 분포
+              {t("section.techDistribution")}
             </h2>
-            <p className="text-sm text-text-faint">프로젝트를 분석하면 기술 분포를 확인할 수 있어요</p>
+            <p className="text-sm text-text-faint">{t("techDistribution.empty")}</p>
           </div>
         )}
       </div>
@@ -534,7 +545,7 @@ export function DashboardContent() {
           <div className="flex items-center gap-2 mb-4">
             <Trophy className="h-4 w-4 text-violet-400" />
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider">
-              내 배지
+              {t("section.myBadges")}
             </h2>
             <span className="text-xs text-text-dim">
               {stats.badges.earnedSlugs.length} / {stats.badges.all.length}
@@ -553,10 +564,11 @@ export function DashboardContent() {
 // ─── Empty State (3-step onboarding) ──────────────────────────────────
 
 function EmptyDashboard() {
+  const t = useTranslations("Dashboard");
   const steps = [
-    { icon: Settings, label: "MCP 설정", desc: "Claude Code나 Cursor에서 연결", href: "/settings" },
-    { icon: FolderOpen, label: "프로젝트 동기화", desc: "자동으로 파일 수집 & 분석", href: "/projects" },
-    { icon: Sparkles, label: "학습 시작", desc: "AI 맞춤 커리큘럼 생성", href: "/learning" },
+    { icon: Settings, label: t("onboarding.mcpSetup.label"), desc: t("onboarding.mcpSetup.desc"), href: "/settings" },
+    { icon: FolderOpen, label: t("onboarding.syncProject.label"), desc: t("onboarding.syncProject.desc"), href: "/projects" },
+    { icon: Sparkles, label: t("onboarding.startLearning.label"), desc: t("onboarding.startLearning.desc"), href: "/learning" },
   ];
 
   return (
@@ -598,20 +610,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: "#71717A",
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
-  framework: "프레임워크",
-  language: "언어",
-  database: "DB",
-  auth: "인증",
-  deploy: "배포",
-  styling: "스타일링",
-  testing: "테스팅",
-  build_tool: "빌드",
-  library: "라이브러리",
-  other: "기타",
-};
-
 function TechDistributionInline({ data }: { data: Array<{ category: string; count: number }> }) {
+  const t = useTranslations("Dashboard");
   const total = data.reduce((sum, d) => sum + d.count, 0);
   if (total === 0) return null;
 
@@ -677,7 +677,7 @@ function TechDistributionInline({ data }: { data: Array<{ category: string; coun
           {total}
         </text>
         <text x={cx} y={cy + 12} textAnchor="middle" className="fill-zinc-500" style={{ fontSize: 10 }}>
-          기술
+          {t("techDistribution.centerLabel")}
         </text>
       </svg>
 
@@ -691,14 +691,14 @@ function TechDistributionInline({ data }: { data: Array<{ category: string; coun
                 style={{ backgroundColor: CATEGORY_COLORS[item.category] ?? CATEGORY_COLORS.other }}
               />
               <span className="text-text-muted">
-                {CATEGORY_LABELS[item.category] ?? item.category}
+                {t(`category.${item.category}`)}
               </span>
             </div>
             <span className="text-text-secondary tabular-nums font-medium">{item.count}</span>
           </div>
         ))}
         {sortedData.length > 5 && (
-          <p className="text-[11px] text-text-dim">+{sortedData.length - 5} more</p>
+          <p className="text-[11px] text-text-dim">{t("techDistribution.more", { count: sortedData.length - 5 })}</p>
         )}
       </div>
     </div>

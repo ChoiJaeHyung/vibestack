@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { CheckCircle2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import confetti from "canvas-confetti";
@@ -23,6 +24,9 @@ export function CelebrationModal({
   nextModuleId,
   learningPathId,
 }: CelebrationModalProps) {
+  const t = useTranslations("Learning");
+  const tc = useTranslations("Common");
+
   // Fire confetti when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -79,16 +83,16 @@ export function CelebrationModal({
           </div>
 
           {/* Title */}
-          <h2 className="text-xl font-bold text-text-primary">축하해요!</h2>
+          <h2 className="text-xl font-bold text-text-primary">{t("celebration.title")}</h2>
 
           {/* Subtitle */}
-          <p className="mt-1 text-sm text-text-muted">{moduleName} 완료</p>
+          <p className="mt-1 text-sm text-text-muted">{t("celebration.subtitle", { name: moduleName })}</p>
 
           {/* Score */}
           {score != null && (
             <div className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-violet-500/10 px-4 py-2">
               <span className="text-sm font-medium text-violet-400">
-                퀴즈 점수: {score}점
+                {t("celebration.score", { score })}
               </span>
             </div>
           )}
@@ -101,7 +105,7 @@ export function CelebrationModal({
                 onClick={onClose}
               >
                 <Button className="w-full bg-violet-600 hover:bg-violet-500 text-white">
-                  다음 모듈로
+                  {t("celebration.nextModule")}
                 </Button>
               </Link>
             )}
@@ -110,7 +114,7 @@ export function CelebrationModal({
               onClick={onClose}
               className="text-sm text-text-muted transition-colors hover:text-text-primary"
             >
-              닫기
+              {tc("close")}
             </button>
           </div>
         </div>

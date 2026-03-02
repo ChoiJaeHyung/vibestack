@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
+  const t = useTranslations("Auth");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,13 +22,13 @@ export default function SignupPage() {
     setError(null);
 
     if (name.trim().length < 2) {
-      setError("이름은 최소 2자 이상이어야 합니다.");
+      setError(t("signupError.nameTooShort"));
       setLoading(false);
       return;
     }
 
     if (password.length < 6) {
-      setError("비밀번호는 최소 6자 이상이어야 합니다.");
+      setError(t("signupError.passwordTooShort"));
       setLoading(false);
       return;
     }
@@ -94,9 +96,9 @@ export default function SignupPage() {
 
       setResendSuccess(true);
     } catch {
-      setResendError("이메일 재전송에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      setResendError(t("signupError.resendFailed"));
     }
-  }, [email, resendCooldown]);
+  }, [email, resendCooldown, t]);
 
   if (success) {
     return (
@@ -107,22 +109,21 @@ export default function SignupPage() {
             V
           </div>
           <h1 className="text-2xl font-bold text-text-primary">
-            이메일을 확인해주세요
+            {t("verification.title")}
           </h1>
           <p className="text-sm text-text-muted">
             <span className="font-medium text-text-primary">
               {email}
             </span>
-            로 확인 이메일을 보냈습니다. 이메일의 링크를 클릭하여 가입을
-            완료해주세요.
+            {t("verification.sentTo", { email: "" })}
           </p>
           <p className="text-xs text-text-faint">
-            보통 1-2분 내에 도착합니다. 스팸 폴더도 확인해 주세요.
+            {t("verification.timeNote")}
           </p>
           <div className="pt-2 space-y-3">
             {resendSuccess && (
               <p className="text-sm text-green-400">
-                이메일을 다시 보냈습니다.
+                {t("verification.resent")}
               </p>
             )}
             {resendError && (
@@ -135,12 +136,12 @@ export default function SignupPage() {
               disabled={resendCooldown > 0}
             >
               {resendCooldown > 0
-                ? `이메일 재전송 (${resendCooldown}초)`
-                : "확인 이메일 다시 보내기"}
+                ? t("verification.resendCooldown", { count: resendCooldown })
+                : t("verification.resendButton")}
             </Button>
             <Link href="/login">
               <Button variant="ghost" className="w-full mt-2">
-                로그인 페이지로 돌아가기
+                {t("verification.backToLogin")}
               </Button>
             </Link>
           </div>
@@ -166,7 +167,7 @@ export default function SignupPage() {
             </span>
           </Link>
           <p className="mt-2 text-sm text-text-muted">
-            무료 계정을 만들어 보세요
+            {t("signup.subtitle")}
           </p>
         </div>
 
@@ -177,14 +178,14 @@ export default function SignupPage() {
             className="w-full py-2.5 rounded-xl bg-bg-surface border border-border-default text-sm font-medium text-text-tertiary hover:bg-bg-surface-hover hover:border-border-hover transition-all flex items-center justify-center gap-2"
           >
             <GitHubIcon />
-            GitHub으로 가입
+            {t("signup.github")}
           </button>
           <button
             onClick={() => handleOAuthLogin("google")}
             className="w-full py-2.5 rounded-xl bg-bg-surface border border-border-default text-sm font-medium text-text-tertiary hover:bg-bg-surface-hover hover:border-border-hover transition-all flex items-center justify-center gap-2"
           >
             <GoogleIcon />
-            Google로 가입
+            {t("signup.google")}
           </button>
         </div>
 
@@ -193,7 +194,7 @@ export default function SignupPage() {
             <div className="w-full border-t border-border-default" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-text-faint">or</span>
+            <span className="bg-background px-2 text-text-faint">{t("signup.divider")}</span>
           </div>
         </div>
 
@@ -201,9 +202,9 @@ export default function SignupPage() {
         <form onSubmit={handleSignup} className="space-y-4">
           <Input
             id="name"
-            label="이름"
+            label={t("signup.nameLabel")}
             type="text"
-            placeholder="홍길동"
+            placeholder={t("signup.namePlaceholder")}
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -221,7 +222,7 @@ export default function SignupPage() {
             id="password"
             label="Password"
             type="password"
-            placeholder="최소 6자 이상"
+            placeholder={t("signup.passwordPlaceholder")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -230,17 +231,17 @@ export default function SignupPage() {
             <p className="text-sm text-red-400">{error}</p>
           )}
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "가입 중..." : "회원가입"}
+            {loading ? t("signup.submitting") : t("signup.submit")}
           </Button>
         </form>
 
         <p className="text-center text-sm text-text-muted">
-          이미 계정이 있으신가요?{" "}
+          {t("signup.hasAccount")}{" "}
           <Link
             href="/login"
             className="font-medium text-text-primary hover:text-violet-400 hover:underline transition-colors"
           >
-            로그인
+            {t("signup.loginLink")}
           </Link>
         </p>
       </div>

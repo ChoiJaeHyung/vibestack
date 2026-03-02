@@ -1,0 +1,44 @@
+{
+  "chat": {
+    "title": "AI 튜터",
+    "newChat": "새 대화",
+    "history": "대화 기록",
+    "noHistory": "대화 기록이 없습니다",
+    "untitled": "제목 없는 대화",
+    "emptyTitle": "AI 튜터에게 질문하세요",
+    "emptyDescription": "프로젝트 코드를 이해하고 맥락에 맞게 답변합니다",
+    "suggestedLabel": "추천 질문",
+    "suggestion1": "이 모듈에서 배운 개념을 실제 프로젝트에 어떻게 적용하나요?",
+    "suggestion2": "이 코드가 왜 이렇게 작성되었는지 설명해 주세요",
+    "suggestion3": "이 기술의 장단점을 알려주세요",
+    "usageWarning": "남은 대화: {count}회 — 한도에 가까워지고 있어요",
+    "remainingChats": "남은 대화: {count}회",
+    "placeholder": "질문을 입력하세요... (Shift+Enter: 줄바꿈)",
+    "sendError": "메시지 전송에 실패했습니다",
+    "unknownError": "알 수 없는 오류가 발생했습니다"
+  },
+  "error": {
+    "rateLimit": "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
+    "apiKey": "API 키가 유효하지 않습니다. 설정에서 확인해주세요.",
+    "timeout": "응답 시간이 초과되었습니다. 다시 시도해주세요.",
+    "contextLength": "메시지가 너무 깁니다. 짧게 다시 작성해주세요.",
+    "generic": "오류가 발생했습니다: {message}"
+  },
+  "panel": {
+    "title": "AI 튜터",
+    "chat": "채팅",
+    "search": "검색",
+    "selectModule": "학습 모듈을 선택하세요"
+  },
+  "search": {
+    "title": "궁금한 걸 검색해보세요",
+    "description": "Google에서 새 탭으로 검색 결과를 확인할 수 있어요",
+    "placeholder": "검색어를 입력하세요",
+    "suggested": "추천 검색어",
+    "recent": "최근 검색어",
+    "suggestion1": "{keyword} 기초 쉽게 설명",
+    "suggestion2": "{keyword} 사용법 예제",
+    "suggestion3": "{keyword} 공식 문서",
+    "suggestion4": "{keyword} 초보자 튜토리얼"
+  }
+}

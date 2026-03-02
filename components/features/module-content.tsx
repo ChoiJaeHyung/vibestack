@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import {
   CheckCircle2,
@@ -27,6 +28,7 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import { updateLearningProgress, generateModuleContent, prefetchNextModuleContent } from "@/server/actions/learning";
 import { useTutorPanel } from "@/components/features/tutor-panel-context";
+import { translateError } from "@/lib/utils/translate-error";
 import hljs from "highlight.js/lib/core";
 import javascript from "highlight.js/lib/languages/javascript";
 import typescript from "highlight.js/lib/languages/typescript";
@@ -99,15 +101,14 @@ const SECTION_CONFIG: Record<
   string,
   {
     icon: React.ComponentType<{ className?: string }>;
-    label: string;
     callout?: boolean;
   }
 > = {
-  explanation: { icon: BookOpen, label: "설명" },
-  code_example: { icon: Code, label: "코드 예시" },
-  quiz_question: { icon: HelpCircle, label: "퀴즈", callout: true },
-  challenge: { icon: Target, label: "챌린지", callout: true },
-  reflection: { icon: BookOpen, label: "생각해보기", callout: true },
+  explanation: { icon: BookOpen },
+  code_example: { icon: Code },
+  quiz_question: { icon: HelpCircle, callout: true },
+  challenge: { icon: Target, callout: true },
+  reflection: { icon: BookOpen, callout: true },
 };
 
 const DEFAULT_SECTION_CONFIG = SECTION_CONFIG.explanation;
@@ -123,6 +124,7 @@ function QuizSection({
   sectionIndex: number;
   onResult: (sectionIndex: number, correct: boolean) => void;
 }) {
+  const t = useTranslations('Learning');
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const options = section.quiz_options ?? [];
@@ -198,7 +200,7 @@ function QuizSection({
           variant="secondary"
           size="sm"
         >
-          정답 확인
+          {t('quiz.checkAnswer')}
         </Button>
       )}
 
@@ -209,7 +211,7 @@ function QuizSection({
             <CheckCircle2 className="h-5 w-5 text-green-400" />
           </div>
           <div>
-            <span className="text-sm font-semibold text-green-300">정답입니다!</span>
+            <span className="text-sm font-semibold text-green-300">{t('quiz.correct')}</span>
             {section.quiz_explanation && (
               <p className="mt-1 text-sm text-text-muted">{section.quiz_explanation}</p>
             )}
@@ -224,7 +226,7 @@ function QuizSection({
             </div>
             <div>
               <span className="text-sm font-semibold text-red-300">
-                틀렸습니다. 정답은 {String.fromCharCode(65 + correctAnswer)}번입니다.
+                {t('quiz.incorrect', { answer: String.fromCharCode(65 + correctAnswer) })}
               </span>
             </div>
           </div>
@@ -232,7 +234,7 @@ function QuizSection({
           {section.quiz_explanation && (
             <div className="rounded-xl border border-border-default bg-bg-input p-4">
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-text-faint">
-                해설
+                {t('quiz.explanation')}
               </p>
               <div className="prose dark:prose-invert max-w-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -281,6 +283,7 @@ function ChallengeSection({
   moduleId: string;
   sectionIndex: number;
 }) {
+  const t = useTranslations('Learning');
   const storageKey = `challenge-code-${moduleId}-${sectionIndex}`;
   const [completed, setCompleted] = useState(false);
   const [code, setCode] = useState(() => {
@@ -336,7 +339,7 @@ function ChallengeSection({
       <div className="overflow-hidden rounded-xl border border-zinc-700">
         <div className="flex items-center justify-between bg-zinc-800 px-4 py-2">
           <span className="text-xs font-medium text-zinc-400">
-            코드 에디터
+            {t('challenge.codeEditor')}
           </span>
           {answerCode && (
             <button
@@ -345,7 +348,7 @@ function ChallengeSection({
               className="flex items-center gap-1.5 rounded-lg bg-zinc-700 px-2.5 py-1 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-600 hover:text-zinc-100"
             >
               <Eye className="h-3.5 w-3.5" />
-              {showAnswer ? "답 숨기기" : "답 확인"}
+              {showAnswer ? t('challenge.hideAnswer') : t('challenge.showAnswer')}
             </button>
           )}
         </div>
@@ -366,7 +369,7 @@ function ChallengeSection({
         <div className="overflow-hidden rounded-xl border border-zinc-700">
           <div className="bg-zinc-800 px-4 py-2">
             <span className="text-xs font-medium text-zinc-400">
-              정답 코드
+              {t('challenge.answerCode')}
             </span>
           </div>
           <div className="overflow-x-auto bg-zinc-900 p-4">
@@ -390,7 +393,7 @@ function ChallengeSection({
           className="h-4 w-4 rounded border-zinc-600 text-violet-500 focus:ring-violet-500/50"
         />
         <span className="text-sm text-text-tertiary">
-          완료
+          {t('challenge.completed')}
         </span>
       </label>
     </div>
@@ -400,12 +403,14 @@ function ChallengeSection({
 // ─── 3-Step Generation Progress UI ──────────────────────────────────
 
 const GENERATION_STEPS = [
-  { icon: Code, label: "프로젝트 코드 분석 중...", threshold: 10 },
-  { icon: Brain, label: "맞춤 콘텐츠 생성 중...", threshold: 25 },
-  { icon: Sparkles, label: "최종 검수 및 최적화 중...", threshold: 40 },
+  { icon: Code, threshold: 10 },
+  { icon: Brain, threshold: 25 },
+  { icon: Sparkles, threshold: 40 },
 ];
 
 function GeneratingStepsUI({ elapsedSeconds }: { elapsedSeconds: number }) {
+  const t = useTranslations('Learning');
+  const stepLabels = [t('generation.step1'), t('generation.step2'), t('generation.step3')];
   const currentStep = GENERATION_STEPS.findIndex((s) => elapsedSeconds < s.threshold);
   const activeStep = currentStep === -1 ? GENERATION_STEPS.length - 1 : currentStep;
 
@@ -442,13 +447,13 @@ function GeneratingStepsUI({ elapsedSeconds }: { elapsedSeconds: number }) {
       </div>
 
       <p className="text-sm font-medium text-text-tertiary">
-        {GENERATION_STEPS[activeStep].label}
+        {stepLabels[activeStep]}
       </p>
 
       <div className="flex items-center gap-2 text-xs text-text-dim">
-        <span className="tabular-nums">{elapsedSeconds}초 경과</span>
+        <span className="tabular-nums">{t('generation.elapsed', { seconds: elapsedSeconds })}</span>
         <span>·</span>
-        <span>보통 30~60초 소요</span>
+        <span>{t('generation.usualTime')}</span>
       </div>
     </div>
   );
@@ -472,6 +477,8 @@ export function ModuleContent({
   needsGeneration,
 }: ModuleContentProps) {
   const router = useRouter();
+  const t = useTranslations('Learning');
+  const te = useTranslations('Errors');
   const { isOpen: isTutorOpen, toggle: toggleTutor, open: openTutor, setPanelProps } = useTutorPanel();
   const [completing, setCompleting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(
@@ -578,12 +585,12 @@ export function ModuleContent({
           setLocalSections(result.data.sections);
         } else {
           setGenerationError(
-            result.error ?? "콘텐츠 생성에 실패했습니다.",
+            result.error ? translateError(result.error, te) : t('generation.defaultError'),
           );
         }
       } catch {
         if (!cancelled) {
-          setGenerationError("콘텐츠 생성 중 오류가 발생했습니다.");
+          setGenerationError(t('generation.unknownError'));
         }
       }
 
@@ -599,7 +606,7 @@ export function ModuleContent({
       cancelled = true;
       generationInFlightRef.current = false;
     };
-  }, [needsGeneration, localSections.length, generationError, moduleId, pollCount]);
+  }, [needsGeneration, localSections.length, generationError, moduleId, pollCount, t, te]);
 
   // Prefetch next module content when current module's content is loaded
   useEffect(() => {
@@ -633,15 +640,15 @@ export function ModuleContent({
         setCelebrationScore(score ?? null);
         setShowCelebration(true);
       } else {
-        alert("학습 진행 상황 저장에 실패했습니다. 다시 시도해 주세요.");
+        alert(t('progress.saveError'));
       }
     } catch (err) {
       console.error("[learning] Progress save error:", err);
-      alert("학습 진행 상황 저장에 실패했습니다. 다시 시도해 주세요.");
+      alert(t('progress.saveError'));
     } finally {
       setCompleting(false);
     }
-  }, [moduleId]);
+  }, [moduleId, t]);
 
   const handleRetryGeneration = useCallback(() => {
     setGenerationError(null);
@@ -714,10 +721,10 @@ export function ModuleContent({
 
   const handleAskTutor = useCallback(() => {
     if (!tooltip) return;
-    openTutor(`이 부분에 대해 더 설명해 주세요:\n\n"${tooltip.text}"`);
+    openTutor(t('askTutor.prompt', { text: tooltip.text }));
     setTooltip(null);
     window.getSelection()?.removeAllRanges();
-  }, [tooltip, openTutor]);
+  }, [tooltip, openTutor, t]);
 
   function renderSectionContent(section: ContentSection, sectionIndex: number) {
     if (section.type === "quiz_question") {
@@ -769,7 +776,7 @@ export function ModuleContent({
             className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white shadow-lg transition-colors hover:bg-violet-700"
           >
             <Brain className="h-3.5 w-3.5" />
-            AI 튜터에게 물어보기
+            {t('askTutor.tooltip')}
           </button>
         </div>
       )}
@@ -786,13 +793,13 @@ export function ModuleContent({
           {estimatedMinutes !== null && (
             <span className="flex items-center gap-1 text-xs text-text-faint">
               <Clock className="h-3 w-3" />
-              {estimatedMinutes}분
+              {t('module.minutes', { minutes: estimatedMinutes })}
             </span>
           )}
           {isCompleted && (
             <span className="flex items-center gap-1 text-xs font-medium text-green-400">
               <CheckCircle2 className="h-3 w-3" />
-              완료됨
+              {t('module.completed')}
             </span>
           )}
         </div>
@@ -816,7 +823,7 @@ export function ModuleContent({
           <XCircle className="h-8 w-8 text-red-400" />
           <div className="text-center">
             <p className="font-medium text-red-300">
-              콘텐츠 생성에 실패했습니다
+              {t('generation.failedTitle')}
             </p>
             <p className="mt-1 text-sm text-red-400">
               {generationError}
@@ -828,7 +835,7 @@ export function ModuleContent({
             onClick={handleRetryGeneration}
           >
             <RefreshCw className="mr-2 h-4 w-4" />
-            다시 시도
+            {t('generation.retry')}
           </Button>
         </div>
       )}
@@ -839,7 +846,7 @@ export function ModuleContent({
           <div className="flex flex-col items-center gap-4 rounded-2xl border border-violet-500/20 bg-gradient-to-b from-violet-500/[0.05] to-transparent py-12">
             <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
             <p className="text-sm font-medium text-text-tertiary">
-              콘텐츠를 준비하고 있습니다...
+              {t('generation.preparing')}
             </p>
             {showManualGenerate && (
               <Button
@@ -848,7 +855,7 @@ export function ModuleContent({
                 onClick={handleManualGenerate}
               >
                 <Sparkles className="mr-2 h-4 w-4" />
-                콘텐츠 생성
+                {t('generation.generateButton')}
               </Button>
             )}
           </div>
@@ -856,7 +863,7 @@ export function ModuleContent({
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-border-default bg-bg-surface py-12">
             <BookOpen className="h-8 w-8 text-text-dim" />
             <p className="text-sm text-text-muted">
-              아직 학습 콘텐츠가 준비되지 않았습니다.
+              {t('generation.notReady')}
             </p>
           </div>
         )
@@ -874,7 +881,7 @@ export function ModuleContent({
                 <div className="mb-3 flex items-center gap-1.5">
                   <SectionIcon className="h-3.5 w-3.5 text-text-faint" />
                   <span className="text-[11px] font-medium uppercase tracking-widest text-text-faint">
-                    {config.label}
+                    {t(`sectionType.${section.type}` as Parameters<typeof t>[0])}
                   </span>
                 </div>
 
@@ -923,7 +930,7 @@ export function ModuleContent({
                 className={isTutorOpen ? "text-violet-400" : ""}
               >
                 <Brain className="mr-1.5 h-4 w-4" />
-                AI 튜터
+                {t('bottomBar.aiTutor')}
               </Button>
 
               {/* Right: Prev / Complete / Next */}
@@ -931,7 +938,7 @@ export function ModuleContent({
                 {prevModuleId && (
                   <Button onClick={handlePrev} variant="ghost" size="sm">
                     <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
-                    이전 모듈
+                    {t('bottomBar.prevModule')}
                   </Button>
                 )}
                 {!isCompleted ? (
@@ -941,11 +948,11 @@ export function ModuleContent({
                     ) : (
                       <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
                     )}
-                    완료
+                    {t('bottomBar.complete')}
                   </Button>
                 ) : (
                   <Button onClick={handleNext} size="sm">
-                    {nextModuleId ? "다음 모듈" : "경로로 돌아가기"}
+                    {nextModuleId ? t('bottomBar.nextModule') : t('bottomBar.backToPath')}
                     {nextModuleId && <ArrowRight className="ml-1.5 h-3.5 w-3.5" />}
                   </Button>
                 )}

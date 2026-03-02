@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Clock, Upload, Loader2, CheckCircle, AlertCircle, FileText } from "lucide-react";
 import { TechStackBadge } from "@/components/features/tech-stack-badge";
 
@@ -14,26 +17,35 @@ interface ProjectCardProps {
   fileCount?: number;
 }
 
-const statusConfig: Record<
-  ProjectStatus,
-  { icon: React.ComponentType<{ className?: string }>; label: string; badgeClass: string }
-> = {
-  created: { icon: Clock, label: "Created", badgeClass: "bg-zinc-500/10 text-text-muted border border-zinc-500/20" },
-  uploaded: { icon: Upload, label: "Uploaded", badgeClass: "bg-zinc-500/10 text-text-muted border border-zinc-500/20" },
-  analyzing: { icon: Loader2, label: "Analyzing", badgeClass: "bg-violet-500/10 text-violet-400 border border-violet-500/20" },
-  analyzed: { icon: CheckCircle, label: "Analyzed", badgeClass: "bg-green-500/10 text-green-400 border border-green-500/20" },
-  error: { icon: AlertCircle, label: "Error", badgeClass: "bg-red-500/10 text-red-400 border border-red-500/20" },
+const statusIcons: Record<ProjectStatus, React.ComponentType<{ className?: string }>> = {
+  created: Clock,
+  uploaded: Upload,
+  analyzing: Loader2,
+  analyzed: CheckCircle,
+  error: AlertCircle,
 };
 
-function formatRelativeTime(dateStr: string): string {
+const statusBadgeClasses: Record<ProjectStatus, string> = {
+  created: "bg-zinc-500/10 text-text-muted border border-zinc-500/20",
+  uploaded: "bg-zinc-500/10 text-text-muted border border-zinc-500/20",
+  analyzing: "bg-violet-500/10 text-violet-400 border border-violet-500/20",
+  analyzed: "bg-green-500/10 text-green-400 border border-green-500/20",
+  error: "bg-red-500/10 text-red-400 border border-red-500/20",
+};
+
+// Module-level utility — avoids React purity lint error in component render
+function formatRelativeTime(
+  dateStr: string,
+  tc: (key: string, values?: Record<string, number>) => string,
+): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "방금 전";
-  if (minutes < 60) return `${minutes}분 전`;
+  if (minutes < 1) return tc("timeAgo.justNow");
+  if (minutes < 60) return tc("timeAgo.minutesAgo", { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}시간 전`;
+  if (hours < 24) return tc("timeAgo.hoursAgo", { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}일 전`;
+  if (days < 30) return tc("timeAgo.daysAgo", { count: days });
   return new Date(dateStr).toLocaleDateString();
 }
 
@@ -46,8 +58,9 @@ export function ProjectCard({
   updatedAt,
   fileCount,
 }: ProjectCardProps) {
-  const statusInfo = statusConfig[status];
-  const StatusIcon = statusInfo.icon;
+  const tp = useTranslations("Projects");
+  const tc = useTranslations("Common");
+  const StatusIcon = statusIcons[status];
 
   return (
     <Link href={`/projects/${id}`}>
@@ -97,11 +110,11 @@ export function ProjectCard({
                   {fileCount} files
                 </span>
               )}
-              <span>{formatRelativeTime(updatedAt)}</span>
+              <span>{formatRelativeTime(updatedAt, tc)}</span>
             </div>
-            <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${statusInfo.badgeClass}`}>
+            <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${statusBadgeClasses[status]}`}>
               <StatusIcon className={`h-3 w-3 ${status === "analyzing" ? "animate-spin" : ""}`} />
-              <span>{statusInfo.label}</span>
+              <span>{tp(`detail.status.${status}`)}</span>
             </div>
           </div>
         </div>

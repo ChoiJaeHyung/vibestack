@@ -1,0 +1,9 @@
+{
+  "metadata": {
+    "title": "Page Not Found"
+  },
+  "title": "This page could not be found",
+  "description": "The page you requested doesn't exist or may have been moved.\nTry navigating from the links below.",
+  "home": "Back to Home",
+  "guide": "View Guide"
+}

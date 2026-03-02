@@ -71,6 +71,9 @@ function validateCurriculum(data: unknown): { valid: true; curriculum: Curriculu
   if (!Array.isArray(c.modules) || c.modules.length === 0) {
     return { valid: false, error: "curriculum.modules must be a non-empty array" };
   }
+  if (c.modules.length < 10) {
+    return { valid: false, error: `curriculum must have at least 10 modules (received ${c.modules.length}). Generate more comprehensive content.` };
+  }
   if (c.modules.length > 50) {
     return { valid: false, error: "curriculum.modules cannot exceed 50 modules" };
   }
@@ -96,6 +99,13 @@ function validateCurriculum(data: unknown): { valid: true; curriculum: Curriculu
     if (!content || !Array.isArray(content.sections) || content.sections.length === 0) {
       return { valid: false, error: `${prefix}.content.sections must be a non-empty array` };
     }
+    const minSections = (c.difficulty as string) === "beginner" ? 5 : 3;
+    if (content.sections.length < minSections) {
+      return { valid: false, error: `${prefix}.content.sections must have at least ${minSections} sections (received ${content.sections.length})` };
+    }
+
+    let hasCode = false;
+    let hasQuiz = false;
 
     for (let j = 0; j < content.sections.length; j++) {
       const sec = content.sections[j] as Record<string, unknown>;
@@ -107,18 +117,50 @@ function validateCurriculum(data: unknown): { valid: true; curriculum: Curriculu
       if (typeof sec.title !== "string" || sec.title.length === 0) {
         return { valid: false, error: `${secPrefix}.title is required` };
       }
-      if (typeof sec.body !== "string" || sec.body.length === 0) {
-        return { valid: false, error: `${secPrefix}.body is required` };
+
+      // Body minimum length: explanation requires 400 chars for beginner / 200 for others, non-explanation requires 20 chars
+      const minBodyLength = sec.type === "explanation"
+        ? ((c.difficulty as string) === "beginner" ? 400 : 200)
+        : 20;
+      if (typeof sec.body !== "string" || sec.body.trim().length < minBodyLength) {
+        return { valid: false, error: `${secPrefix}.body must be at least ${minBodyLength} characters (${sec.type})` };
+      }
+
+      if (sec.type === "code_example") {
+        hasCode = true;
+        if (typeof sec.code !== "string" || sec.code.trim().length === 0) {
+          return { valid: false, error: `${secPrefix} code_example must have a non-empty code field` };
+        }
       }
 
       if (sec.type === "quiz_question") {
+        hasQuiz = true;
         if (!Array.isArray(sec.quiz_options) || sec.quiz_options.length !== 4) {
           return { valid: false, error: `${secPrefix}.quiz_options must have exactly 4 options` };
         }
         if (typeof sec.quiz_answer !== "number" || sec.quiz_answer < 0 || sec.quiz_answer > 3) {
           return { valid: false, error: `${secPrefix}.quiz_answer must be 0-3` };
         }
+        if (typeof sec.quiz_explanation !== "string" || sec.quiz_explanation.trim().length === 0) {
+          return { valid: false, error: `${secPrefix} quiz_question must have quiz_explanation` };
+        }
       }
+
+      if (sec.type === "challenge") {
+        if (typeof sec.challenge_starter_code !== "string" || sec.challenge_starter_code.trim().length === 0) {
+          return { valid: false, error: `${secPrefix} challenge must have challenge_starter_code` };
+        }
+        if (typeof sec.challenge_answer_code !== "string" || sec.challenge_answer_code.trim().length === 0) {
+          return { valid: false, error: `${secPrefix} challenge must have challenge_answer_code` };
+        }
+      }
+    }
+
+    if (!hasCode) {
+      return { valid: false, error: `${prefix} must have at least one code_example section` };
+    }
+    if (!hasQuiz) {
+      return { valid: false, error: `${prefix} must have at least one quiz_question section` };
     }
   }
 
@@ -180,6 +222,14 @@ export async function POST(
       }
     }
 
+    // Fetch user locale
+    const { data: userData } = await supabase
+      .from("users")
+      .select("locale")
+      .eq("id", authResult.userId)
+      .single();
+    const locale = (userData?.locale === "en" ? "en" : "ko") as "ko" | "en";
+
     // Create learning_path
     const pathInsert: LearningPathInsert = {
       project_id: projectId,
@@ -191,6 +241,7 @@ export async function POST(
       total_modules: curriculum.modules.length,
       status: "active",
       llm_provider: "mcp_client",
+      locale,
     };
 
     const { data: learningPath, error: pathError } = await supabase

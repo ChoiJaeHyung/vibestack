@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useTranslations } from "next-intl";
 import {
   Play,
   Loader2,
@@ -132,15 +133,15 @@ function groupByCategory(
 
 const POLL_INTERVAL = 3000;
 
-function getErrorGuidance(errorMessage: string): string {
+function getErrorGuidanceKey(errorMessage: string): string | null {
   const lower = errorMessage.toLowerCase();
   if (lower.includes("llm") || lower.includes("api key") || lower.includes("api 키") || lower.includes("decrypt") || lower.includes("encryption")) {
-    return "LLM API 키를 확인해주세요. 설정에서 키를 등록하거나 다시 입력해주세요.";
+    return "analysis.errorGuidanceLlm";
   }
   if (lower.includes("file") || lower.includes("파일") || lower.includes("no files") || lower.includes("load project files")) {
-    return "분석할 파일이 부족합니다. 프로젝트에 더 많은 파일을 업로드해주세요.";
+    return "analysis.errorGuidanceFile";
   }
-  return errorMessage;
+  return null;
 }
 
 export function ProjectAnalysis({
@@ -149,6 +150,7 @@ export function ProjectAnalysis({
   initialTechStacks,
   fileCount,
 }: ProjectAnalysisProps) {
+  const t = useTranslations('Projects');
   const [status, setStatus] = useState(initialStatus);
   const [techStacks, setTechStacks] = useState(initialTechStacks);
   const [loading, setLoading] = useState(false);
@@ -239,7 +241,7 @@ export function ProjectAnalysis({
       setStatus("analyzing");
       startPolling();
     } else {
-      setError(result.error ?? "분석을 시작할 수 없습니다");
+      setError(result.error ?? t('analysis.startError'));
     }
     setLoading(false);
   }
@@ -258,10 +260,10 @@ export function ProjectAnalysis({
         <CardHeader>
           <div className="flex items-center gap-2">
             <Layers className="h-5 w-5 text-text-muted" />
-            <CardTitle>기술 스택 분석</CardTitle>
+            <CardTitle>{t('analysis.title')}</CardTitle>
           </div>
           <CardDescription>
-            AI가 프로젝트 파일을 분석하여 기술 스택을 자동으로 감지합니다
+            {t('analysis.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -273,21 +275,19 @@ export function ProjectAnalysis({
                 </div>
                 <div className="text-center">
                   <p className="font-medium text-text-primary">
-                    파일이 없습니다
+                    {t('analysis.noFiles')}
                   </p>
-                  <p className="mt-1 text-sm text-text-muted">
-                    분석을 시작하려면 먼저 파일을 업로드해주세요.
-                    <br />
-                    MCP 또는 API를 통해 프로젝트 파일을 전송할 수 있습니다.
+                  <p className="mt-1 text-sm text-text-muted whitespace-pre-line">
+                    {t('analysis.noFilesDescription')}
                   </p>
                 </div>
                 <Button
                   disabled
                   size="lg"
-                  title="파일을 먼저 업로드해주세요"
+                  title={t('analysis.uploadFirst')}
                 >
                   <Play className="mr-2 h-4 w-4" />
-                  분석 시작
+                  {t('analysis.startButton')}
                 </Button>
               </>
             ) : (
@@ -297,10 +297,10 @@ export function ProjectAnalysis({
                 </div>
                 <div className="text-center">
                   <p className="font-medium text-text-primary">
-                    분석 준비 완료
+                    {t('analysis.readyTitle')}
                   </p>
                   <p className="mt-1 text-sm text-text-muted">
-                    업로드된 {fileCount}개 파일을 기반으로 기술 스택을 분석합니다
+                    {t('analysis.readyDescription', { count: fileCount })}
                   </p>
                 </div>
                 {error && (
@@ -318,7 +318,7 @@ export function ProjectAnalysis({
                   ) : (
                     <Play className="mr-2 h-4 w-4" />
                   )}
-                  분석 시작
+                  {t('analysis.startButton')}
                 </Button>
               </>
             )}
@@ -335,7 +335,7 @@ export function ProjectAnalysis({
         <CardHeader>
           <div className="flex items-center gap-2">
             <Layers className="h-5 w-5 text-text-muted" />
-            <CardTitle>기술 스택 분석</CardTitle>
+            <CardTitle>{t('analysis.title')}</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -347,10 +347,10 @@ export function ProjectAnalysis({
             </div>
             <div className="text-center">
               <p className="font-medium text-text-primary">
-                분석 중...
+                {t('analysis.analyzingTitle')}
               </p>
               <p className="mt-1 text-sm text-text-muted">
-                AI가 프로젝트 파일을 분석하고 있습니다. 잠시 기다려주세요.
+                {t('analysis.analyzingDescription')}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -366,16 +366,17 @@ export function ProjectAnalysis({
 
   // Error state: show error with retry
   if (status === "error") {
+    const guidanceKey = error ? getErrorGuidanceKey(error) : null;
     const displayError = error
-      ? getErrorGuidance(error)
-      : "분석 과정에서 문제가 발생했습니다. 다시 시도해주세요.";
+      ? (guidanceKey ? t(guidanceKey) : error)
+      : t("analysis.defaultError");
 
     return (
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <Layers className="h-5 w-5 text-text-muted" />
-            <CardTitle>기술 스택 분석</CardTitle>
+            <CardTitle>{t('analysis.title')}</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -385,7 +386,7 @@ export function ProjectAnalysis({
             </div>
             <div className="text-center">
               <p className="font-medium text-text-primary">
-                분석 중 오류가 발생했습니다
+                {t('analysis.errorTitle')}
               </p>
               <p className="mt-1 text-sm text-text-muted max-w-md">
                 {displayError}
@@ -401,7 +402,7 @@ export function ProjectAnalysis({
               ) : (
                 <RefreshCw className="mr-2 h-4 w-4" />
               )}
-              다시 시도
+              {t('analysis.retry')}
             </Button>
           </div>
         </CardContent>
@@ -420,7 +421,7 @@ export function ProjectAnalysis({
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 shrink-0 text-green-400" />
             <p className="text-sm font-medium text-green-300">
-              분석이 완료되었습니다!
+              {t('analysis.completedBanner')}
             </p>
           </div>
           <button
@@ -435,14 +436,14 @@ export function ProjectAnalysis({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Layers className="h-5 w-5 text-text-muted" />
-            <CardTitle>기술 스택 분석 결과</CardTitle>
+            <CardTitle>{t('analysis.resultTitle')}</CardTitle>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={handleRetry}
             disabled={loading}
-            title="재분석"
+            title={t('analysis.reanalyze')}
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -452,13 +453,13 @@ export function ProjectAnalysis({
           </Button>
         </div>
         <CardDescription>
-          총 {techStacks.length}개의 기술이 감지되었습니다
+          {t('analysis.techCount', { count: techStacks.length })}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {techStacks.length === 0 ? (
           <p className="py-4 text-center text-sm text-text-muted">
-            감지된 기술 스택이 없습니다
+            {t('analysis.noTechStacks')}
           </p>
         ) : (
           <>

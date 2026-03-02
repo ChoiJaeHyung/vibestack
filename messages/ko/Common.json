@@ -1,0 +1,26 @@
+{
+  "save": "저장",
+  "cancel": "취소",
+  "delete": "삭제",
+  "confirm": "확인",
+  "close": "닫기",
+  "loading": "로딩 중...",
+  "error": "오류가 발생했습니다",
+  "retry": "다시 시도",
+  "back": "뒤로",
+  "next": "다음",
+  "previous": "이전",
+  "search": "검색",
+  "copy": "복사",
+  "copied": "복사됨",
+  "unlimited": "무제한",
+  "upgrade": "업그레이드",
+  "timeAgo": {
+    "justNow": "방금 전",
+    "minutesAgo": "{count}분 전",
+    "hoursAgo": "{count}시간 전",
+    "daysAgo": "{count}일 전",
+    "weeksAgo": "{count}주 전",
+    "monthsAgo": "{count}개월 전"
+  }
+}

@@ -105,7 +105,7 @@ const TEACHING_CRITICAL_PATTERNS = [
   "types/**/*.ts",
 ];
 
-function isTeachingCriticalFile(relativePath: string): boolean {
+export function isTeachingCriticalFile(relativePath: string): boolean {
   return TEACHING_CRITICAL_PATTERNS.some((pattern) => {
     // Convert glob pattern to regex using placeholders to avoid
     // conflicting replacements between glob wildcards and regex syntax.
@@ -366,4 +366,56 @@ export async function scanProjectFiles(
     `[vibeuniv] Scanned ${foundFiles.length} files (${rootMatches.length} config + ${limitedSource.length} source) in ${rootDir}`
   );
   return foundFiles;
+}
+
+/**
+ * Scan local project and return only teaching-critical files
+ * (page.tsx, layout.tsx, API routes, middleware, lib/*, server/*, types/*).
+ * Config files excluded. Files truncated to maxContentLength.
+ */
+export async function scanTeachingCriticalFiles(
+  rootDir: string,
+  options: { maxFiles?: number; maxContentLength?: number } = {},
+): Promise<Array<{ file_path: string; content: string }>> {
+  const maxFiles = options.maxFiles ?? 20;
+  const maxContentLength = options.maxContentLength ?? 8000;
+
+  // Collect source files only (config files excluded)
+  const sourceMatches = await collectFiles(rootDir, SOURCE_PATTERNS, IGNORE_PATTERNS);
+
+  // Filter to teaching-critical files only
+  const teachingFiles = sourceMatches.filter((p) => isTeachingCriticalFile(p));
+
+  // Sort by depth (entry points first), then alphabetically
+  teachingFiles.sort((a, b) => {
+    const depthA = a.split("/").length;
+    const depthB = b.split("/").length;
+    if (depthA !== depthB) return depthA - depthB;
+    return a.localeCompare(b);
+  });
+
+  const limited = teachingFiles.slice(0, maxFiles);
+  const results: Array<{ file_path: string; content: string }> = [];
+
+  for (const relativePath of limited) {
+    const absolutePath = join(rootDir, relativePath);
+    try {
+      const fileStat = await stat(absolutePath);
+      if (!fileStat.isFile() || fileStat.size > MAX_FILE_SIZE) continue;
+
+      let content = await readFile(absolutePath, "utf-8");
+      if (content.length > maxContentLength) {
+        content = content.slice(0, maxContentLength) +
+          `\n// ... truncated (original ${content.length} chars)`;
+      }
+      results.push({ file_path: relativePath, content });
+    } catch {
+      console.error(`[vibeuniv] Warning: Could not read file ${relativePath}`);
+    }
+  }
+
+  console.error(
+    `[vibeuniv] Scanned ${results.length} teaching-critical files locally`,
+  );
+  return results;
 }

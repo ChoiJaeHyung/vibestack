@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 interface UsageProgressProps {
   label: string;
@@ -15,10 +16,12 @@ export function UsageProgress({
   limit,
   showUpgradeHint,
 }: UsageProgressProps) {
+  const tc = useTranslations("Common");
+
   if (limit === null) {
     return (
       <div className="text-sm text-text-muted">
-        {label}: <span className="font-medium text-text-secondary">무제한</span>
+        {label}: <span className="font-medium text-text-secondary">{tc("unlimited")}</span>
       </div>
     );
   }
@@ -49,7 +52,7 @@ export function UsageProgress({
           href="/settings/billing"
           className="inline-block text-xs text-text-faint underline hover:text-violet-400 transition-colors"
         >
-          업그레이드
+          {tc("upgrade")}
         </Link>
       )}
     </div>

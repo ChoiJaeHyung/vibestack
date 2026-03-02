@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { updateWeeklyTarget } from "@/server/actions/streak";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -10,22 +11,23 @@ interface WeeklyTargetSettingProps {
   currentTarget: number;
 }
 
-const TARGET_OPTIONS = [
-  { value: 2, label: "2일", desc: "가볍게" },
-  { value: 3, label: "3일", desc: "추천" },
-  { value: 5, label: "5일", desc: "꾸준히" },
-  { value: 7, label: "매일", desc: "풀파워" },
-] as const;
-
 // ─── Component ──────────────────────────────────────────────────────
 
 export function WeeklyTargetSetting({
   userId,
   currentTarget,
 }: WeeklyTargetSettingProps) {
+  const t = useTranslations("Settings");
   const [selected, setSelected] = useState(currentTarget);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
+
+  const TARGET_OPTIONS = [
+    { value: 2, label: t("weeklyTarget.2days"), desc: t("weeklyTarget.2daysDesc") },
+    { value: 3, label: t("weeklyTarget.3days"), desc: t("weeklyTarget.3daysDesc") },
+    { value: 5, label: t("weeklyTarget.5days"), desc: t("weeklyTarget.5daysDesc") },
+    { value: 7, label: t("weeklyTarget.7days"), desc: t("weeklyTarget.7daysDesc") },
+  ];
 
   function handleSelect(value: number) {
     if (value === selected || isPending) return;
@@ -45,11 +47,11 @@ export function WeeklyTargetSetting({
     <div>
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm text-text-secondary">
-          주간 학습 일수
+          {t("weeklyTarget.label")}
         </p>
         {saved && (
           <span className="text-xs text-green-500 font-medium">
-            저장됨
+            {t("weeklyTarget.saved")}
           </span>
         )}
       </div>

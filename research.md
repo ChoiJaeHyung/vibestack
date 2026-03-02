@@ -91,6 +91,8 @@ vibeuniv/
 │           │       ├── curriculum/route.ts           # GET: 커리큘럼 상태
 │           │       ├── educational-analysis/route.ts # POST/GET: 교육 분석
 │           │       └── learning/route.ts            # GET: 학습 상태
+│           ├── user/
+│           │   └── locale/route.ts            # GET: 사용자 locale 조회 (MCP용)
 │           └── learning/
 │               ├── paths/
 │               │   ├── route.ts                     # GET: 경로 목록
@@ -140,6 +142,7 @@ vibeuniv/
 │       ├── weekly-target-setting.tsx   # 주간 학습 목표 설정 (2/3/5/7일)
 │       ├── badge-earned-modal.tsx      # 배지 획득 알림 모달
 │       ├── badge-grid.tsx             # 배지 그리드 (전체 배지 + 잠금 상태)
+│       ├── locale-selector.tsx        # 언어 선택 (ko/en) + DB/쿠키 동기화
 │       ├── announcement-banner.tsx    # 공지사항 배너
 │       ├── auth-state-listener.tsx    # 인증 상태 추적
 │       └── admin-*.tsx                # 어드민 컴포넌트 (6종)
@@ -191,6 +194,7 @@ vibeuniv/
 │   │   ├── api-response.ts           # 표준 API 응답 헬퍼
 │   │   ├── rate-limit.ts             # 인메모리 레이트 리미터
 │   │   ├── usage-limits.ts           # 플랜별 사용량 체크
+│   │   ├── translate-error.ts        # 서버 에러 코드 → i18n 번역 헬퍼
 │   │   ├── constants.ts
 │   │   ├── system-settings.ts        # 시스템 설정 조회
 │   │   ├── user-role.ts              # 역할 확인
@@ -257,9 +261,20 @@ vibeuniv/
 │       ├── 011_badges.sql                 # 배지/업적 시스템 (badges, user_badges)
 │       └── 012_user_streaks.sql           # 학습 스트릭 (user_streaks)
 │
+├── i18n/
+│   └── request.ts                    # next-intl 설정 (cookie→Accept-Language→default locale)
+│
+├── messages/                         # i18n 번역 파일 (13 네임스페이스)
+│   ├── ko/                           # 한국어
+│   │   ├── Common.json, Auth.json, Dashboard.json, Settings.json,
+│   │   ├── Billing.json, Learning.json, Projects.json, Tutor.json,
+│   │   ├── Landing.json, Guide.json, Metadata.json, NotFound.json,
+│   │   └── Errors.json               # 서버 에러 코드 번역
+│   └── en/                           # 영어 (동일 구조)
+│
 ├── scripts/                          # 유틸리티 스크립트
-├── middleware.ts                      # Next.js 미들웨어 (세션+레이트리밋)
-├── next.config.ts
+├── middleware.ts                      # Next.js 미들웨어 (세션+레이트리밋+locale 자동감지)
+├── next.config.ts                    # createNextIntlPlugin 래핑
 ├── tsconfig.json
 ├── tailwind.config.ts
 └── package.json
@@ -312,6 +327,7 @@ is_banned       BOOLEAN DEFAULT false
 banned_at       TIMESTAMPTZ
 ban_reason      TEXT
 onboarding_completed BOOLEAN DEFAULT false
+locale          TEXT NOT NULL DEFAULT 'ko' CHECK ('ko','en')  -- 학습 콘텐츠 언어
 created_at      TIMESTAMPTZ DEFAULT now()
 updated_at      TIMESTAMPTZ DEFAULT now()
 ```
@@ -373,6 +389,7 @@ estimated_hours DECIMAL(5,1)
 total_modules   INTEGER DEFAULT 0
 llm_provider    TEXT
 status          TEXT DEFAULT 'draft' CHECK ('draft','active','completed','archived')
+locale          TEXT NOT NULL DEFAULT 'ko' CHECK ('ko','en')  -- 콘텐츠 언어
 ```
 
 #### learning_modules
@@ -432,7 +449,8 @@ is_recurring    BOOLEAN DEFAULT false
 ```sql
 id                          UUID PK
 technology_name             TEXT NOT NULL
-technology_name_normalized  TEXT UNIQUE NOT NULL  -- 소문자 정규화
+technology_name_normalized  TEXT NOT NULL  -- 소문자 정규화
+locale                      TEXT NOT NULL DEFAULT 'ko' CHECK ('ko','en')  -- UNIQUE(name_normalized, locale)
 version                     TEXT
 concepts                    JSONB NOT NULL DEFAULT '[]'  -- ConceptHint[]
 source                      TEXT DEFAULT 'llm_generated' CHECK ('seed','llm_generated')
@@ -530,10 +548,11 @@ auth.users ─┬→ users
        │
        ▼
 Phase 1: 구조 생성
+   - users.locale 조회 → 프롬프트 언어 분기 (ko/en)
    - project-digest.ts: buildProjectDigest() → 프로젝트 요약
-   - learning-roadmap.ts: buildStructurePrompt() → LLM에 구조 요청
+   - learning-roadmap.ts: buildStructurePrompt(locale) → LLM에 구조 요청
    - LLM 응답: { title, modules[]: { title, type, tech_name, objectives } }
-   - learning_paths + learning_modules 저장 (content 비어있음)
+   - learning_paths + learning_modules 저장 (content 비어있음, locale 포함)
        │
        ▼
 Phase 2: 콘텐츠 생성 (기술별 배치, maxTokens: beginner 24000*n / 그 외 16000*n, cap 128K)
@@ -638,6 +657,8 @@ Section = {
 | `vibeuniv_submit_curriculum` | 커리큘럼 제출 | 편집된 커리큘럼 저장 (검증: 최소 10 모듈, 모듈당 최소 3 섹션, code_example/quiz 필수) |
 
 > **Local-First 패턴 (v0.3.0)**: `analyze`, `ask_tutor`, `generate_curriculum`은 서버 LLM을 호출하지 않고, 서버에서 데이터만 fetch한 뒤 로컬 AI(Claude Code 등)에게 분석/튜터링/생성 지침을 반환한다. 결과는 companion 도구(`submit_tech_stacks`, `submit_curriculum`)로 서버에 저장한다.
+>
+> **MCP 다국어 지원**: 모든 MCP 도구는 `/api/v1/user/locale`에서 사용자 locale을 조회(캐시)하여 한국어/영어 메시지를 분기한다. `generate_curriculum`은 `curriculum-context` 응답의 `locale` 필드를 사용한다.
 
 ### 3.8 Knowledge Base 시스템
 
@@ -688,6 +709,44 @@ ConceptHint 구조:
 | XAI | grok-2-latest | openai-compat.ts |
 | OpenRouter | llama-3.3-70b | openai-compat.ts |
 | Cohere | command-r-plus | cohere.ts |
+
+### 3.11 UI 다국어 (i18n) — next-intl
+
+**방식:** next-intl "without i18n routing" — 쿠키 기반 locale, URL 변경 없음, `[locale]` 폴더 불필요
+
+**Locale 결정 우선순위:**
+1. `locale` 쿠키 (ko | en)
+2. `Accept-Language` 헤더 파싱 (middleware에서 자동 감지 → 쿠키 설정)
+3. DB `users.locale` (auth callback에서 동기화)
+4. 기본값: `ko`
+
+**핵심 파일:**
+| 파일 | 역할 |
+|------|------|
+| `i18n/request.ts` | `getRequestConfig()` — 쿠키/헤더 기반 locale + 13개 네임스페이스 동적 import |
+| `next.config.ts` | `createNextIntlPlugin('./i18n/request.ts')` 래핑 |
+| `app/layout.tsx` | `NextIntlClientProvider` + `<html lang={locale}>` |
+| `middleware.ts` | 첫 방문 시 Accept-Language → locale 쿠키 자동 설정 |
+| `app/(auth)/callback/route.ts` | 로그인 시 DB ↔ 쿠키 locale 동기화 |
+| `components/features/locale-selector.tsx` | 설정 UI에서 언어 변경 → DB + 쿠키 + `router.refresh()` |
+| `lib/utils/translate-error.ts` | 서버 에러 코드 → `Errors` 네임스페이스 번역 |
+
+**네임스페이스 (13개):**
+`Common`, `Metadata`, `Landing`, `Auth`, `Dashboard`, `Projects`, `Learning`, `Settings`, `Billing`, `Tutor`, `Guide`, `NotFound`, `Errors`
+
+**번역 키:** 약 1,300개 (ko/en 각각)
+
+**서버 에러 코드화:**
+- 서버 액션/API에서 한국어 에러 → 영어 에러 코드로 반환 (예: `already_free_plan`)
+- 프론트: `translateError(error, te)` → `Errors` 네임스페이스에서 코드 조회 → 번역된 메시지 표시
+- 해당 컴포넌트: `billing-manager.tsx`, `payment-confirm.tsx`, `module-content.tsx`, `learning-generator.tsx`
+
+**쿠키 동기화 플로우:**
+```
+첫 방문 → middleware: Accept-Language → locale 쿠키 설정
+로그인  → callback: DB locale ↔ 쿠키 동기화 (첫 가입: 쿠키→DB / 기존: DB→쿠키)
+설정 변경 → locale-selector: updateUserLocale(DB) + document.cookie + router.refresh()
+```
 
 ---
 
@@ -804,3 +863,4 @@ interface LLMProvider {
 | 009 | payments_webhook_secret.sql | payments 테이블에 toss_secret 컬럼 추가 (웹훅 검증용) |
 | 011 | badges.sql | badges, user_badges 테이블 + RLS + 시드 8종 (first_step, consistent_learner, quiz_master, code_challenger, fullstack_explorer, versatile, ai_friend, speedster) |
 | 012 | user_streaks.sql | user_streaks 테이블 (current_streak, longest_streak, weekly_target, last_active_date, week_active_days, week_start_date) + RLS |
+| 010 | locale_support.sql | users, learning_paths, technology_knowledge에 locale 컬럼 추가 + technology_knowledge unique constraint (name_normalized, locale) 변경 |

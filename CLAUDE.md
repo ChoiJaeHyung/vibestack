@@ -163,7 +163,8 @@ NEXT_PUBLIC_APP_URL=
 | **SEO** | `app/opengraph-image.tsx`, `twitter-image.tsx`, `not-found.tsx` | OG 이미지, 404 페이지 |
 | **MCP 서버** | `packages/mcp-server/src/` | 10개 MCP 도구 (v0.3.0, Local-First) |
 | **DB 타입** | `types/database.ts` | Supabase 전체 스키마 타입 |
-| **마이그레이션** | `supabase/migrations/` | 001~012 SQL |
+| **i18n** | `i18n/request.ts`, `messages/{ko,en}/*.json`, `lib/utils/translate-error.ts` | next-intl 설정, 13개 네임스페이스(ko/en), 서버 에러 코드 번역 |
+| **마이그레이션** | `supabase/migrations/` | 001~012 SQL (010: locale 지원) |
 
 ### DB 테이블 (21개)
 
@@ -180,10 +181,10 @@ NEXT_PUBLIC_APP_URL=
 
 1. **프로젝트 분석 (웹)**: 파일 업로드 → file-parser → digest-generator(`after()` 백그라운드) → LLM 분석 → tech_stacks 저장
 2. **프로젝트 분석 (MCP, Local-First)**: analyze → 서버에서 파일 fetch → 로컬 AI 분석 → submit_tech_stacks → 서버 저장 (서버 LLM 0)
-3. **커리큘럼 생성 (2-Phase, 웹)**: Phase 1: 구조 생성(LLM) → Phase 2: 기술별 콘텐츠 생성(LLM+KB) → 콘텐츠 검증(`_validateGeneratedSections(sections, difficulty)`: beginner→최소 5섹션, 400자↑ / 그 외→최소 3섹션, 200자↑, code+quiz 필수) → 실패 시 최대 3회 retry 후 `validation_failed`. beginner maxTokens 24000*n (1.5배)
-4. **커리큘럼 생성 (MCP, Local-First)**: curriculum-context API(tech stacks+KB+edu analysis+파일 소스코드 20개/8000자) → 로컬 AI 생성(최소 15모듈, 프로젝트 기능 중심) → submit_curriculum(검증: 최소 10모듈, beginner→5섹션/모듈+400자↑ / 그 외→3섹션/모듈+200자↑, code+quiz 각각 필수, quiz_explanation 필수, challenge starter/answer_code 필수)
-5. **AI 튜터 (웹)**: 프로젝트 파일 + 기술 스택 + 현재 모듈 콘텐츠 서머리(6000자) → 시스템 프롬프트(해요체) → LLM 대화
-6. **AI 튜터 (MCP, Local-First)**: tutor-context → 로컬 AI가 직접 답변 (서버 LLM 0)
+3. **커리큘럼 생성 (2-Phase, 웹)**: users.locale 조회 → Phase 1: 구조 생성(LLM, locale 분기) → Phase 2: 기술별 콘텐츠 생성(LLM+KB, locale 분기) → 콘텐츠 검증(`_validateGeneratedSections(sections, difficulty)`: beginner→최소 5섹션, 400자↑ / 그 외→최소 3섹션, 200자↑, code+quiz 필수) → 실패 시 최대 3회 retry 후 `validation_failed`. beginner maxTokens 24000*n (1.5배)
+4. **커리큘럼 생성 (MCP, Local-First)**: curriculum-context API(tech stacks+KB+edu analysis+파일 소스코드 20개/8000자+locale) → 로컬 AI 생성(최소 15모듈, 프로젝트 기능 중심, locale에 따라 ko/en 지시문) → submit_curriculum(검증: 최소 10모듈, beginner→5섹션/모듈+400자↑ / 그 외→3섹션/모듈+200자↑, code+quiz 각각 필수, quiz_explanation 필수, challenge starter/answer_code 필수)
+5. **AI 튜터 (웹)**: 프로젝트 파일 + 기술 스택 + 현재 모듈 콘텐츠 서머리(6000자) → 시스템 프롬프트(locale에 따라 해요체/영어) → LLM 대화
+6. **AI 튜터 (MCP, Local-First)**: tutor-context → `/api/v1/user/locale` 캐시 조회 → locale 기반 ko/en 지시문 → 로컬 AI가 직접 답변 (서버 LLM 0)
 7. **결제**: createPaymentRequest → 토스 결제 → confirm (금액 검증 + secret 저장) → plan_type 업데이트
 8. **웹훅**: 토스 웹훅 → secret 비교 검증 → 결제 상태 동기화
 
@@ -332,3 +333,5 @@ Anthropic, OpenAI, Google, Groq, Mistral, DeepSeek, Cohere, Together, Fireworks,
 - [x] 초급(beginner) 콘텐츠 "5~6세 수준" 강화: 3단계 개념 쪼개기(비유→정의→코드), before/after 비교, 코드 우리말 번역, 비유 퀴즈 50%+, beginner 검증 강화(5섹션↑/400자↑), maxTokens 1.5배(24000*n), MCP 지시문 동적화
 - [x] 튜터 패널 Google 검색 탭 추가 (PR #57)
 - [x] 게이미피케이션 시스템: 모듈 완료 축하(confetti 애니메이션), 학습 스트릭(일간 기반 + 주간 캘린더 위젯), 주간 학습 목표(2/3/5/7일), 배지/업적 8종(first_step, consistent_learner, quiz_master 등), 대시보드 넛지 배너("오늘 학습")
+- [x] 학습 콘텐츠 다국어(ko/en) 지원: DB locale 컬럼(users, learning_paths, technology_knowledge), 프롬프트 로컬라이제이션(learning-roadmap, tutor-chat, knowledge-generation), KB 시스템 locale 필터, MCP 전체 도구 다국어(10개 중 7개 ko/en 분기 + `/api/v1/user/locale` 캐시 조회), 설정 UI 언어 선택
+- [x] UI 전체 다국어(i18n) — next-intl 도입: cookie 기반 locale(URL 변경 없음), 13개 네임스페이스(Common/Metadata/Landing/Auth/Dashboard/Projects/Learning/Settings/Billing/Tutor/Guide/NotFound/Errors), ~1300개 번역 키(ko/en), 서버 에러 코드화(`lib/utils/translate-error.ts`), middleware Accept-Language 자동감지, auth callback DB↔쿠키 동기화, 전체 컴포넌트 `useTranslations` 마이그레이션

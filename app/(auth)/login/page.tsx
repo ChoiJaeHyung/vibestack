@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
@@ -15,17 +16,18 @@ export default function LoginPage() {
   );
 }
 
-const ERROR_MESSAGES: Record<string, string> = {
-  auth_callback_error: "소셜 로그인에 실패했습니다. 다시 시도해주세요.",
-  banned: "이 계정은 이용이 제한되었습니다. 관리자에게 문의하세요.",
-};
-
 function LoginForm() {
+  const t = useTranslations("Auth");
   const router = useRouter();
   const searchParams = useSearchParams();
   const expired = searchParams.get("expired") === "true";
   const errorParam = searchParams.get("error");
-  const paramErrorMessage = errorParam ? ERROR_MESSAGES[errorParam] ?? null : null;
+  const ERROR_KEYS: Record<string, string> = {
+    auth_callback_error: "error.authCallback",
+    banned: "error.banned",
+  };
+  const paramErrorKey = errorParam ? ERROR_KEYS[errorParam] ?? null : null;
+  const paramErrorMessage = paramErrorKey ? t(paramErrorKey) : null;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +86,7 @@ function LoginForm() {
 
       setResetSuccess(true);
     } catch {
-      setResetError("요청 중 오류가 발생했습니다. 다시 시도해주세요.");
+      setResetError(t("login.resetForm.error"));
     } finally {
       setResetLoading(false);
     }
@@ -107,13 +109,13 @@ function LoginForm() {
             </span>
           </Link>
           <p className="mt-2 text-sm text-text-muted">
-            계정에 로그인하세요
+            {t("login.subtitle")}
           </p>
         </div>
 
         {expired && (
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
-            세션이 만료되었습니다. 다시 로그인해 주세요.
+            {t("login.sessionExpired")}
           </div>
         )}
 
@@ -130,14 +132,14 @@ function LoginForm() {
             className="w-full py-2.5 rounded-xl bg-bg-surface border border-border-default text-sm font-medium text-text-tertiary hover:bg-bg-surface-hover hover:border-border-hover transition-all flex items-center justify-center gap-2"
           >
             <GitHubIcon />
-            GitHub으로 로그인
+            {t("login.github")}
           </button>
           <button
             onClick={() => handleOAuthLogin("google")}
             className="w-full py-2.5 rounded-xl bg-bg-surface border border-border-default text-sm font-medium text-text-tertiary hover:bg-bg-surface-hover hover:border-border-hover transition-all flex items-center justify-center gap-2"
           >
             <GoogleIcon />
-            Google로 로그인
+            {t("login.google")}
           </button>
         </div>
 
@@ -146,7 +148,7 @@ function LoginForm() {
             <div className="w-full border-t border-border-default" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-text-faint">or</span>
+            <span className="bg-background px-2 text-text-faint">{t("login.divider")}</span>
           </div>
         </div>
 
@@ -155,13 +157,13 @@ function LoginForm() {
           <div className="space-y-4">
             {resetSuccess ? (
               <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-4 text-sm text-green-200 space-y-2">
-                <p className="font-medium">비밀번호 재설정 링크를 보내드렸습니다.</p>
-                <p>이메일을 확인해주세요.</p>
+                <p className="font-medium">{t("login.resetSuccess.title")}</p>
+                <p>{t("login.resetSuccess.description")}</p>
               </div>
             ) : (
               <form onSubmit={handleResetPassword} className="space-y-4">
                 <p className="text-sm text-text-muted">
-                  가입한 이메일을 입력하시면 비밀번호 재설정 링크를 보내드립니다.
+                  {t("login.resetForm.description")}
                 </p>
                 <Input
                   id="reset-email"
@@ -176,7 +178,7 @@ function LoginForm() {
                   <p className="text-sm text-red-400">{resetError}</p>
                 )}
                 <Button type="submit" className="w-full" disabled={resetLoading}>
-                  {resetLoading ? "전송 중..." : "재설정 링크 보내기"}
+                  {resetLoading ? t("login.resetForm.sending") : t("login.resetForm.submit")}
                 </Button>
               </form>
             )}
@@ -189,7 +191,7 @@ function LoginForm() {
               }}
               className="w-full text-center text-sm text-text-muted hover:text-text-primary transition-colors"
             >
-              로그인으로 돌아가기
+              {t("login.backToLogin")}
             </button>
           </div>
         ) : (
@@ -222,7 +224,7 @@ function LoginForm() {
                   }}
                   className="text-xs text-text-muted hover:text-violet-400 transition-colors"
                 >
-                  비밀번호를 잊으셨나요?
+                  {t("login.forgotPassword")}
                 </button>
               </div>
             </div>
@@ -230,18 +232,18 @@ function LoginForm() {
               <p className="text-sm text-red-400">{error}</p>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "로그인 중..." : "로그인"}
+              {loading ? t("login.submitting") : t("login.submit")}
             </Button>
           </form>
         )}
 
         <p className="text-center text-sm text-text-muted">
-          계정이 없으신가요?{" "}
+          {t("login.noAccount")}{" "}
           <Link
             href="/signup"
             className="font-medium text-text-primary hover:text-violet-400 hover:underline transition-colors"
           >
-            회원가입
+            {t("login.signupLink")}
           </Link>
         </p>
       </div>

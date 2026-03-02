@@ -8,6 +8,7 @@ import type {
   EducationalAnalysisData,
   KnowledgeHintsResult,
   LearningPath,
+  Locale,
   Project,
   ProjectDetail,
   ProjectFile,
@@ -79,10 +80,22 @@ interface RawSessionResponse {
 export class VibeUnivClient {
   private apiKey: string;
   private baseUrl: string;
+  private cachedLocale: Locale | null = null;
 
   constructor(apiKey: string, baseUrl: string) {
     this.apiKey = apiKey;
     this.baseUrl = baseUrl.replace(/\/$/, "");
+  }
+
+  async getUserLocale(): Promise<Locale> {
+    if (this.cachedLocale) return this.cachedLocale;
+    try {
+      const data = await this.request<{ locale: Locale }>("GET", "/user/locale");
+      this.cachedLocale = data.locale;
+      return data.locale;
+    } catch {
+      return "ko";
+    }
   }
 
   private async request<T>(

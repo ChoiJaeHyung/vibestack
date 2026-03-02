@@ -4,6 +4,7 @@ import type {
   ConceptHint,
   KBGenerationInput,
 } from "@/lib/knowledge/types";
+import type { Locale } from "@/types/database";
 import { buildKBGenerationPrompt } from "@/lib/prompts/knowledge-generation";
 
 /**
@@ -29,6 +30,7 @@ function normalizeTechName(name: string): string {
 
 export async function getKBFromDB(
   techName: string,
+  locale: Locale = "ko",
 ): Promise<{ concepts: ConceptHint[]; source: string } | null> {
   const supabase = createKBServiceClient();
 
@@ -36,6 +38,7 @@ export async function getKBFromDB(
     .from("technology_knowledge")
     .select("concepts, source")
     .eq("technology_name_normalized", normalizeTechName(techName))
+    .eq("locale", locale)
     .eq("generation_status", "ready")
     .maybeSingle();
 
@@ -94,6 +97,7 @@ export async function generateKBForTech(
   techName: string,
   version: string | null,
   provider: LLMProvider,
+  locale: Locale = "ko",
 ): Promise<ConceptHint[]> {
   const supabase = createKBServiceClient();
   const normalized = normalizeTechName(techName);
@@ -104,6 +108,7 @@ export async function generateKBForTech(
     .from("technology_knowledge")
     .select("concepts, generation_status, updated_at")
     .eq("technology_name_normalized", normalized)
+    .eq("locale", locale)
     .maybeSingle();
 
   if (existing?.generation_status === "ready") {
@@ -130,6 +135,7 @@ export async function generateKBForTech(
         updated_at: now,
       })
       .eq("technology_name_normalized", normalized)
+      .eq("locale", locale)
       .eq("updated_at", existing.updated_at)
       .in("generation_status", ["failed", "generating"])
       .select("id")
@@ -147,6 +153,7 @@ export async function generateKBForTech(
         technology_name: techName,
         technology_name_normalized: normalized,
         version,
+        locale,
         concepts: [],
         source: "llm_generated",
         generation_status: "generating",
@@ -162,7 +169,7 @@ export async function generateKBForTech(
 
   try {
     // 4. Generate concepts via LLM
-    const prompt = buildKBGenerationPrompt(techName, version);
+    const prompt = buildKBGenerationPrompt(techName, version, locale);
     const response = await provider.chat({
       messages: [{ role: "user", content: prompt }],
       maxTokens: 8192,
@@ -191,7 +198,8 @@ export async function generateKBForTech(
         generation_error: null,
         updated_at: now,
       })
-      .eq("technology_name_normalized", normalized);
+      .eq("technology_name_normalized", normalized)
+      .eq("locale", locale);
 
     return concepts;
   } catch (err) {
@@ -206,7 +214,8 @@ export async function generateKBForTech(
         generation_error: message,
         updated_at: now,
       })
-      .eq("technology_name_normalized", normalized);
+      .eq("technology_name_normalized", normalized)
+      .eq("locale", locale);
 
     return [];
   }
@@ -217,6 +226,7 @@ export async function generateKBForTech(
 export async function generateMissingKBs(
   techs: KBGenerationInput[],
   provider: LLMProvider,
+  locale: Locale = "ko",
 ): Promise<void> {
   const supabase = createKBServiceClient();
 
@@ -225,7 +235,8 @@ export async function generateMissingKBs(
   const { data: existingRows } = await supabase
     .from("technology_knowledge")
     .select("technology_name_normalized, generation_status")
-    .in("technology_name_normalized", normalizedNames);
+    .in("technology_name_normalized", normalizedNames)
+    .eq("locale", locale);
 
   const readyOrGeneratingSet = new Set(
     (existingRows ?? [])
@@ -242,7 +253,7 @@ export async function generateMissingKBs(
   for (const tech of missing) {
     console.log(`[knowledge] Generating KB for ${tech.name}...`);
     try {
-      await generateKBForTech(tech.name, tech.version, provider);
+      await generateKBForTech(tech.name, tech.version, provider, locale);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(`[knowledge] Error generating KB for ${tech.name}:`, message);

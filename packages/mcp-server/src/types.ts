@@ -98,6 +98,8 @@ export interface KnowledgeHintsResult {
   requestedCount: number;
 }
 
+export type Locale = "ko" | "en";
+
 // ─── Local-First Types (Phase A) ─────────────────────────────────
 
 // Project detail with file contents (for local analysis)
@@ -158,11 +160,13 @@ export interface TutorContext {
   };
 }
 
-// Curriculum context (combined tech stacks + KB hints + educational analysis)
+// Curriculum context (combined tech stacks + KB hints + educational analysis + files)
 export interface CurriculumContext {
   techStacks: TechStackItem[];
   knowledgeHints: Record<string, ConceptHintItem[]>;
   educationalAnalysis: EducationalAnalysisData | null;
+  files?: Array<{ file_path: string; content: string }>;
+  locale?: "ko" | "en";
 }
 
 // ─── Educational Analysis ────────────────────────────────────────

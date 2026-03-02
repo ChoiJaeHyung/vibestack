@@ -44,26 +44,45 @@ export function registerSyncProject(server: McpServer, client: VibeUnivClient): 
         await client.uploadFiles(project.id, files);
 
         const fileList = files.map((f) => `  - ${f.relativePath} (${f.size} bytes)`).join("\n");
+        const locale = await client.getUserLocale();
+
+        const message = locale === "en"
+          ? [
+              `Project "${project.name}" synced successfully!`,
+              `Project ID: ${project.id}`,
+              "",
+              `${files.length} files uploaded:`,
+              fileList,
+              "",
+              "Next step: Read the project source files and submit an educational analysis.",
+              "",
+              `vibeuniv_submit_analysis({ project_id: "${project.id}", analysis: {`,
+              `  project_overview: { one_liner, app_type, core_features },`,
+              `  file_roles: [{ path, role, complexity(1-5) }],`,
+              `  architecture_summary, learning_priorities: { start_with, focus_on, skip_for_now }`,
+              `} })`,
+            ]
+          : [
+              `프로젝트 "${project.name}" 동기화 완료!`,
+              `Project ID: ${project.id}`,
+              "",
+              `${files.length}개 파일 업로드됨:`,
+              fileList,
+              "",
+              "다음 단계: 프로젝트 소스 파일을 읽고 교육적 분석을 제출하세요.",
+              "",
+              `vibeuniv_submit_analysis({ project_id: "${project.id}", analysis: {`,
+              `  project_overview: { one_liner, app_type, core_features },`,
+              `  file_roles: [{ path, role, complexity(1-5) }],`,
+              `  architecture_summary, learning_priorities: { start_with, focus_on, skip_for_now }`,
+              `} })`,
+            ];
 
         return {
           content: [
             {
               type: "text" as const,
-              text: [
-                `프로젝트 "${project.name}" 동기화 완료!`,
-                `Project ID: ${project.id}`,
-                "",
-                `${files.length}개 파일 업로드됨:`,
-                fileList,
-                "",
-                "다음 단계: 프로젝트 소스 파일을 읽고 교육적 분석을 제출하세요.",
-                "",
-                `vibeuniv_submit_analysis({ project_id: "${project.id}", analysis: {`,
-                `  project_overview: { one_liner, app_type, core_features },`,
-                `  file_roles: [{ path, role, complexity(1-5) }],`,
-                `  architecture_summary, learning_priorities: { start_with, focus_on, skip_for_now }`,
-                `} })`,
-              ].join("\n"),
+              text: message.join("\n"),
             },
           ],
         };

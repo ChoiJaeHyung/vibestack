@@ -1,0 +1,44 @@
+{
+  "chat": {
+    "title": "AI Tutor",
+    "newChat": "New Chat",
+    "history": "Chat History",
+    "noHistory": "No chat history",
+    "untitled": "Untitled conversation",
+    "emptyTitle": "Ask the AI Tutor",
+    "emptyDescription": "Answers with context, understanding your project code",
+    "suggestedLabel": "Suggested Questions",
+    "suggestion1": "How can I apply the concepts from this module to my project?",
+    "suggestion2": "Why was this code written this way?",
+    "suggestion3": "What are the pros and cons of this technology?",
+    "usageWarning": "Remaining chats: {count} — approaching the limit",
+    "remainingChats": "Remaining chats: {count}",
+    "placeholder": "Ask a question... (Shift+Enter: new line)",
+    "sendError": "Failed to send message",
+    "unknownError": "An unknown error occurred"
+  },
+  "error": {
+    "rateLimit": "Too many requests. Please try again shortly.",
+    "apiKey": "Invalid API key. Please check your settings.",
+    "timeout": "Response timed out. Please try again.",
+    "contextLength": "Message is too long. Please shorten it.",
+    "generic": "An error occurred: {message}"
+  },
+  "panel": {
+    "title": "AI Tutor",
+    "chat": "Chat",
+    "search": "Search",
+    "selectModule": "Select a learning module"
+  },
+  "search": {
+    "title": "Search the web",
+    "description": "Opens Google search results in a new tab",
+    "placeholder": "Enter search term",
+    "suggested": "Suggested Searches",
+    "recent": "Recent Searches",
+    "suggestion1": "{keyword} basics explained",
+    "suggestion2": "{keyword} usage examples",
+    "suggestion3": "{keyword} official docs",
+    "suggestion4": "{keyword} beginner tutorial"
+  }
+}

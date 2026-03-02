@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, after } from "next/server";
 import { successResponse, errorResponse } from "@/lib/utils/api-response";
 import { authenticateApiKey, isAuthResult } from "@/server/middleware/api-auth";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -121,39 +121,46 @@ export async function POST(
       return errorResponse("Failed to upload files", 500);
     }
 
-    // Auto-generate project digest from all files
-    const { data: allFiles } = await supabase
-      .from("project_files")
-      .select("file_name, file_path, file_type, raw_content")
-      .eq("project_id", projectId)
-      .neq("file_name", "_project_digest.md");
+    // Auto-generate project digest in background (non-blocking)
+    const projectName = project.name;
+    after(async () => {
+      try {
+        const bgSupabase = createServiceClient();
+        const { data: allFiles } = await bgSupabase
+          .from("project_files")
+          .select("file_name, file_path, file_type, raw_content")
+          .eq("project_id", projectId)
+          .neq("file_name", "_project_digest.md");
 
-    if (allFiles && allFiles.length > 0) {
-      const decryptedFiles = allFiles.map((f) => ({
-        ...f,
-        raw_content: f.raw_content ? decryptContent(f.raw_content) : f.raw_content,
-      }));
-      const digest = generateDigest(project.name, decryptedFiles);
-      const digestMarkdown = digestToMarkdown(digest);
+        if (allFiles && allFiles.length > 0) {
+          const decryptedFiles = allFiles.map((f) => ({
+            ...f,
+            raw_content: f.raw_content ? decryptContent(f.raw_content) : f.raw_content,
+          }));
+          const digest = generateDigest(projectName, decryptedFiles);
+          const digestMarkdown = digestToMarkdown(digest);
 
-      // Upsert _project_digest.md — delete existing then insert
-      await supabase
-        .from("project_files")
-        .delete()
-        .eq("project_id", projectId)
-        .eq("file_name", "_project_digest.md")
-        .eq("file_name", "_project_digest.md");
+          // Upsert _project_digest.md — delete existing then insert
+          await bgSupabase
+            .from("project_files")
+            .delete()
+            .eq("project_id", projectId)
+            .eq("file_name", "_project_digest.md");
 
-      const digestInsert: ProjectFileInsert = {
-        project_id: projectId,
-        file_name: "_project_digest.md",
-        file_type: "other",
-        file_path: "_project_digest.md",
-        raw_content: encryptContent(digestMarkdown),
-        file_size: Buffer.byteLength(digestMarkdown, "utf-8"),
-      };
-      await supabase.from("project_files").insert(digestInsert);
-    }
+          const digestInsert: ProjectFileInsert = {
+            project_id: projectId,
+            file_name: "_project_digest.md",
+            file_type: "other",
+            file_path: "_project_digest.md",
+            raw_content: encryptContent(digestMarkdown),
+            file_size: Buffer.byteLength(digestMarkdown, "utf-8"),
+          };
+          await bgSupabase.from("project_files").insert(digestInsert);
+        }
+      } catch (err) {
+        console.error("[files/route] Background digest generation failed:", err);
+      }
+    });
 
     if (project.status === "created") {
       const statusUpdate: ProjectUpdate = {

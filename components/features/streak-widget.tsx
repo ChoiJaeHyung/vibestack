@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Flame, Trophy } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -13,14 +14,6 @@ interface StreakWidgetProps {
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────
-
-const DAY_LABELS = ["월", "화", "수", "목", "금", "토", "일"];
-
-function getTodayKST(): string {
-  const now = new Date();
-  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-  return kst.toISOString().split("T")[0];
-}
 
 function getMondayOfWeekKST(): Date {
   const now = new Date();
@@ -87,14 +80,15 @@ export function StreakWidget({
   weekActiveDays,
   lastActiveDate,
 }: StreakWidgetProps) {
+  const t = useTranslations("Dashboard");
   const todayIdx = getDayOfWeekIndexKST();
-  const today = getTodayKST();
-  const learnedToday = lastActiveDate === today;
   const activityMap = getWeekActivityMap(weekActiveDays, lastActiveDate);
   const goalReached = weekActiveDays >= weeklyTarget;
   const progressPercent = weeklyTarget > 0
     ? Math.min((weekActiveDays / weeklyTarget) * 100, 100)
     : 0;
+
+  const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
   return (
     <div className="rounded-2xl border border-border-default bg-bg-surface p-5">
@@ -107,14 +101,14 @@ export function StreakWidget({
           <div>
             <p className="text-sm font-semibold text-text-primary">
               {currentStreak > 0
-                ? `${currentStreak}일 연속 학습 중`
-                : "오늘 학습을 시작해보세요!"}
+                ? t("streak.activeStreak", { count: currentStreak })
+                : t("streak.startToday")}
             </p>
             {longestStreak > 0 && (
               <div className="flex items-center gap-1 mt-0.5">
                 <Trophy className="h-3 w-3 text-text-dim" />
                 <p className="text-xs text-text-muted">
-                  최장: {longestStreak}일
+                  {t("streak.longest", { count: longestStreak })}
                 </p>
               </div>
             )}
@@ -124,14 +118,14 @@ export function StreakWidget({
 
       {/* Weekly Calendar */}
       <div className="flex items-center justify-between gap-1 mb-4">
-        {DAY_LABELS.map((label, idx) => {
+        {DAY_KEYS.map((key, idx) => {
           const isToday = idx === todayIdx;
           const isActive = activityMap[idx];
 
           return (
-            <div key={label} className="flex flex-col items-center gap-1.5 flex-1">
+            <div key={key} className="flex flex-col items-center gap-1.5 flex-1">
               <span className="text-[10px] font-medium text-text-dim">
-                {label}
+                {t(`streak.days.${key}`)}
               </span>
               <div
                 className={`h-7 w-7 rounded-full flex items-center justify-center transition-all ${
@@ -157,12 +151,12 @@ export function StreakWidget({
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs text-text-muted">
-            주간 목표
+            {t("streak.weeklyGoal")}
           </span>
           <span className={`text-xs font-medium ${goalReached ? "text-green-500" : "text-text-secondary"}`}>
             {goalReached
-              ? "이번 주 목표 달성!"
-              : `${weekActiveDays}/${weeklyTarget}일`}
+              ? t("streak.goalReached")
+              : t("streak.progress", { active: weekActiveDays, target: weeklyTarget })}
           </span>
         </div>
         <div className="h-2 w-full rounded-full bg-bg-input overflow-hidden">
