@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LearningPathCard } from "@/components/features/learning-path-card";
@@ -16,6 +17,7 @@ async function fetchLearningPaths(): Promise<LearningPathsData> {
 }
 
 export function LearningContent() {
+  const t = useTranslations('Learning');
   const { data, isLoading } = useCachedFetch(
     "/api/learning-paths",
     fetchLearningPaths,
@@ -68,10 +70,10 @@ export function LearningContent() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-text-primary">
-          Learning
+          {t('page.title')}
         </h1>
         <p className="mt-1 text-sm text-text-muted">
-          AI가 생성한 맞춤 학습 로드맵으로 학습하세요
+          {t('page.subtitle')}
         </p>
       </div>
 
@@ -85,21 +87,21 @@ export function LearningContent() {
             <GraduationCap className="h-8 w-8 text-violet-400" />
           </div>
           <p className="mt-4 text-sm text-text-muted">
-            아직 학습 로드맵이 없습니다
+            {t('empty.title')}
           </p>
           <p className="mt-1 text-xs text-text-faint">
-            프로젝트를 분석한 후 위에서 로드맵을 생성해보세요
+            {t('empty.description')}
           </p>
           <Link href="/projects" className="mt-4">
             <Button variant="secondary" size="sm">
-              프로젝트 관리로 이동
+              {t('empty.goToProjects')}
             </Button>
           </Link>
         </div>
       ) : (
         <div className="space-y-4">
           <h2 className="text-lg font-semibold text-text-primary">
-            내 학습 로드맵
+            {t('list.title')}
           </h2>
           <div className="grid gap-4">
             {paths.map((path) => (

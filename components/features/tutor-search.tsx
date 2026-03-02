@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Search, ExternalLink, Clock, X } from "lucide-react";
 
 interface TutorSearchProps {
@@ -44,6 +45,7 @@ function openGoogleSearch(query: string) {
 }
 
 export function TutorSearch({ techName, moduleName }: TutorSearchProps) {
+  const t = useTranslations('Tutor');
   const [query, setQuery] = useState("");
   const [recentSearches, setRecentSearches] = useState<string[]>(() => getRecentSearches());
 
@@ -69,10 +71,10 @@ export function TutorSearch({ techName, moduleName }: TutorSearchProps) {
 
   const suggestions = keyword
     ? [
-        `${keyword} 기초 쉽게 설명`,
-        `${keyword} 사용법 예제`,
-        `${keyword} 공식 문서`,
-        `${keyword} 초보자 튜토리얼`,
+        t('search.suggestion1', { keyword }),
+        t('search.suggestion2', { keyword }),
+        t('search.suggestion3', { keyword }),
+        t('search.suggestion4', { keyword }),
       ]
     : [];
 
@@ -84,10 +86,10 @@ export function TutorSearch({ techName, moduleName }: TutorSearchProps) {
           <Search className="h-5 w-5 text-violet-400" />
         </div>
         <p className="text-sm font-medium text-text-primary">
-          궁금한 걸 검색해보세요
+          {t('search.title')}
         </p>
         <p className="mt-1 text-xs text-text-muted">
-          Google에서 새 탭으로 검색 결과를 확인할 수 있어요
+          {t('search.description')}
         </p>
       </div>
 
@@ -101,7 +103,7 @@ export function TutorSearch({ techName, moduleName }: TutorSearchProps) {
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSearch();
             }}
-            placeholder="검색어를 입력하세요"
+            placeholder={t('search.placeholder')}
             className="flex-1 rounded-lg border border-border-default bg-bg-input px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
           />
           <button
@@ -121,7 +123,7 @@ export function TutorSearch({ techName, moduleName }: TutorSearchProps) {
         {suggestions.length > 0 && (
           <div className="mb-5">
             <p className="mb-2 text-xs font-medium text-text-muted">
-              추천 검색어
+              {t('search.suggested')}
             </p>
             <div className="flex flex-col gap-1.5">
               {suggestions.map((s) => (
@@ -143,7 +145,7 @@ export function TutorSearch({ techName, moduleName }: TutorSearchProps) {
         {recentSearches.length > 0 && (
           <div>
             <p className="mb-2 text-xs font-medium text-text-muted">
-              최근 검색어
+              {t('search.recent')}
             </p>
             <div className="flex flex-col gap-1">
               {recentSearches.map((s) => (

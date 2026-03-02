@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import {
   Brain,
   Send,
@@ -49,13 +50,13 @@ interface TutorChatProps {
 }
 
 /**
- * Translate English LLM error messages to Korean for end users.
+ * Map English LLM error messages to translation keys.
  */
-function translateErrorMessage(msg: string): string {
+function getErrorTranslationKey(msg: string): { key: string; params?: Record<string, string> } | null {
   const lower = msg.toLowerCase();
 
   if (lower.includes("rate limit")) {
-    return "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.";
+    return { key: "error.rateLimit" };
   }
   if (
     lower.includes("api key") ||
@@ -63,19 +64,19 @@ function translateErrorMessage(msg: string): string {
     lower.includes("authentication") ||
     lower.includes("unauthorized")
   ) {
-    return "API 키가 유효하지 않습니다. 설정에서 확인해주세요.";
+    return { key: "error.apiKey" };
   }
   if (lower.includes("timeout") || lower.includes("timed out")) {
-    return "응답 시간이 초과되었습니다. 다시 시도해주세요.";
+    return { key: "error.timeout" };
   }
   if (lower.includes("context length") || lower.includes("token")) {
-    return "메시지가 너무 깁니다. 짧게 다시 작성해주세요.";
+    return { key: "error.contextLength" };
   }
   // If the message already looks Korean, return as-is
   if (/[\uAC00-\uD7AF]/.test(msg)) {
-    return msg;
+    return null;
   }
-  return `오류가 발생했습니다: ${msg}`;
+  return { key: "error.generic", params: { message: msg } };
 }
 
 export function TutorChat({
@@ -86,6 +87,7 @@ export function TutorChat({
   conversationId: initialConversationId,
   selectedText,
 }: TutorChatProps) {
+  const t = useTranslations('Tutor');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -249,14 +251,17 @@ export function TutorChat({
           setRemainingChats((prev) => (prev !== null ? Math.max(prev - 1, 0) : null));
         }
       } else {
-        const errMsg = result.error ?? "메시지 전송에 실패했습니다";
+        const errMsg = result.error ?? t('chat.sendError');
         if (errMsg.toLowerCase().includes("limit") || errMsg.includes("한도")) {
           setShowUpgradeModal(true);
         }
-        setError(translateErrorMessage(errMsg));
+        const errTranslation = getErrorTranslationKey(errMsg);
+        setError(errTranslation
+          ? t(errTranslation.key as Parameters<typeof t>[0], errTranslation.params)
+          : errMsg);
       }
     } catch {
-      setError("알 수 없는 오류가 발생했습니다");
+      setError(t('chat.unknownError'));
     } finally {
       setLoading(false);
     }
@@ -276,7 +281,7 @@ export function TutorChat({
         <div className="flex items-center gap-2 min-w-0">
           <Brain className="h-4 w-4 shrink-0 text-violet-400" />
           <span className="text-sm font-medium text-text-primary">
-            AI 튜터
+            {t('chat.title')}
           </span>
           {projectName && (
             <span className="truncate text-xs text-text-muted">
@@ -289,7 +294,7 @@ export function TutorChat({
             type="button"
             onClick={handleNewConversation}
             className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-bg-input hover:text-text-primary"
-            title="새 대화"
+            title={t('chat.newChat')}
           >
             <Plus className="h-3.5 w-3.5" />
           </button>
@@ -301,7 +306,7 @@ export function TutorChat({
                 ? "bg-violet-500/10 text-violet-400"
                 : "text-text-muted hover:bg-bg-input hover:text-text-primary"
             }`}
-            title="대화 기록"
+            title={t('chat.history')}
           >
             <History className="h-3.5 w-3.5" />
           </button>
@@ -313,7 +318,7 @@ export function TutorChat({
         <div className="border-b border-border-default bg-bg-elevated">
           <div className="flex items-center justify-between px-4 py-2">
             <span className="text-xs font-medium text-text-muted">
-              대화 기록
+              {t('chat.history')}
             </span>
             <button
               type="button"
@@ -330,7 +335,7 @@ export function TutorChat({
               </div>
             ) : conversations.length === 0 ? (
               <p className="px-2 py-3 text-center text-xs text-text-faint">
-                대화 기록이 없습니다
+                {t('chat.noHistory')}
               </p>
             ) : (
               <div className="space-y-0.5">
@@ -348,7 +353,7 @@ export function TutorChat({
                     <MessageSquare className="h-3 w-3 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-medium">
-                        {conv.title || "제목 없는 대화"}
+                        {conv.title || t('chat.untitled')}
                       </p>
                       <p className="text-[10px] text-text-faint">
                         {new Date(conv.updated_at).toLocaleDateString("ko-KR", {
@@ -379,16 +384,16 @@ export function TutorChat({
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/10 ring-1 ring-violet-500/20">
                 <Brain className="h-6 w-6 text-violet-400" />
               </div>
-              <h3 className="mt-3 text-sm font-medium text-text-secondary">AI 튜터에게 질문하세요</h3>
-              <p className="mt-1 text-xs text-text-faint">프로젝트 코드를 이해하고 맥락에 맞게 답변합니다</p>
+              <h3 className="mt-3 text-sm font-medium text-text-secondary">{t('chat.emptyTitle')}</h3>
+              <p className="mt-1 text-xs text-text-faint">{t('chat.emptyDescription')}</p>
             </div>
 
             <div className="space-y-2">
-              <p className="text-[11px] font-medium uppercase tracking-widest text-text-dim">추천 질문</p>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-text-dim">{t('chat.suggestedLabel')}</p>
               {[
-                "이 모듈에서 배운 개념을 실제 프로젝트에 어떻게 적용하나요?",
-                "이 코드가 왜 이렇게 작성되었는지 설명해 주세요",
-                "이 기술의 장단점을 알려주세요",
+                t('chat.suggestion1'),
+                t('chat.suggestion2'),
+                t('chat.suggestion3'),
               ].map((prompt, idx) => (
                 <button
                   key={idx}
@@ -473,13 +478,13 @@ export function TutorChat({
           <div className="mb-1.5 flex items-center gap-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5">
             <AlertTriangle className="h-3 w-3 shrink-0 text-amber-400" />
             <p className="text-xs text-amber-300">
-              남은 대화: {remainingChats}회 — 한도에 가까워지고 있어요
+              {t('chat.usageWarning', { count: remainingChats })}
             </p>
           </div>
         )}
         {!isUnlimited && remainingChats !== null && remainingChats > 4 && (
           <p className="mb-1.5 text-xs text-text-faint">
-            남은 대화: {remainingChats}회
+            {t('chat.remainingChats', { count: remainingChats })}
           </p>
         )}
         <div className="flex items-end gap-2">
@@ -488,7 +493,7 @@ export function TutorChat({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="질문을 입력하세요... (Shift+Enter: 줄바꿈)"
+            placeholder={t('chat.placeholder')}
             rows={1}
             className="flex-1 resize-none rounded-xl border border-border-default bg-bg-input px-3 py-2 text-sm text-text-primary placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/40 transition-all duration-200"
           />

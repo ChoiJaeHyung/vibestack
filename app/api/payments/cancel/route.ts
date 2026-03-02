@@ -27,7 +27,7 @@ export async function POST() {
     }
 
     if (userData.plan_type === "free") {
-      return errorResponse("이미 Free 플랜입니다", 400);
+      return errorResponse("already_free_plan", 400);
     }
 
     // 빌링키 삭제 (자동결제 중단)
@@ -52,12 +52,12 @@ export async function POST() {
     }
 
     return successResponse({
-      message: "구독이 취소되었습니다",
+      message: "subscription_cancelled",
       expiresAt: userData.plan_expires_at,
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "구독 취소 중 오류가 발생했습니다";
+      error instanceof Error ? error.message : "subscription_cancel_error";
     return errorResponse(message, 500);
   }
 }

@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!userData.toss_billing_key) {
-      return errorResponse("빌링키가 등록되지 않았습니다. 먼저 카드를 등록해주세요.", 400);
+      return errorResponse("billing_key_not_registered", 400);
     }
 
     const decryptedBillingKey = decrypt(userData.toss_billing_key);
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     if (!billingResponse.ok) {
       return errorResponse(
-        billingData.message ?? "자동결제에 실패했습니다",
+        billingData.message ?? "auto_payment_failed",
         billingResponse.status,
       );
     }
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       console.error("[payments/subscribe] Failed to insert payment:", insertError);
-      return errorResponse("결제는 완료되었으나 기록 저장에 실패했습니다. 고객센터에 문의해주세요.", 500);
+      return errorResponse("payment_record_save_failed", 500);
     }
 
     // plan_expires_at 갱신
@@ -119,13 +119,13 @@ export async function POST(request: NextRequest) {
 
     if (planError) {
       console.error("[payments/subscribe] Failed to update user plan:", planError);
-      return errorResponse("결제는 완료되었으나 플랜 업데이트에 실패했습니다. 고객센터에 문의해주세요.", 500);
+      return errorResponse("plan_update_failed", 500);
     }
 
     return successResponse({ status: "done", plan });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "자동결제 중 오류가 발생했습니다";
+      error instanceof Error ? error.message : "auto_payment_error";
     return errorResponse(message, 500);
   }
 }

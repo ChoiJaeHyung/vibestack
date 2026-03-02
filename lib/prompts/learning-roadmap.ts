@@ -47,6 +47,7 @@ const CONTENT_JSON_SCHEMA = `[
 
 import type { EducationalAnalysis } from "@/types/educational-analysis";
 import type { ConceptHint } from "@/lib/knowledge/types";
+import type { Locale } from "@/types/database";
 
 interface TechStackInput {
   technology_name: string;
@@ -70,27 +71,108 @@ function buildTechListSection(techStacks: TechStackInput[]): string {
     .join("\n");
 }
 
-function buildLevelGuidance(level: string): string {
+function buildLevelGuidance(level: string, locale: Locale = "ko"): string {
   if (level === "beginner") {
-    return `   - Start with absolute basics ("What is X and why does it exist?")
-   - Use simple analogies and everyday language
-   - Avoid jargon — when you must use a technical term, define it immediately
-   - More concept and quiz modules, fewer practical modules
-   - 모든 기술 개념에 최소 1개 실생활 비유 필수 (예: "API는 식당 메뉴판 같은 거예요")
-   - 개념 소개 → 즉시 학생 코드에서 해당 부분 연결 ("여러분의 코드에서는 이렇게 쓰이고 있어요")
-   - "왜 필요한지" 먼저 설명 → 그 다음 "어떻게 동작하는지"
-   - 각 섹션 끝에 "💡 핵심 포인트" 요약 박스 추가`;
+    if (locale === "en") {
+      return `   **[Core Principle] Explain as if teaching a 5-6 year old child.**
+   Assume they know absolutely nothing. They've never heard of "variables" or "functions."
+
+   **① Explanation depth — Break every new concept into 3 steps (mandatory):**
+   - Step 1 Analogy: Use everyday things ("An API is like a restaurant order window 🍜")
+   - Step 2 One-sentence definition: Turn the analogy into a technical one-liner ("An API is a protocol for programs to exchange data")
+   - Step 3 Code connection: Find a real example in the student's code ("Your app/api/route.ts file is exactly this API!")
+
+   **② "What if this didn't exist?" — before/after comparison mandatory:**
+   - For every concept, first show the "what if it's missing?" scenario
+   - e.g., "Without middleware? → Anyone can access secret pages without logging in 😱"
+   - before (problem) → after (solution) structure makes the "why" click immediately
+
+   **③ Analogy principles — Use only things kids know:**
+   - 🍕 Food: API→restaurant order window, database→refrigerator, cache→lunchbox
+   - 🧱 LEGO: component→LEGO brick, library→LEGO instruction manual, props→brick color
+   - 🏫 School: routing→classroom numbers, auth→ID badge, middleware→security guard
+   - 🎮 Play: events→pressing game buttons, async→sending a letter and waiting for a reply
+   - Give technical terms friendly nicknames: useState→"memory box", props→"delivery box", middleware→"security checkpoint"
+
+   **④ Encouragement, praise & emojis — use generously:**
+   - 🎯 One-line summary at the end of each section
+   - 💡 Tip: practical advice
+   - ⚠️ Watch out: common mistake warnings
+   - 👏 Praise every 2-3 explanations: "👏 Amazing! If you've understood this far, you're doing great!"
+   - 🎉 Celebration at module end: "🎉 Congrats! You now understand X!"
+   - Use emojis liberally throughout (no dry explanations)
+
+   **⑤ Section composition & tone:**
+   - concept modules 40%+, quiz modules 20%+, practical 15% max (very easy only)
+   - 50%+ quizzes should be analogy-based ("If an API is a restaurant order window, what's the menu?")
+   - Every line of code needs a plain-English translation (e.g., \`const x = 5\` → "We're putting the number 5 into a box named x")
+   - Tone: gentle and patient, like reading a picture book — "Let's look at this together!", "See? Easier than you thought! 😊"
+   - Short sentences (ideally under 15 words each), one idea per sentence
+   - One concept at a time — never pile multiple concepts together`;
+    }
+    return `   **[대원칙] 5~6세 아이에게 설명한다고 생각하세요.**
+   아무것도 모른다고 가정하세요. "변수가 뭔지", "함수가 뭔지"조차 처음 듣는 사람이에요.
+
+   **① 설명 깊이 — 개념을 3단계로 쪼개기 (모든 새 개념에 필수):**
+   - 1단계 비유: 아이가 아는 것으로 비유 ("API는 분식집 주문 창구예요 🍜")
+   - 2단계 한 문장 정의: 비유를 기술 용어로 바꿔 한 문장으로 ("API는 프로그램끼리 데이터를 주고받는 약속이에요")
+   - 3단계 코드 연결: 학생 코드에서 실제 예시 찾기 ("여러분의 app/api/route.ts 파일이 바로 이 API예요!")
+
+   **② "이게 없으면 어떻게 될까요?" — before/after 비교 필수:**
+   - 개념을 설명할 때마다 "만약 이게 없다면?" 시나리오를 먼저 보여주세요
+   - 예: "미들웨어가 없으면? → 아무나 로그인 없이 비밀 페이지에 들어갈 수 있어요 😱"
+   - 예: "타입이 없으면? → 숫자를 넣어야 하는 곳에 글자를 넣어도 아무도 안 알려줘요"
+   - before(문제 상황) → after(해결) 구조로 설명하면 "왜 필요한지"가 바로 와닿아요
+
+   **③ 비유 원칙 — 아이들이 아는 것만 사용:**
+   - 🍕 음식: API→분식집 주문 창구, 데이터베이스→냉장고, 캐시→도시락
+   - 🧱 레고: 컴포넌트→레고 블록, 라이브러리→레고 세트 설명서, props→블록 색깔
+   - 🏫 학교: 라우팅→교실 번호, 인증→출입증, 미들웨어→보안 아저씨
+   - 🎮 놀이: 이벤트→게임 버튼 누르기, 비동기→친구한테 편지 보내고 답장 기다리기
+   - 기술 용어에 한국어 별명 붙이기: useState→"기억 상자", props→"택배 상자", middleware→"보안 검문소"
+
+   **④ 격려·칭찬·이모지를 대폭 늘리기:**
+   - 🎯 한 줄 정리: 섹션 끝마다 "🎯 한 줄 정리: ..."로 핵심 요약
+   - 💡 팁: "💡 꿀팁: ..."으로 실용적 조언
+   - ⚠️ 주의: "⚠️ 조심! ..."으로 흔한 실수 경고
+   - 👏 칭찬: 설명 2-3개마다 "👏 대단해요! 여기까지 이해했으면 정말 잘하고 있는 거예요!"
+   - 🎉 축하: 모듈 마지막에 "🎉 축하해요! 이제 여러분은 X를 이해하는 사람이에요!"
+   - 문장 사이사이에 이모지를 적극 활용 (딱딱한 설명 금지)
+
+   **⑤ 섹션 구성 & 톤:**
+   - concept 모듈 40% 이상, quiz 모듈 20% 이상, practical은 15% 이하(아주 쉬운 것만)
+   - quiz의 50% 이상은 비유 기반 ("API가 분식집 주문 창구라면, 메뉴판은 뭘까요?")
+   - 코드 한 줄마다 개별 "우리말 번역" 필수 (예: \`const x = 5\` → "x라는 이름의 상자에 숫자 5를 넣는 거예요")
+   - 톤: 그림책 읽어주듯 부드럽고 천천히 — "자, 이제 같이 볼까요~?", "어때요, 생각보다 쉽죠? 😊"
+   - 짧은 문장 위주 (한 문장 15자 이내 권장), 한 문장에 하나의 아이디어만
+   - 한 번에 하나의 개념만 — 여러 개념을 한꺼번에 설명하지 않기`;
   }
   if (level === "intermediate") {
-    return `   - Assume basic programming knowledge
-   - Focus on "how" and "why" rather than "what"
-   - Include more practical and project_walkthrough modules
-   - Cover common patterns and best practices`;
+    if (locale === "en") {
+      return `   - Assume basic programming knowledge
+   - Focus on "how" and "why" — not just usage but underlying mechanics and design rationale
+   - Emphasize practical and project_walkthrough modules
+   - Cover common patterns, best practices, and frequent mistakes — when discussing mistakes, empathize: "This is a really common one — I made the same mistake when I started too"
+   - Tone: like a senior developer doing a code review — "This part works better if you do it this way", "This is why we use this pattern"`;
+    }
+    return `   - 기본 프로그래밍 지식은 안다고 가정
+   - "어떻게"와 "왜"에 집중 — 단순 사용법이 아니라 동작 원리와 설계 이유
+   - practical과 project_walkthrough 모듈 비중 높이기
+   - 일반적인 패턴, 베스트 프랙티스, 흔한 실수를 다루되, 실수 얘기 시 "이런 실수 많이 하거든요, 저도 처음에 그랬어요" 식으로 공감
+   - 톤: 같이 일하는 선배 개발자가 코드 리뷰하며 알려주듯 — "이 부분은 이렇게 하면 더 좋아요", "이런 이유로 이 패턴을 쓰는 거예요"`;
   }
-  return `   - Assume solid programming knowledge
-   - Focus on advanced patterns, performance, and architecture
-   - Heavy on practical and project_walkthrough modules
-   - Cover edge cases, internals, and optimization strategies`;
+  if (locale === "en") {
+    return `   - Assume strong programming knowledge
+   - Focus on advanced patterns, performance optimization, and architecture design
+   - Maximize practical and project_walkthrough modules
+   - Cover edge cases, internal mechanics, and optimization strategies
+   - Tone: like a peer-to-peer tech discussion — "Let's examine the trade-offs of this approach", "This scenario comes up quite often in production"`;
+  }
+  return `   - 탄탄한 프로그래밍 지식 전제
+   - 고급 패턴, 성능 최적화, 아키텍처 설계에 집중
+   - practical과 project_walkthrough 비중 극대화
+   - 엣지 케이스, 내부 동작 원리, 최적화 전략 다루기
+   - 톤: 같은 개발자끼리 기술 토론하듯 — "이 접근 방식의 트레이드오프를 살펴볼까요?", "실무에서는 이런 상황이 꽤 자주 발생하거든요"`;
 }
 
 // ─── Educational Analysis Context Builder ─────────────────────────────
@@ -250,6 +332,7 @@ export function buildStructurePrompt(
   projectDigest: string,
   userLevel?: "beginner" | "intermediate" | "advanced",
   educationalAnalysis?: EducationalAnalysis,
+  locale: Locale = "ko",
 ): string {
   const level = userLevel ?? "beginner";
   const techListSection = buildTechListSection(techStacks);
@@ -290,7 +373,7 @@ ${projectDigest}
 ${educationalContext}
 ## Instructions
 
-Write ALL output in Korean (한국어). Module titles, descriptions, and learning_objectives should all be in Korean.
+${locale === "en" ? "Write ALL output in English. Module titles, descriptions, and learning_objectives should all be in English." : "Write ALL output in Korean (한국어). Module titles, descriptions, and learning_objectives should all be in Korean."}
 
 Create the STRUCTURE of a learning roadmap (no content bodies yet). Follow these rules:
 
@@ -309,7 +392,12 @@ Create the STRUCTURE of a learning roadmap (no content bodies yet). Follow these
    - \`quiz\` — Knowledge check with multiple choice questions
    - \`project_walkthrough\` — Walk through how this concept appears in their actual project
 6. **For ${level} level:**
-${buildLevelGuidance(level)}
+${buildLevelGuidance(level, locale)}${level === "beginner" ? `
+   **[초급 모듈 비중 규칙 — 반드시 준수]:**
+   - concept 모듈: 전체의 40% 이상
+   - quiz 모듈: 전체의 20% 이상
+   - practical 모듈: 전체의 15% 이하 (아주 쉬운 것만)
+   - estimated_minutes: 25-45분 (더 상세한 설명 때문에 기본 시간 증가)` : ""}
 7. **relevant_files** — List specific file paths from the project that are relevant to this module. Use actual paths from the project digest above.
 8. **learning_objectives** — List 2-4 specific things the student will learn in this module.
 9. **Organize modules by layer** — Help the student understand the frontend/backend boundary. For web apps, organize modules to cover: routing/pages (프론트엔드), API endpoints (백엔드), database access patterns (데이터베이스), authentication flow (인증), and shared utilities (공통 유틸리티).
@@ -345,6 +433,7 @@ export function buildContentBatchPrompt(
   userLevel?: "beginner" | "intermediate" | "advanced",
   educationalAnalysis?: EducationalAnalysis,
   kbHints?: ConceptHint[],
+  locale: Locale = "ko",
 ): string {
   const level = userLevel ?? "beginner";
 
@@ -386,7 +475,7 @@ ${kbSection}
 ${educationalAnalysis ? `\n${formatContentContext(educationalAnalysis, level, relevantCode.map((f) => f.path))}\n` : ""}
 ## Instructions
 
-Write ALL content in Korean (한국어). Module titles, descriptions, explanations, quiz questions, quiz options, and challenges should all be in Korean. Technical terms (e.g., "middleware", "API route") can stay in English but explanations must be in Korean.
+${locale === "en" ? "Write ALL content in English. Module titles, descriptions, explanations, quiz questions, quiz options, and challenges should all be in English." : "Write ALL content in Korean (한국어). Module titles, descriptions, explanations, quiz questions, quiz options, and challenges should all be in Korean. Technical terms (e.g., \"middleware\", \"API route\") can stay in English but explanations must be in Korean."}
 
 For each module listed above, generate detailed content sections. Follow these rules:
 
@@ -397,10 +486,72 @@ For each module listed above, generate detailed content sections. Follow these r
    - \`quiz_question\` — Multiple choice question based on the student's actual code (must include \`quiz_options\` and \`quiz_answer\` fields). For example: "\`app/layout.tsx\`에서 \`<html lang='ko'>\`를 사용하는 이유는 무엇일까요?"
    - \`challenge\` — A small, concrete coding challenge the student can try on their own project. Be specific about which file to modify and what to add. For example: "\`app/api/v1/projects/route.ts\`에 새로운 쿼리 파라미터를 추가해서 프로젝트를 상태별로 필터링하는 기능을 만들어 보세요."
    - \`reflection\` — A short "생각해보기" prompt (1-3 sentences) asking the student to pause and think. No quiz_options needed. For example: "만약 이 미들웨어가 없다면 어떤 문제가 생길까요? 한번 상상해 보세요."
-3. **Each module MUST have 5-8 sections.** Each explanation section should be thorough — 5-8 paragraphs with step-by-step explanations. Use a mix of paragraphs and bullet points. Longer, detailed explanations are better than short, cryptic ones. Treat each explanation like a mini-lesson.
+3. **Each module MUST have ${level === "beginner" ? "7-12" : "5-8"} sections.** Each explanation section should be thorough — ${level === "beginner" ? "8-12 paragraphs" : "5-8 paragraphs"} with step-by-step explanations. Use a mix of paragraphs and bullet points. Longer, detailed explanations are better than short, cryptic ones. Treat each explanation like a mini-lesson.${level === "beginner" ? " Each explanation body MUST be at least 400 characters." : ""}
 4. **Interleave interactive sections:** After every 1-2 explanation/code_example sections, insert a quiz_question or reflection section. Never have more than 2 explanation sections in a row.
-5. **Friendly teacher tone:** Write like a patient, experienced friend explaining things over coffee. Use clear, simple Korean. Start sections with a hook question ("왜 이렇게 할까요?", "이 코드를 보면..."). Mix short sentences with detailed explanations. Use analogies liberally — compare programming concepts to everyday things (e.g., "API는 식당 메뉴판 같은 거예요", "컴포넌트는 레고 블록이에요"). Each section should feel like a thorough mini-lesson that the student can truly learn from.
-6. **Citations and References:** Every explanation and code_example section MUST include relevant official documentation links as markdown. At the end of each explanation section, add a '📚 더 알아보기' subsection with 2-3 clickable links to the most relevant docs:
+5. **Friendly, warm, encouraging tone:** ${locale === "en" ? `Make the student feel "I can do this with this teacher!"
+
+   **Tone rules (mandatory):**
+   - Use casual, friendly "you" language
+   - Address the student as "you" or "we"
+   - Short sentences, one idea per sentence
+
+   **Encouragement and empathy (mandatory — at least once per explanation section):**
+   - Opening: "Ever looked at this code and thought 'what does this do?' Don't worry, let's break it down together 😊"
+   - Mid-section: "If you've followed along this far, you already understand half of it!", "This part can be tricky, so let's take it slow"
+   - Closing: "Amazing! You now know how X works 👏"
+
+   **Transition phrases (natural flow):**
+   - "Alright, now let's..." / "Hold on a second!" / "But here's an interesting question..."
+   - "Let's see how this looks in your actual code"
+   - "Hearing about it is one thing — let's check the code directly"
+
+   **Analogies and everyday connections (mandatory — for every new concept):**
+   - "An API is like a restaurant order window — you place an order (request) and get food (data) back"
+   - "Components are like LEGO bricks. You combine small bricks to build bigger structures"
+   - "Middleware is like the security checkpoint at a building entrance. Everyone must pass through before going in"
+
+   **Forbidden patterns:**
+   - ❌ Dry academic tone or textbook style
+   - ❌ Stiff commands: "Execute the following", "You must understand"
+   - ❌ Emotionless listing: just dumping definitions without context
+   - ❌ Overly formal language
+
+   **Hook questions to start each section:**
+   - "Have you ever opened this file in your project?"
+   - "Why do we do it this way? Is there an easier approach?"
+   - "Let's look at this code together — it's simpler than you think!"` : `학생이 "이 선생님한테 배우면 나도 할 수 있겠다"고 느끼게 해주세요.
+
+   **어투 규칙 (필수):**
+   - 해요체 사용 (~이에요, ~거든요, ~잖아요, ~할 수 있어요, ~해볼까요?)
+   - 학생을 "여러분" 또는 "우리"로 지칭
+   - 짧은 문장 위주, 한 문장에 하나의 아이디어만
+
+   **격려와 공감 (필수 — 각 explanation 섹션에 최소 1회):**
+   - 시작부: "혹시 이런 코드 보면서 '이게 뭐지?' 싶었던 적 있으세요? 걱정 마세요, 같이 하나씩 풀어볼게요 😊"
+   - 중간 격려: "여기까지 따라오셨으면 벌써 절반은 이해하신 거예요!", "이 부분이 좀 헷갈릴 수 있는데, 천천히 가볼게요"
+   - 마무리 칭찬: "대단해요! 이제 여러분은 X가 어떻게 동작하는지 아는 사람이에요 👏"
+
+   **전환 어구 (자연스러운 흐름):**
+   - "자, 그러면 이제..." / "여기서 잠깐!" / "그런데 한 가지 궁금한 게 있죠?"
+   - "실제로 여러분의 코드에서 어떻게 쓰이는지 볼까요?"
+   - "말로만 들으면 어려울 수 있으니, 코드로 직접 확인해봐요"
+
+   **비유와 일상 연결 (필수 — 새 개념 등장 시마다):**
+   - "API는 식당 주문 창구 같은 거예요 — 주문(요청)을 넣으면 음식(데이터)이 나오죠"
+   - "컴포넌트는 레고 블록이에요. 작은 블록을 조합해서 큰 구조를 만드는 거거든요"
+   - "미들웨어는 건물 입구의 보안 검색대예요. 모든 사람이 들어가기 전에 한 번 거쳐야 하죠"
+
+   **금지 패턴:**
+   - ❌ 교과서체/논문체: "~이다", "~하라", "~것이다", "~해야 한다"
+   - ❌ 딱딱한 명령형: "다음을 수행하시오", "이해해야 합니다"
+   - ❌ 감정 없는 나열: 개념을 그냥 정의만 던지고 넘어가는 것
+   - ❌ 영어 직역투: "이것은 ~의 역할을 한다" → "이건 ~하는 역할이에요"
+
+   **Hook question으로 시작 (각 섹션 첫 문장):**
+   - "혹시 여러분의 프로젝트에서 이 파일 열어보신 적 있으세요?"
+   - "왜 이렇게 할까요? 더 쉬운 방법은 없을까요?"
+   - "이 코드 한번 같이 볼까요? 생각보다 간단해요!"`}
+6. **Citations and References:** Every explanation and code_example section MUST include relevant official documentation links as markdown. At the end of each explanation section, add a '${locale === "en" ? "📚 Learn More" : "📚 더 알아보기"}' subsection with 2-3 clickable links to the most relevant docs:
    - React → [React 공식 문서](https://react.dev)
    - Next.js → [Next.js 공식 문서](https://nextjs.org/docs)
    - JavaScript/TypeScript → [MDN Web Docs](https://developer.mozilla.org)
@@ -412,7 +563,15 @@ For each module listed above, generate detailed content sections. Follow these r
    2. \`const { data } = await supabase.from('users')...\` — users 테이블에서 데이터를 가져옵니다. await는 데이터가 올 때까지 기다리라는 뜻이에요.
 8. **Quiz questions** should have exactly 4 options with one correct answer (0-indexed). Always include a \`quiz_explanation\` field: explain why the correct answer is right and briefly note why the main wrong answers are incorrect (2-4 sentences).
 9. **For ${level} level:**
-${buildLevelGuidance(level)}
+${buildLevelGuidance(level, locale)}${level === "beginner" ? `
+   **[초급 전용 추가 규칙 — 반드시 준수]:**
+   - explanation body는 최소 400자 이상 — 짧은 설명 금지
+   - 모든 개념에 "이게 없으면 어떻게 될까요?" before/after 비교 필수
+   - code_example의 모든 코드 라인에 "우리말 번역" 필수 (예: \`const x = 5\` → "x라는 이름표가 붙은 상자에 숫자 5를 넣어요 📦")
+   - quiz의 50% 이상은 비유 기반 문제 ("컴포넌트가 레고 블록이라면, props는 뭘까요?")
+   - explanation 2개마다 reflection 1개 삽입 (학생이 멈추고 생각하게)
+   - challenge는 빈칸 1-2개만, 힌트는 매우 구체적으로 ("이 빈칸에는 '데이터를 가져오는 함수 이름'이 들어가요. 힌트: fetch로 시작해요!")
+   - 기술 용어에 한국어 별명 필수: useState→"기억 상자", props→"택배 상자", middleware→"보안 검문소"` : ""}
 10. **For \`project_walkthrough\` modules:** Walk through one of the student's actual files from top to bottom. Start with the imports (각 라이브러리가 무슨 역할인지), then the main logic (핵심 로직 설명), then the exports (다른 파일에서 어떻게 사용되는지). Explain how this file connects to the rest of the project. Use the actual code from the source files above — do NOT paraphrase or abbreviate.
 11. **For \`code_example\` sections:** Use ACTUAL code snippets FROM the student's files, not invented examples. Include the file path and add Korean comments explaining what each important line does. For example:
    \`\`\`
@@ -478,6 +637,7 @@ const ROADMAP_JSON_SCHEMA = `{
 export function buildRoadmapPrompt(
   techStacks: TechStackInput[],
   userLevel?: "beginner" | "intermediate" | "advanced",
+  locale: Locale = "ko",
 ): string {
   const level = userLevel ?? "beginner";
   const techListSection = buildTechListSection(techStacks);
@@ -510,7 +670,7 @@ Create a structured learning roadmap following these rules:
    - \`quiz\` — Knowledge check with multiple choice questions
    - \`project_walkthrough\` — Walk through how this concept appears in their actual project
 6. **For ${level} level:**
-${buildLevelGuidance(level)}
+${buildLevelGuidance(level, locale)}
 7. **Content sections within each module:**
    - \`explanation\` — Clear markdown text explaining a concept
    - \`code_example\` — A code snippet with explanation (must include \`code\` field)

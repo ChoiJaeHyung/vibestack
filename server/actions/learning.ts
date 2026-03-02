@@ -39,6 +39,55 @@ async function getUserLocale(userId: string): Promise<Locale> {
   return (data?.locale as Locale) ?? "ko";
 }
 
+/**
+ * Get the authenticated user's locale. For use in server components.
+ */
+export async function getAuthUserLocale(): Promise<Locale> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return "ko";
+    return getUserLocale(user.id);
+  } catch {
+    return "ko";
+  }
+}
+
+/**
+ * Update the user's learning content locale preference.
+ */
+export async function updateUserLocale(
+  locale: Locale,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const serviceClient = createServiceClient();
+    const { error } = await serviceClient
+      .from("users")
+      .update({ locale })
+      .eq("id", user.id);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to update locale" };
+  }
+}
+
 // ─── Type Aliases ────────────────────────────────────────────────────
 
 type Difficulty = Database["public"]["Enums"]["difficulty"];
@@ -736,7 +785,7 @@ export async function generateModuleContent(
       return {
         success: false,
         error:
-          "이 모듈에는 메타데이터가 없습니다. 로드맵을 다시 생성해 주세요.",
+          "module_metadata_missing",
       };
     }
 
@@ -993,10 +1042,10 @@ async function _generateContentForModule(
       `[learning] Content parse error for batch (${batchModules.map((m) => m.title).join(", ")}):`,
       parseError instanceof Error ? parseError.message : parseError,
     );
-    await setBatchError("콘텐츠 생성 결과를 파싱하지 못했습니다.");
+    await setBatchError("content_parse_error");
     return {
       success: false,
-      error: "콘텐츠 생성 결과를 파싱하지 못했습니다. 다시 시도해 주세요.",
+      error: "content_parse_error",
     };
   }
 

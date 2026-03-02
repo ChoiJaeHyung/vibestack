@@ -26,6 +26,7 @@ export interface TechnologyKnowledgeRow {
   llm_model: string | null;
   generation_error: string | null;
   generated_at: string | null;
+  locale: "ko" | "en";
   created_at: string;
   updated_at: string;
 }

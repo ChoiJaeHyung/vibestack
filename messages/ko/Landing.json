@@ -1,0 +1,211 @@
+{
+  "nav": {
+    "howItWorks": "작동 방식",
+    "features": "기능",
+    "pricing": "가격",
+    "faq": "FAQ",
+    "dashboard": "대시보드",
+    "logout": "로그아웃"
+  },
+  "metadata": {
+    "title": "VibeUniv — AI로 만든 앱, 내 코드로 제대로 배우기",
+    "description": "Cursor, Claude Code로 앱을 만들었나요? 프로젝트를 연결하면 AI가 기술 스택을 분석하고, 내 코드가 교재가 되는 맞춤 학습을 시작할 수 있어요. 무료로 지금 시작하세요."
+  },
+  "hero": {
+    "badge": "바이브 코더를 위한 학습 플랫폼",
+    "title": {
+      "prefix": "만들었으면 ",
+      "highlight": "반은 왔어요",
+      "line2": "나머지 반,",
+      "line3": "여기서 채워요"
+    },
+    "description": {
+      "line1": "AI 코딩 도구로 앱을 만들었나요?",
+      "line2": "프로젝트를 연결하면 AI가 기술 스택을 분석하고, 딱 필요한 것만 알려드려요"
+    },
+    "cta": {
+      "dashboard": "대시보드로 이동",
+      "guide": "가이드 보기",
+      "signup": "5분만에 시작하기",
+      "guideArrow": "가이드 보기 →"
+    }
+  },
+  "stats": {
+    "projects": "프로젝트 분석",
+    "aiModelsSuffix": "개",
+    "aiModels": "AI 모델 지원",
+    "modules": "학습 모듈 생성"
+  },
+  "how": {
+    "title": {
+      "prefix": "어떻게 ",
+      "highlight": "작동",
+      "suffix": "하나요?"
+    },
+    "subtitle": "3단계로 프로젝트를 이해하세요"
+  },
+  "steps": {
+    "0": {
+      "title": "프로젝트 연결",
+      "description": "코딩 도구에서 MCP로 원클릭 연결. Claude Code, Cursor 등에서 한 번만 설정하면 끝.",
+      "code": "// claude_desktop_config.json\n{\n  \"mcpServers\": {\n    \"vibeuniv\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"@vibeuniv/mcp-server@latest\"],\n      \"env\": { \"VIBEUNIV_API_KEY\": \"your-key\" }\n    }\n  }\n}"
+    },
+    "1": {
+      "title": "AI가 분석",
+      "description": "기술 스택, 구조, 패턴을 자동으로 파악. 11개 AI 모델 중 원하는 걸로 분석.",
+      "code": "✓ Scanning project files...\n📦 package.json → Next.js 15, React 19\n📦 tsconfig.json → TypeScript (strict)\n📦 tailwind.config → Tailwind CSS v4\n📦 supabase/ → Supabase (PostgreSQL)\n✓ 4 technologies detected"
+    },
+    "2": {
+      "title": "내 코드로 학습",
+      "description": "내 프로젝트 코드가 교재가 됩니다. AI 튜터에게 뭐든 물어보세요.",
+      "code": "🎓 Learning Path: \"Next.js 풀스택 마스터\"\n├── Module 1: App Router 이해하기\n├── Module 2: Server Components vs Client\n├── Module 3: Supabase Auth 연동\n├── Module 4: API Routes 설계\n├── Module 5: 배포와 최적화\n└── Module 6: 보안 베스트 프랙티스"
+    }
+  },
+  "features": {
+    "0": {
+      "title": "원클릭 프로젝트 연동",
+      "description": "Claude Code, Cursor 등에서 한 번만 설정하면 끝. MCP로 자동 연결됩니다."
+    },
+    "1": {
+      "title": "11개 AI 모델 지원",
+      "description": "Anthropic, OpenAI, Google 등 원하는 모델로 분석하고 학습하세요."
+    },
+    "2": {
+      "title": "내 코드가 교과서",
+      "description": "추상적인 튜토리얼 대신, 내가 만든 코드로 배워요. 진짜 이해가 됩니다."
+    },
+    "3": {
+      "title": "AI 튜터",
+      "description": "모르는 건 바로 물어보세요. 내 코드 컨텍스트로 설명해줘요."
+    },
+    "4": {
+      "title": "AES-256 암호화",
+      "description": "모든 API 키와 코드 데이터는 AES-256-GCM으로 암호화되어 안전합니다."
+    },
+    "5": {
+      "title": "BYOK (자체 LLM 키)",
+      "description": "Pro 플랜에서 본인의 API 키를 등록해 원하는 모델로 자유롭게 사용하세요."
+    },
+    "title": {
+      "prefix": "주요 ",
+      "highlight": "기능"
+    },
+    "subtitle": "바이브 코더를 위한 올인원 학습 플랫폼"
+  },
+  "pricing": {
+    "title": {
+      "prefix": "플랜 & ",
+      "highlight": "가격"
+    },
+    "subtitle": "무료로 시작하고, 필요할 때 업그레이드하세요",
+    "perMonth": "/월",
+    "popular": "POPULAR",
+    "currentPlan": "현재 플랜",
+    "upgrade": "업그레이드",
+    "free": {
+      "description": "사이드 프로젝트로 시작하기",
+      "price": "₩0",
+      "cta": "무료로 시작하기",
+      "features": {
+        "0": "프로젝트 3개",
+        "1": "기본 기술 스택 분석",
+        "2": "월 1회 학습 로드맵",
+        "3": "월 20회 AI 대화"
+      }
+    },
+    "pro": {
+      "description": "본격적으로 성장하기",
+      "price": "₩25,000",
+      "cta": "Pro 시작하기",
+      "features": {
+        "0": "무제한 프로젝트",
+        "1": "심화 분석",
+        "2": "무제한 학습 로드맵",
+        "3": "무제한 AI 대화",
+        "4": "BYOK (자체 LLM 키)"
+      }
+    },
+    "team": {
+      "description": "팀과 함께 학습하기",
+      "price": "₩59,000",
+      "cta": "Team 시작하기",
+      "features": {
+        "0": "Pro 전체 기능",
+        "1": "팀 프로젝트 공유",
+        "2": "팀 학습 대시보드",
+        "3": "우선 지원"
+      }
+    }
+  },
+  "faq": {
+    "0": {
+      "question": "바이브 코딩이 뭔가요?",
+      "answer": "<p>바이브 코딩(Vibe Coding)은 AI 코딩 도구(Claude Code, Cursor, Bolt 등)를 사용하여 <strong>프롬프트만으로 앱을 만드는 방식</strong>이에요. \"이런 기능 만들어줘\"라고 말하면 AI가 코드를 생성하죠.</p><p>문제는, 이렇게 만든 앱이 <em>왜</em> 돌아가는지 모를 수 있다는 거예요. VibeUniv는 바로 그 부분을 채워드립니다.</p>"
+    },
+    "1": {
+      "question": "MCP로 프로젝트를 연결하는 방법이 궁금해요",
+      "answer": "<p>MCP(Model Context Protocol)를 사용하면 코딩 도구에서 프로젝트를 자동으로 VibeUniv에 연결할 수 있어요.</p><step>1단계: API 키 발급</step><p>VibeUniv에 가입한 뒤, Settings > API Keys 페이지에서 API 키를 발급하세요.</p><step>2단계: MCP 서버 설정</step><p>코딩 도구의 MCP 설정 파일에 vibeuniv 서버를 추가하세요.</p><step>3단계: 프로젝트 동기화</step><p>코딩 도구를 재시작하면 자동 연결됩니다. 대시보드에서 확인하세요!</p>"
+    },
+    "2": {
+      "question": "어떤 AI 모델을 지원하나요?",
+      "answer": "<p>총 <strong>11개 LLM 프로바이더</strong>를 지원합니다.</p><p>Anthropic (Claude), OpenAI (GPT), Google (Gemini), Groq, Mistral, DeepSeek, Cohere, Together AI, Fireworks AI, xAI (Grok), OpenRouter</p><p>Pro 플랜에서는 BYOK 기능으로 본인의 API 키를 등록해서 쓸 수 있어요.</p>"
+    },
+    "3": {
+      "question": "Free 플랜으로 충분한가요?",
+      "answer": "<p>개인 사이드 프로젝트 1~2개를 학습하기에는 충분해요! 프로젝트 3개, 기본 분석, 월 1회 로드맵, 월 20회 AI 대화가 포함됩니다.</p><p>더 많은 프로젝트나 무제한 AI 대화가 필요하다면 Pro(₩25,000/월)를 추천해요.</p>"
+    },
+    "4": {
+      "question": "내 코드는 안전하게 보관되나요?",
+      "answer": "<p>보안은 최우선 사항이에요.</p><p>모든 데이터는 암호화되어 전송 및 저장됩니다. 민감한 파일(.env 등)은 자동 제외되고, LLM API 키는 AES-256-GCM으로 암호화됩니다. 언제든 데이터 삭제도 가능해요.</p>"
+    },
+    "5": {
+      "question": "BYOK(Bring Your Own Key)가 뭔가요?",
+      "answer": "<p>BYOK는 <strong>본인이 가진 LLM API 키</strong>를 등록해서 사용하는 기능이에요. Pro 플랜 이상에서 사용할 수 있습니다.</p><p>Settings > LLM Keys에서 프로바이더를 선택하고 API 키를 입력하면 바로 사용 가능해요.</p>"
+    },
+    "title": {
+      "prefix": "자주 묻는 ",
+      "highlight": "질문"
+    }
+  },
+  "finalCta": {
+    "title": "지금 바로 시작하세요",
+    "description": {
+      "line1": "AI로 만든 프로젝트, 이제 진짜 이해할 차례예요.",
+      "line2": "5분이면 첫 분석을 시작할 수 있어요."
+    },
+    "dashboard": "대시보드로 이동",
+    "signup": "무료로 시작하기"
+  },
+  "footer": {
+    "copyright": "© 2026 VibeUniv. All rights reserved.",
+    "company": "상호명: VibeUniv.Inc | 대표: 최재형 | 사업자등록번호: 257-37-01450"
+  },
+  "jsonLd": {
+    "faq": {
+      "0": {
+        "question": "바이브 코딩이 뭔가요?",
+        "answer": "바이브 코딩(Vibe Coding)은 AI 코딩 도구(Claude Code, Cursor, Bolt 등)를 사용하여 프롬프트만으로 앱을 만드는 방식이에요. 문제는 이렇게 만든 앱이 왜 돌아가는지 모를 수 있다는 거예요. VibeUniv는 바로 그 부분을 채워드립니다."
+      },
+      "1": {
+        "question": "MCP로 프로젝트를 연결하는 방법이 궁금해요",
+        "answer": "MCP(Model Context Protocol)를 사용하면 코딩 도구에서 프로젝트를 자동으로 VibeUniv에 연결할 수 있어요. 1단계: API 키 발급, 2단계: MCP 서버 설정, 3단계: 프로젝트 동기화. 코딩 도구를 재시작하면 자동 연결됩니다."
+      },
+      "2": {
+        "question": "어떤 AI 모델을 지원하나요?",
+        "answer": "총 11개 LLM 프로바이더를 지원합니다. Anthropic (Claude), OpenAI (GPT), Google (Gemini), Groq, Mistral, DeepSeek, Cohere, Together AI, Fireworks AI, xAI (Grok), OpenRouter. Pro 플랜에서는 BYOK 기능으로 본인의 API 키를 등록해서 쓸 수 있어요."
+      },
+      "3": {
+        "question": "Free 플랜으로 충분한가요?",
+        "answer": "개인 사이드 프로젝트 1~2개를 학습하기에는 충분해요! 프로젝트 3개, 기본 분석, 월 1회 로드맵, 월 20회 AI 대화가 포함됩니다. 더 많은 프로젝트나 무제한 AI 대화가 필요하다면 Pro(₩25,000/월)를 추천해요."
+      },
+      "4": {
+        "question": "내 코드는 안전하게 보관되나요?",
+        "answer": "보안은 최우선 사항이에요. 모든 데이터는 암호화되어 전송 및 저장됩니다. 민감한 파일(.env 등)은 자동 제외되고, LLM API 키는 AES-256-GCM으로 암호화됩니다. 언제든 데이터 삭제도 가능해요."
+      },
+      "5": {
+        "question": "BYOK(Bring Your Own Key)가 뭔가요?",
+        "answer": "BYOK는 본인이 가진 LLM API 키를 등록해서 사용하는 기능이에요. Pro 플랜 이상에서 사용할 수 있습니다. Settings > LLM Keys에서 프로바이더를 선택하고 API 키를 입력하면 바로 사용 가능해요."
+      }
+    }
+  }
+}

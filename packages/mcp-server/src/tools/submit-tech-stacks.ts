@@ -43,10 +43,18 @@ export function registerSubmitTechStacks(server: McpServer, client: VibeUnivClie
         }
 
         const result = await client.submitTechStacks(project_id, submission);
+        const locale = await client.getUserLocale();
 
-        let output = `🎉 프로젝트 연결 완료! (${result.savedCount}개 기술 저장)\n\n`;
-        output += `https://vibeuniv.com 에서 프로젝트를 확인할 수 있습니다.\n\n`;
-        output += `📚 다음: 사용자에게 난이도(beginner 초급 / intermediate 중급 / advanced 고급)를 물어본 후 vibeuniv_generate_curriculum을 호출하세요.`;
+        let output: string;
+        if (locale === "en") {
+          output = `🎉 Project connected! (${result.savedCount} technologies saved)\n\n`;
+          output += `You can view the project at https://vibeuniv.com\n\n`;
+          output += `📚 Next: Ask the user which difficulty level they prefer (beginner / intermediate / advanced), then call vibeuniv_generate_curriculum.`;
+        } else {
+          output = `🎉 프로젝트 연결 완료! (${result.savedCount}개 기술 저장)\n\n`;
+          output += `https://vibeuniv.com 에서 프로젝트를 확인할 수 있습니다.\n\n`;
+          output += `📚 다음: 사용자에게 난이도(beginner 초급 / intermediate 중급 / advanced 고급)를 물어본 후 vibeuniv_generate_curriculum을 호출하세요.`;
+        }
 
         return {
           content: [{ type: "text" as const, text: output }],

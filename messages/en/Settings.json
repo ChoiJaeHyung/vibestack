@@ -1,0 +1,74 @@
+{
+  "title": "Settings",
+  "subtitle": "Manage your account settings and API keys",
+  "profile": {
+    "title": "Profile",
+    "description": "View your account information",
+    "email": "Email",
+    "unknown": "Unknown"
+  },
+  "learningGoal": {
+    "title": "Learning Goal",
+    "description": "Set your weekly learning goal"
+  },
+  "weeklyTarget": {
+    "label": "Weekly learning days",
+    "saved": "Saved",
+    "2days": "2 days",
+    "2daysDesc": "Light",
+    "3days": "3 days",
+    "3daysDesc": "Recommended",
+    "5days": "5 days",
+    "5daysDesc": "Steady",
+    "7days": "Every day",
+    "7daysDesc": "Full power"
+  },
+  "locale": {
+    "sectionTitle": "Content Language",
+    "sectionDescription": "Choose the language for AI-generated learning content",
+    "label": "Content Language",
+    "saved": "Saved",
+    "notice": "Applies to newly generated content only. Existing content will not change."
+  },
+  "apiKey": {
+    "title": "API Keys",
+    "description": "Manage API keys for MCP server and CLI",
+    "inputPlaceholder": "Key name (e.g. my-mcp-server)",
+    "create": "Create",
+    "createdMessage": "API key created. This key won't be shown again, so save it somewhere safe.",
+    "close": "Close",
+    "noKeys": "No API keys created",
+    "inactive": "Inactive",
+    "created": "Created:",
+    "lastUsed": "Last used:",
+    "deactivate": "Deactivate",
+    "delete": "Delete"
+  },
+  "llmKey": {
+    "title": "LLM API Keys",
+    "description": "Register API keys for LLM providers used in AI analysis (BYOK)",
+    "byokTitle": "BYOK (Bring Your Own Key)",
+    "byokDescription": " lets you use your own AI service API keys. Supported on the Pro plan with faster responses and model selection.",
+    "inputPlaceholder": "Enter API key",
+    "getKey": "Get {provider} key",
+    "getKeyGeneric": "Get an API key from the official website",
+    "validate": "Validate",
+    "save": "Save",
+    "enterKey": "Please enter an API key",
+    "validKey": "API key is valid",
+    "invalidKey": "API key is invalid",
+    "validationError": "An error occurred during validation",
+    "saveError": "An error occurred while saving",
+    "deleteError": "An error occurred while deleting",
+    "setDefaultError": "An error occurred while setting default",
+    "noKeys": "No LLM API keys registered",
+    "default": "Default",
+    "registered": "Added:",
+    "setDefault": "Set as default",
+    "delete": "Delete"
+  },
+  "subscription": {
+    "title": "Subscription Plan",
+    "description": "Current plan: {plan} — Click to manage"
+  }
+}

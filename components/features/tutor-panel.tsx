@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { X, MessageCircle, Search } from "lucide-react";
 import { useTutorPanel } from "@/components/features/tutor-panel-context";
 import { TutorChat } from "@/components/features/tutor-chat";
@@ -9,6 +10,7 @@ import { TutorSearch } from "@/components/features/tutor-search";
 type TabType = "chat" | "search";
 
 export function TutorPanel() {
+  const t = useTranslations("Tutor");
   const { isOpen, close, panelProps, selectedText } = useTutorPanel();
   const [activeTab, setActiveTab] = useState<TabType>("chat");
 
@@ -50,7 +52,7 @@ export function TutorPanel() {
         <div className="border-b border-border-default">
           <div className="flex items-center justify-between px-4 py-3">
             <span className="text-sm font-medium text-text-primary">
-              AI 튜터
+              {t("panel.title")}
             </span>
             <button
               type="button"
@@ -73,7 +75,7 @@ export function TutorPanel() {
               }`}
             >
               <MessageCircle className="h-3.5 w-3.5" />
-              채팅
+              {t("panel.chat")}
             </button>
             <button
               type="button"
@@ -85,7 +87,7 @@ export function TutorPanel() {
               }`}
             >
               <Search className="h-3.5 w-3.5" />
-              검색
+              {t("panel.search")}
             </button>
           </div>
         </div>
@@ -104,7 +106,7 @@ export function TutorPanel() {
             ) : (
               <div className="flex h-full items-center justify-center">
                 <p className="text-sm text-text-muted">
-                  학습 모듈을 선택하세요
+                  {t("panel.selectModule")}
                 </p>
               </div>
             )

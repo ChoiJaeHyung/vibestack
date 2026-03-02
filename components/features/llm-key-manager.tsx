@@ -15,6 +15,7 @@ import {
   ChevronDown,
   ExternalLink,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -102,6 +103,7 @@ function getProviderColor(provider: LlmProvider): string {
 }
 
 export function LlmKeyManager() {
+  const t = useTranslations("Settings");
   const [keys, setKeys] = useState<LlmKeyItem[]>([]);
   const [selectedProvider, setSelectedProvider] =
     useState<LlmProvider>("anthropic");
@@ -138,7 +140,7 @@ export function LlmKeyManager() {
 
   async function handleValidate() {
     if (!apiKeyInput.trim()) {
-      setError("API 키를 입력해주세요");
+      setError(t("llmKey.enterKey"));
       return;
     }
 
@@ -152,18 +154,18 @@ export function LlmKeyManager() {
       setValidationResult({
         valid: result.valid,
         message: result.valid
-          ? "API 키가 유효합니다"
-          : result.error ?? "API 키가 유효하지 않습니다",
+          ? t("llmKey.validKey")
+          : result.error ?? t("llmKey.invalidKey"),
       });
     } else {
-      setError(result.error ?? "검증 중 오류가 발생했습니다");
+      setError(result.error ?? t("llmKey.validationError"));
     }
     setValidating(false);
   }
 
   async function handleSave() {
     if (!apiKeyInput.trim()) {
-      setError("API 키를 입력해주세요");
+      setError(t("llmKey.enterKey"));
       return;
     }
 
@@ -178,7 +180,7 @@ export function LlmKeyManager() {
       setValidationResult(null);
       await fetchKeys();
     } else {
-      setError(result.error ?? "저장 중 오류가 발생했습니다");
+      setError(result.error ?? t("llmKey.saveError"));
     }
     setLoading(false);
   }
@@ -189,7 +191,7 @@ export function LlmKeyManager() {
     if (result.success) {
       await fetchKeys();
     } else {
-      setError(result.error ?? "삭제 중 오류가 발생했습니다");
+      setError(result.error ?? t("llmKey.deleteError"));
     }
     setDeletingId(null);
   }
@@ -200,7 +202,7 @@ export function LlmKeyManager() {
     if (result.success) {
       await fetchKeys();
     } else {
-      setError(result.error ?? "기본 설정 중 오류가 발생했습니다");
+      setError(result.error ?? t("llmKey.setDefaultError"));
     }
     setSettingDefaultId(null);
   }
@@ -210,16 +212,16 @@ export function LlmKeyManager() {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Brain className="h-5 w-5 text-text-muted" />
-          <CardTitle>LLM API Keys</CardTitle>
+          <CardTitle>{t("llmKey.title")}</CardTitle>
         </div>
         <CardDescription>
-          AI 분석에 사용할 LLM 프로바이더의 API 키를 등록합니다 (BYOK)
+          {t("llmKey.description")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* BYOK explanation */}
         <div className="rounded-xl border border-border-default bg-bg-input px-4 py-3 text-sm text-text-muted">
-          <strong className="text-text-secondary">BYOK(Bring Your Own Key)</strong>는 직접 발급받은 AI 서비스 API 키를 사용하는 방식입니다. Pro 플랜에서 지원되며, 더 빠른 응답과 원하는 모델을 선택할 수 있습니다.
+          <strong className="text-text-secondary">{t("llmKey.byokTitle")}</strong>{t("llmKey.byokDescription")}
         </div>
 
         {/* Provider selector + API key input */}
@@ -246,7 +248,7 @@ export function LlmKeyManager() {
             <div className="relative flex-1">
               <Input
                 type={showApiKey ? "text" : "password"}
-                placeholder="API 키를 입력하세요"
+                placeholder={t("llmKey.inputPlaceholder")}
                 value={apiKeyInput}
                 onChange={(e) => {
                   setApiKeyInput(e.target.value);
@@ -277,13 +279,13 @@ export function LlmKeyManager() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-xs text-text-faint transition-colors hover:text-violet-400"
             >
-              {getProviderLabel(selectedProvider)} 키 발급받기
+              {t("llmKey.getKey", { provider: getProviderLabel(selectedProvider) })}
               <ExternalLink className="h-3 w-3" />
             </a>
           )}
           {!PROVIDER_KEY_URLS[selectedProvider] && (
             <p className="text-xs text-text-faint">
-              공식 사이트에서 API 키를 발급받으세요
+              {t("llmKey.getKeyGeneric")}
             </p>
           )}
           <div className="flex gap-2">
@@ -298,7 +300,7 @@ export function LlmKeyManager() {
               ) : (
                 <ShieldCheck className="mr-2 h-4 w-4" />
               )}
-              검증
+              {t("llmKey.validate")}
             </Button>
             <Button
               onClick={handleSave}
@@ -310,7 +312,7 @@ export function LlmKeyManager() {
               ) : (
                 <Plus className="mr-2 h-4 w-4" />
               )}
-              저장
+              {t("llmKey.save")}
             </Button>
           </div>
         </div>
@@ -345,7 +347,7 @@ export function LlmKeyManager() {
           </div>
         ) : keys.length === 0 ? (
           <p className="py-4 text-center text-sm text-text-muted">
-            등록된 LLM API 키가 없습니다
+            {t("llmKey.noKeys")}
           </p>
         ) : (
           <div className="divide-y divide-border-default">
@@ -375,14 +377,14 @@ export function LlmKeyManager() {
                     {key.is_default && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-300 border border-amber-500/20">
                         <Star className="h-3 w-3" />
-                        기본
+                        {t("llmKey.default")}
                       </span>
                     )}
                   </div>
                   <div className="mt-0.5 flex items-center gap-3 text-xs text-text-faint">
                     <code className="font-mono">****{key.display_hint ?? "***"}</code>
                     <span>
-                      등록: {new Date(key.created_at).toLocaleDateString()}
+                      {t("llmKey.registered")} {new Date(key.created_at).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
@@ -393,7 +395,7 @@ export function LlmKeyManager() {
                       size="sm"
                       onClick={() => handleSetDefault(key.id)}
                       disabled={settingDefaultId === key.id}
-                      title="기본 설정"
+                      title={t("llmKey.setDefault")}
                     >
                       {settingDefaultId === key.id ? (
                         <Loader2 className="h-4 w-4 animate-spin text-text-faint" />
@@ -407,7 +409,7 @@ export function LlmKeyManager() {
                     size="sm"
                     onClick={() => handleDelete(key.id)}
                     disabled={deletingId === key.id}
-                    title="삭제"
+                    title={t("llmKey.delete")}
                   >
                     {deletingId === key.id ? (
                       <Loader2 className="h-4 w-4 animate-spin text-red-500" />

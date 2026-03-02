@@ -1,0 +1,16 @@
+{
+  "already_free_plan": "이미 Free 플랜입니다",
+  "subscription_cancelled": "구독이 취소되었습니다",
+  "module_metadata_missing": "이 모듈에는 메타데이터가 없습니다. 로드맵을 다시 생성해 주세요.",
+  "content_parse_error": "콘텐츠 생성 결과를 파싱하지 못했습니다. 다시 시도해 주세요.",
+  "billing_key_not_registered": "빌링키가 등록되지 않았습니다. 먼저 카드를 등록해주세요.",
+  "auto_payment_failed": "자동결제에 실패했습니다",
+  "payment_record_save_failed": "결제는 완료되었으나 기록 저장에 실패했습니다. 고객센터에 문의해주세요.",
+  "plan_update_failed": "결제는 완료되었으나 플랜 업데이트에 실패했습니다. 고객센터에 문의해주세요.",
+  "auto_payment_error": "자동결제 중 오류가 발생했습니다",
+  "subscription_cancel_error": "구독 취소 중 오류가 발생했습니다",
+  "billing_key_issue_failed": "빌링키 발급에 실패했습니다",
+  "billing_key_issue_error": "빌링키 발급 중 오류가 발생했습니다",
+  "payment_confirm_failed": "결제 승인에 실패했습니다",
+  "payment_confirm_error": "결제 승인 중 오류가 발생했습니다"
+}

@@ -1,0 +1,114 @@
+{
+  "pathDetail": {
+    "backLink": "Learning",
+    "modulesCompleted": "{completed} / {total} 모듈 완료",
+    "estimatedTime": "예상 소요 시간: {hours}시간",
+    "moduleList": "모듈 목록",
+    "minutes": "{minutes}분",
+    "aiTutorButton": "AI 튜터와 학습하기"
+  },
+  "moduleType": {
+    "concept": "Concept",
+    "practical": "Practical",
+    "quiz": "Quiz",
+    "project_walkthrough": "Walkthrough"
+  },
+  "sectionType": {
+    "explanation": "설명",
+    "code_example": "코드 예시",
+    "quiz_question": "퀴즈",
+    "challenge": "챌린지",
+    "reflection": "생각해보기"
+  },
+  "quiz": {
+    "checkAnswer": "정답 확인",
+    "correct": "정답입니다!",
+    "incorrect": "틀렸습니다. 정답은 {answer}번입니다.",
+    "explanation": "해설"
+  },
+  "challenge": {
+    "codeEditor": "코드 에디터",
+    "showAnswer": "답 확인",
+    "hideAnswer": "답 숨기기",
+    "answerCode": "정답 코드",
+    "completed": "완료"
+  },
+  "generation": {
+    "step1": "프로젝트 코드 분석 중...",
+    "step2": "맞춤 콘텐츠 생성 중...",
+    "step3": "최종 검수 및 최적화 중...",
+    "elapsed": "{seconds}초 경과",
+    "usualTime": "보통 30~60초 소요",
+    "failedTitle": "콘텐츠 생성에 실패했습니다",
+    "retry": "다시 시도",
+    "preparing": "콘텐츠를 준비하고 있습니다...",
+    "generateButton": "콘텐츠 생성",
+    "notReady": "아직 학습 콘텐츠가 준비되지 않았습니다.",
+    "defaultError": "콘텐츠 생성에 실패했습니다.",
+    "unknownError": "콘텐츠 생성 중 오류가 발생했습니다."
+  },
+  "module": {
+    "completed": "완료됨",
+    "minutes": "{minutes}분"
+  },
+  "askTutor": {
+    "tooltip": "AI 튜터에게 물어보기",
+    "prompt": "이 부분에 대해 더 설명해 주세요:\n\n\"{text}\""
+  },
+  "bottomBar": {
+    "aiTutor": "AI 튜터",
+    "prevModule": "이전 모듈",
+    "complete": "완료",
+    "nextModule": "다음 모듈",
+    "backToPath": "경로로 돌아가기"
+  },
+  "progress": {
+    "saveError": "학습 진행 상황 저장에 실패했습니다. 다시 시도해 주세요."
+  },
+  "generator": {
+    "step1": "프로젝트 분석 중...",
+    "step2": "학습 구조 설계 중...",
+    "step3": "모듈 콘텐츠 준비 중...",
+    "elapsed": "{seconds}초 경과",
+    "usualTime": "보통 30~60초 소요",
+    "resultSuccess": "로드맵이 생성되었습니다!",
+    "resultModules": "\u201C{title}\u201D \u2014 총 {count}개 모듈",
+    "startLearning": "학습 시작",
+    "createAnother": "다른 로드맵 생성",
+    "title": "새 학습 로드맵 생성",
+    "subtitle": "분석된 프로젝트를 기반으로 AI 맞춤 커리큘럼",
+    "selectProject": "프로젝트 선택",
+    "loadingProjects": "프로젝트 목록을 불러오는 중...",
+    "noAnalyzedProjects": "분석 완료된 프로젝트가 없습니다",
+    "goToProjects": "프로젝트 관리로 이동",
+    "difficulty": "난이도",
+    "selectProjectError": "프로젝트를 선택해주세요",
+    "defaultError": "로드맵 생성에 실패했습니다",
+    "unknownError": "로드맵 생성 중 오류가 발생했습니다. 다시 시도해 주세요.",
+    "remainingPaths": "남은 로드맵 생성: {count}회",
+    "generateButton": "생성하기"
+  },
+  "difficulty": {
+    "beginner": "기초 개념부터 차근차근",
+    "intermediate": "핵심 개념과 실전 활용",
+    "advanced": "심화 패턴과 최적화"
+  },
+  "page": {
+    "title": "Learning",
+    "subtitle": "AI가 생성한 맞춤 학습 로드맵으로 학습하세요"
+  },
+  "empty": {
+    "title": "아직 학습 로드맵이 없습니다",
+    "description": "프로젝트를 분석한 후 위에서 로드맵을 생성해보세요",
+    "goToProjects": "프로젝트 관리로 이동"
+  },
+  "list": {
+    "title": "내 학습 로드맵"
+  },
+  "celebration": {
+    "title": "축하해요!",
+    "subtitle": "{name} 완료",
+    "score": "퀴즈 점수: {score}점",
+    "nextModule": "다음 모듈로"
+  }
+}

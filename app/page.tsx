@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import React from "react";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getTranslations } from "next-intl/server";
 import { LandingNav } from "@/components/features/landing-nav";
 import { TerminalDemo } from "@/components/features/terminal-demo";
 import { AnimatedCounter } from "@/components/features/animated-counter";
@@ -9,13 +11,17 @@ import { SectionReveal } from "@/components/features/section-reveal";
 import { GlowCard } from "@/components/features/glow-card";
 import { FaqAccordion } from "@/components/features/faq-accordion";
 
-export const metadata: Metadata = {
-  title: "VibeUniv — AI로 만든 앱, 내 코드로 제대로 배우기",
-  description:
-    "Cursor, Claude Code로 앱을 만들었나요? 프로젝트를 연결하면 AI가 기술 스택을 분석하고, 내 코드가 교재가 되는 맞춤 학습을 시작할 수 있어요. 무료로 지금 시작하세요.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("Landing");
+  return {
+    title: t("metadata.title"),
+    description: t("metadata.description"),
+  };
+}
 
 export default async function LandingPage() {
+  const t = await getTranslations("Landing");
+
   let userEmail: string | null = null;
   let userPlanType: string | null = null;
   try {
@@ -35,6 +41,52 @@ export default async function LandingPage() {
   } catch {
     // auth 실패 시 비로그인 상태로 처리
   }
+
+  const richTags = {
+    p: (chunks: React.ReactNode) => <p>{chunks}</p>,
+    strong: (chunks: React.ReactNode) => <strong className="text-text-secondary">{chunks}</strong>,
+    em: (chunks: React.ReactNode) => <em>{chunks}</em>,
+    step: (chunks: React.ReactNode) => <p className="font-medium text-text-secondary">{chunks}</p>,
+  };
+
+  const STEPS = [
+    {
+      emoji: "🔌",
+      title: t("steps.0.title"),
+      description: t("steps.0.description"),
+      code: t.raw("steps.0.code"),
+    },
+    {
+      emoji: "🧠",
+      title: t("steps.1.title"),
+      description: t("steps.1.description"),
+      code: t.raw("steps.1.code"),
+    },
+    {
+      emoji: "🎓",
+      title: t("steps.2.title"),
+      description: t("steps.2.description"),
+      code: t.raw("steps.2.code"),
+    },
+  ];
+
+  const FEATURES = [
+    { emoji: "🔌", title: t("features.0.title"), description: t("features.0.description") },
+    { emoji: "🤖", title: t("features.1.title"), description: t("features.1.description") },
+    { emoji: "📚", title: t("features.2.title"), description: t("features.2.description") },
+    { emoji: "💬", title: t("features.3.title"), description: t("features.3.description") },
+    { emoji: "🔐", title: t("features.4.title"), description: t("features.4.description") },
+    { emoji: "🔑", title: t("features.5.title"), description: t("features.5.description") },
+  ];
+
+  const FAQ_ITEMS = [
+    { question: t("faq.0.question"), answer: t.rich("faq.0.answer", richTags) },
+    { question: t("faq.1.question"), answer: t.rich("faq.1.answer", richTags) },
+    { question: t("faq.2.question"), answer: t.rich("faq.2.answer", richTags) },
+    { question: t("faq.3.question"), answer: t.rich("faq.3.answer", richTags) },
+    { question: t("faq.4.question"), answer: t.rich("faq.4.answer", richTags) },
+    { question: t("faq.5.question"), answer: t.rich("faq.5.answer", richTags) },
+  ];
 
   return (
     <div className="min-h-screen bg-background text-text-primary font-sans">
@@ -64,24 +116,23 @@ export default async function LandingPage() {
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-[13px] text-violet-300 mb-6">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-[pulse-dot_2s_infinite]" />
-                바이브 코더를 위한 학습 플랫폼
+                {t("hero.badge")}
               </div>
 
               {/* Title */}
               <h1 className="text-[clamp(36px,5vw,56px)] font-extrabold leading-[1.15] tracking-[-1.5px] text-text-primary">
-                만들었으면 <span className="gradient-text">반은 왔어요</span>
+                {t("hero.title.prefix")}<span className="gradient-text">{t("hero.title.highlight")}</span>
                 <br />
-                나머지 반,
+                {t("hero.title.line2")}
                 <br />
-                여기서 채워요
+                {t("hero.title.line3")}
               </h1>
 
               {/* Description */}
               <p className="text-[17px] leading-relaxed text-text-muted max-w-[480px] mt-6 mb-9">
-                AI 코딩 도구로 앱을 만들었나요?
+                {t("hero.description.line1")}
                 <br />
-                프로젝트를 연결하면 AI가 기술 스택을 분석하고, 딱 필요한 것만
-                알려드려요
+                {t("hero.description.line2")}
               </p>
 
               {/* CTA Buttons */}
@@ -92,14 +143,14 @@ export default async function LandingPage() {
                       href="/dashboard"
                       className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 text-[15px] font-semibold text-white shadow-glow-purple hover:shadow-glow-purple-lg hover:scale-[1.02] transition-all duration-300"
                     >
-                      대시보드로 이동
+                      {t("hero.cta.dashboard")}
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                     <Link
                       href="/guide"
                       className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-bg-input border border-border-strong text-[15px] font-medium text-text-tertiary hover:bg-bg-surface-hover hover:border-border-hover transition-all duration-300"
                     >
-                      가이드 보기
+                      {t("hero.cta.guide")}
                       <BookOpen className="h-4 w-4" />
                     </Link>
                   </>
@@ -109,14 +160,14 @@ export default async function LandingPage() {
                       href="/signup"
                       className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 text-[15px] font-semibold text-white shadow-glow-purple hover:shadow-glow-purple-lg hover:scale-[1.02] transition-all duration-300"
                     >
-                      5분만에 시작하기
+                      {t("hero.cta.signup")}
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                     <Link
                       href="/guide"
                       className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-bg-input border border-border-strong text-[15px] font-medium text-text-tertiary hover:bg-bg-surface-hover hover:border-border-hover transition-all duration-300"
                     >
-                      가이드 보기 →
+                      {t("hero.cta.guideArrow")}
                     </Link>
                   </>
                 )}
@@ -135,19 +186,19 @@ export default async function LandingPage() {
               <div className="text-[32px] font-extrabold mb-1">
                 <AnimatedCounter target={500} suffix="+" />
               </div>
-              <div className="text-[13px] text-text-faint">프로젝트 분석</div>
+              <div className="text-[13px] text-text-faint">{t("stats.projects")}</div>
             </div>
             <div className="text-center min-w-[140px]">
               <div className="text-[32px] font-extrabold mb-1">
-                <AnimatedCounter target={11} suffix="개" />
+                <AnimatedCounter target={11} suffix={t("stats.aiModelsSuffix")} />
               </div>
-              <div className="text-[13px] text-text-faint">AI 모델 지원</div>
+              <div className="text-[13px] text-text-faint">{t("stats.aiModels")}</div>
             </div>
             <div className="text-center min-w-[140px]">
               <div className="text-[32px] font-extrabold mb-1">
                 <AnimatedCounter target={2400} suffix="+" />
               </div>
-              <div className="text-[13px] text-text-faint">학습 모듈 생성</div>
+              <div className="text-[13px] text-text-faint">{t("stats.modules")}</div>
             </div>
           </div>
         </SectionReveal>
@@ -157,10 +208,10 @@ export default async function LandingPage() {
           <div className="max-w-[1120px] w-full">
             <SectionReveal className="text-center mb-16">
               <h2 className="text-4xl font-extrabold text-text-primary tracking-tight">
-                어떻게 <span className="gradient-text">작동</span>하나요?
+                {t("how.title.prefix")}<span className="gradient-text">{t("how.title.highlight")}</span>{t("how.title.suffix")}
               </h2>
               <p className="text-base text-text-faint max-w-[480px] mx-auto mt-4">
-                3단계로 프로젝트를 이해하세요
+                {t("how.subtitle")}
               </p>
             </SectionReveal>
 
@@ -197,10 +248,10 @@ export default async function LandingPage() {
           <div className="max-w-[1120px] w-full">
             <SectionReveal className="text-center mb-16">
               <h2 className="text-4xl font-extrabold text-text-primary tracking-tight">
-                주요 <span className="gradient-text">기능</span>
+                {t("features.title.prefix")}<span className="gradient-text">{t("features.title.highlight")}</span>
               </h2>
               <p className="text-base text-text-faint max-w-[480px] mx-auto mt-4">
-                바이브 코더를 위한 올인원 학습 플랫폼
+                {t("features.subtitle")}
               </p>
             </SectionReveal>
 
@@ -236,10 +287,10 @@ export default async function LandingPage() {
           <div className="max-w-[1120px] w-full relative z-10">
             <SectionReveal className="text-center mb-16">
               <h2 className="text-4xl font-extrabold text-text-primary tracking-tight">
-                플랜 &amp; <span className="gradient-text">가격</span>
+                {t("pricing.title.prefix")}<span className="gradient-text">{t("pricing.title.highlight")}</span>
               </h2>
               <p className="text-base text-text-faint max-w-[480px] mx-auto mt-4">
-                무료로 시작하고, 필요할 때 업그레이드하세요
+                {t("pricing.subtitle")}
               </p>
             </SectionReveal>
 
@@ -247,55 +298,67 @@ export default async function LandingPage() {
               <PricingCard
                 name="Free"
                 planKey="free"
-                description="사이드 프로젝트로 시작하기"
-                price="₩0"
+                description={t("pricing.free.description")}
+                price={t("pricing.free.price")}
                 features={[
-                  "프로젝트 3개",
-                  "기본 기술 스택 분석",
-                  "월 1회 학습 로드맵",
-                  "월 20회 AI 대화",
+                  t("pricing.free.features.0"),
+                  t("pricing.free.features.1"),
+                  t("pricing.free.features.2"),
+                  t("pricing.free.features.3"),
                 ]}
-                ctaLabel="무료로 시작하기"
+                ctaLabel={t("pricing.free.cta")}
                 ctaHref="/signup"
                 isLoggedIn={!!userEmail}
                 userPlanType={userPlanType}
                 checkColor="text-cyan-500"
+                perMonthLabel={t("pricing.perMonth")}
+                currentPlanLabel={t("pricing.currentPlan")}
+                upgradeLabel={t("pricing.upgrade")}
+                popularLabel={t("pricing.popular")}
               />
               <PricingCard
                 name="Pro"
                 planKey="pro"
-                description="본격적으로 성장하기"
-                price="₩25,000"
+                description={t("pricing.pro.description")}
+                price={t("pricing.pro.price")}
                 isPopular
                 features={[
-                  "무제한 프로젝트",
-                  "심화 분석",
-                  "무제한 학습 로드맵",
-                  "무제한 AI 대화",
-                  "BYOK (자체 LLM 키)",
+                  t("pricing.pro.features.0"),
+                  t("pricing.pro.features.1"),
+                  t("pricing.pro.features.2"),
+                  t("pricing.pro.features.3"),
+                  t("pricing.pro.features.4"),
                 ]}
-                ctaLabel="Pro 시작하기"
+                ctaLabel={t("pricing.pro.cta")}
                 ctaHref="/signup"
                 isLoggedIn={!!userEmail}
                 userPlanType={userPlanType}
                 checkColor="text-violet-500"
+                perMonthLabel={t("pricing.perMonth")}
+                currentPlanLabel={t("pricing.currentPlan")}
+                upgradeLabel={t("pricing.upgrade")}
+                popularLabel={t("pricing.popular")}
               />
               <PricingCard
                 name="Team"
                 planKey="team"
-                description="팀과 함께 학습하기"
-                price="₩59,000"
+                description={t("pricing.team.description")}
+                price={t("pricing.team.price")}
                 features={[
-                  "Pro 전체 기능",
-                  "팀 프로젝트 공유",
-                  "팀 학습 대시보드",
-                  "우선 지원",
+                  t("pricing.team.features.0"),
+                  t("pricing.team.features.1"),
+                  t("pricing.team.features.2"),
+                  t("pricing.team.features.3"),
                 ]}
-                ctaLabel="Team 시작하기"
+                ctaLabel={t("pricing.team.cta")}
                 ctaHref="/signup"
                 isLoggedIn={!!userEmail}
                 userPlanType={userPlanType}
                 checkColor="text-cyan-500"
+                perMonthLabel={t("pricing.perMonth")}
+                currentPlanLabel={t("pricing.currentPlan")}
+                upgradeLabel={t("pricing.upgrade")}
+                popularLabel={t("pricing.popular")}
               />
             </div>
           </div>
@@ -306,7 +369,7 @@ export default async function LandingPage() {
           <div className="max-w-[720px] w-full">
             <SectionReveal className="text-center mb-16">
               <h2 className="text-4xl font-extrabold text-text-primary tracking-tight">
-                자주 묻는 <span className="gradient-text">질문</span>
+                {t("faq.title.prefix")}<span className="gradient-text">{t("faq.title.highlight")}</span>
               </h2>
             </SectionReveal>
 
@@ -330,26 +393,26 @@ export default async function LandingPage() {
             />
             <div className="relative z-10">
               <h2 className="text-[32px] font-extrabold text-text-primary tracking-tight">
-                지금 바로 시작하세요
+                {t("finalCta.title")}
               </h2>
               <p className="text-base text-text-muted leading-relaxed max-w-[500px] mx-auto mt-4 mb-8">
-                AI로 만든 프로젝트, 이제 진짜 이해할 차례예요.
+                {t("finalCta.description.line1")}
                 <br />
-                5분이면 첫 분석을 시작할 수 있어요.
+                {t("finalCta.description.line2")}
               </p>
               {userEmail ? (
                 <Link
                   href="/dashboard"
                   className="inline-block px-10 py-4 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 text-base font-bold text-white shadow-glow-purple-lg hover:scale-[1.03] transition-all duration-300"
                 >
-                  대시보드로 이동
+                  {t("finalCta.dashboard")}
                 </Link>
               ) : (
                 <Link
                   href="/signup"
                   className="inline-block px-10 py-4 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 text-base font-bold text-white shadow-glow-purple-lg hover:scale-[1.03] transition-all duration-300"
                 >
-                  무료로 시작하기
+                  {t("finalCta.signup")}
                 </Link>
               )}
             </div>
@@ -377,8 +440,8 @@ export default async function LandingPage() {
             </a>
           </div>
           <div className="text-xs text-text-ghost">
-            <div>&copy; 2026 VibeUniv. All rights reserved.</div>
-            <div className="mt-1">상호명: VibeUniv.Inc | 대표: 최재형 | 사업자등록번호: 257-37-01450</div>
+            <div>{t("footer.copyright")}</div>
+            <div className="mt-1">{t("footer.company")}</div>
           </div>
         </div>
       </footer>
@@ -390,238 +453,20 @@ export default async function LandingPage() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "FAQPage",
-            mainEntity: [
-              {
-                "@type": "Question",
-                name: "바이브 코딩이 뭔가요?",
-                acceptedAnswer: {
-                  "@type": "Answer",
-                  text: "바이브 코딩(Vibe Coding)은 AI 코딩 도구(Claude Code, Cursor, Bolt 등)를 사용하여 프롬프트만으로 앱을 만드는 방식이에요. 문제는 이렇게 만든 앱이 왜 돌아가는지 모를 수 있다는 거예요. VibeUniv는 바로 그 부분을 채워드립니다.",
-                },
+            mainEntity: [0, 1, 2, 3, 4, 5].map((i) => ({
+              "@type": "Question",
+              name: t(`jsonLd.faq.${i}.question`),
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: t(`jsonLd.faq.${i}.answer`),
               },
-              {
-                "@type": "Question",
-                name: "MCP로 프로젝트를 연결하는 방법이 궁금해요",
-                acceptedAnswer: {
-                  "@type": "Answer",
-                  text: "MCP(Model Context Protocol)를 사용하면 코딩 도구에서 프로젝트를 자동으로 VibeUniv에 연결할 수 있어요. 1단계: API 키 발급, 2단계: MCP 서버 설정, 3단계: 프로젝트 동기화. 코딩 도구를 재시작하면 자동 연결됩니다.",
-                },
-              },
-              {
-                "@type": "Question",
-                name: "어떤 AI 모델을 지원하나요?",
-                acceptedAnswer: {
-                  "@type": "Answer",
-                  text: "총 11개 LLM 프로바이더를 지원합니다. Anthropic (Claude), OpenAI (GPT), Google (Gemini), Groq, Mistral, DeepSeek, Cohere, Together AI, Fireworks AI, xAI (Grok), OpenRouter. Pro 플랜에서는 BYOK 기능으로 본인의 API 키를 등록해서 쓸 수 있어요.",
-                },
-              },
-              {
-                "@type": "Question",
-                name: "Free 플랜으로 충분한가요?",
-                acceptedAnswer: {
-                  "@type": "Answer",
-                  text: "개인 사이드 프로젝트 1~2개를 학습하기에는 충분해요! 프로젝트 3개, 기본 분석, 월 1회 로드맵, 월 20회 AI 대화가 포함됩니다. 더 많은 프로젝트나 무제한 AI 대화가 필요하다면 Pro(₩25,000/월)를 추천해요.",
-                },
-              },
-              {
-                "@type": "Question",
-                name: "내 코드는 안전하게 보관되나요?",
-                acceptedAnswer: {
-                  "@type": "Answer",
-                  text: "보안은 최우선 사항이에요. 모든 데이터는 암호화되어 전송 및 저장됩니다. 민감한 파일(.env 등)은 자동 제외되고, LLM API 키는 AES-256-GCM으로 암호화됩니다. 언제든 데이터 삭제도 가능해요.",
-                },
-              },
-              {
-                "@type": "Question",
-                name: "BYOK(Bring Your Own Key)가 뭔가요?",
-                acceptedAnswer: {
-                  "@type": "Answer",
-                  text: "BYOK는 본인이 가진 LLM API 키를 등록해서 사용하는 기능이에요. Pro 플랜 이상에서 사용할 수 있습니다. Settings > LLM Keys에서 프로바이더를 선택하고 API 키를 입력하면 바로 사용 가능해요.",
-                },
-              },
-            ],
+            })),
           }),
         }}
       />
     </div>
   );
 }
-
-/* ─── Static Data ──────────────────────────────────────────────── */
-
-const STEPS = [
-  {
-    emoji: "🔌",
-    title: "프로젝트 연결",
-    description: "코딩 도구에서 MCP로 원클릭 연결. Claude Code, Cursor 등에서 한 번만 설정하면 끝.",
-    code: `// claude_desktop_config.json
-{
-  "mcpServers": {
-    "vibeuniv": {
-      "command": "npx",
-      "args": ["-y", "@vibeuniv/mcp-server@latest"],
-      "env": { "VIBEUNIV_API_KEY": "your-key" }
-    }
-  }
-}`,
-  },
-  {
-    emoji: "🧠",
-    title: "AI가 분석",
-    description: "기술 스택, 구조, 패턴을 자동으로 파악. 11개 AI 모델 중 원하는 걸로 분석.",
-    code: `✓ Scanning project files...
-📦 package.json → Next.js 15, React 19
-📦 tsconfig.json → TypeScript (strict)
-📦 tailwind.config → Tailwind CSS v4
-📦 supabase/ → Supabase (PostgreSQL)
-✓ 4 technologies detected`,
-  },
-  {
-    emoji: "🎓",
-    title: "내 코드로 학습",
-    description: "내 프로젝트 코드가 교재가 됩니다. AI 튜터에게 뭐든 물어보세요.",
-    code: `🎓 Learning Path: "Next.js 풀스택 마스터"
-├── Module 1: App Router 이해하기
-├── Module 2: Server Components vs Client
-├── Module 3: Supabase Auth 연동
-├── Module 4: API Routes 설계
-├── Module 5: 배포와 최적화
-└── Module 6: 보안 베스트 프랙티스`,
-  },
-];
-
-const FEATURES = [
-  {
-    emoji: "🔌",
-    title: "원클릭 프로젝트 연동",
-    description: "Claude Code, Cursor 등에서 한 번만 설정하면 끝. MCP로 자동 연결됩니다.",
-  },
-  {
-    emoji: "🤖",
-    title: "11개 AI 모델 지원",
-    description: "Anthropic, OpenAI, Google 등 원하는 모델로 분석하고 학습하세요.",
-  },
-  {
-    emoji: "📚",
-    title: "내 코드가 교과서",
-    description: "추상적인 튜토리얼 대신, 내가 만든 코드로 배워요. 진짜 이해가 됩니다.",
-  },
-  {
-    emoji: "💬",
-    title: "AI 튜터",
-    description: "모르는 건 바로 물어보세요. 내 코드 컨텍스트로 설명해줘요.",
-  },
-  {
-    emoji: "🔐",
-    title: "AES-256 암호화",
-    description: "모든 API 키와 코드 데이터는 AES-256-GCM으로 암호화되어 안전합니다.",
-  },
-  {
-    emoji: "🔑",
-    title: "BYOK (자체 LLM 키)",
-    description: "Pro 플랜에서 본인의 API 키를 등록해 원하는 모델로 자유롭게 사용하세요.",
-  },
-];
-
-const FAQ_ITEMS = [
-  {
-    question: "바이브 코딩이 뭔가요?",
-    answer: (
-      <>
-        <p>
-          바이브 코딩(Vibe Coding)은 AI 코딩 도구(Claude Code, Cursor,
-          Bolt 등)를 사용하여 <strong className="text-text-secondary">프롬프트만으로 앱을 만드는 방식</strong>이에요.
-          &quot;이런 기능 만들어줘&quot;라고 말하면 AI가 코드를 생성하죠.
-        </p>
-        <p>
-          문제는, 이렇게 만든 앱이 <em>왜</em> 돌아가는지 모를 수 있다는 거예요.
-          VibeUniv는 바로 그 부분을 채워드립니다.
-        </p>
-      </>
-    ),
-  },
-  {
-    question: "MCP로 프로젝트를 연결하는 방법이 궁금해요",
-    answer: (
-      <>
-        <p>
-          MCP(Model Context Protocol)를 사용하면 코딩 도구에서 프로젝트를
-          자동으로 VibeUniv에 연결할 수 있어요.
-        </p>
-        <p className="font-medium text-text-secondary">1단계: API 키 발급</p>
-        <p>
-          VibeUniv에 가입한 뒤, Settings &gt; API Keys 페이지에서
-          API 키를 발급하세요.
-        </p>
-        <p className="font-medium text-text-secondary">2단계: MCP 서버 설정</p>
-        <p>
-          코딩 도구의 MCP 설정 파일에 vibeuniv 서버를 추가하세요.
-        </p>
-        <p className="font-medium text-text-secondary">3단계: 프로젝트 동기화</p>
-        <p>
-          코딩 도구를 재시작하면 자동 연결됩니다. 대시보드에서 확인하세요!
-        </p>
-      </>
-    ),
-  },
-  {
-    question: "어떤 AI 모델을 지원하나요?",
-    answer: (
-      <>
-        <p>
-          총 <strong className="text-text-secondary">11개 LLM 프로바이더</strong>를 지원합니다.
-        </p>
-        <p>
-          Anthropic (Claude), OpenAI (GPT), Google (Gemini), Groq, Mistral,
-          DeepSeek, Cohere, Together AI, Fireworks AI, xAI (Grok), OpenRouter
-        </p>
-        <p>
-          Pro 플랜에서는 BYOK 기능으로 본인의 API 키를 등록해서 쓸 수 있어요.
-        </p>
-      </>
-    ),
-  },
-  {
-    question: "Free 플랜으로 충분한가요?",
-    answer: (
-      <>
-        <p>
-          개인 사이드 프로젝트 1~2개를 학습하기에는 충분해요!
-          프로젝트 3개, 기본 분석, 월 1회 로드맵, 월 20회 AI 대화가 포함됩니다.
-        </p>
-        <p>
-          더 많은 프로젝트나 무제한 AI 대화가 필요하다면 Pro(₩25,000/월)를 추천해요.
-        </p>
-      </>
-    ),
-  },
-  {
-    question: "내 코드는 안전하게 보관되나요?",
-    answer: (
-      <>
-        <p>보안은 최우선 사항이에요.</p>
-        <p>
-          모든 데이터는 암호화되어 전송 및 저장됩니다. 민감한 파일(.env 등)은 자동 제외되고,
-          LLM API 키는 AES-256-GCM으로 암호화됩니다. 언제든 데이터 삭제도 가능해요.
-        </p>
-      </>
-    ),
-  },
-  {
-    question: "BYOK(Bring Your Own Key)가 뭔가요?",
-    answer: (
-      <>
-        <p>
-          BYOK는 <strong className="text-text-secondary">본인이 가진 LLM API 키</strong>를 등록해서 사용하는 기능이에요.
-          Pro 플랜 이상에서 사용할 수 있습니다.
-        </p>
-        <p>
-          Settings &gt; LLM Keys에서 프로바이더를 선택하고 API 키를 입력하면 바로 사용 가능해요.
-        </p>
-      </>
-    ),
-  },
-];
 
 /* ─── Sub-components ──────────────────────────────────────────────── */
 
@@ -639,6 +484,10 @@ function PricingCard({
   isLoggedIn,
   userPlanType,
   checkColor,
+  perMonthLabel,
+  currentPlanLabel,
+  upgradeLabel,
+  popularLabel,
 }: {
   name: string;
   planKey: string;
@@ -651,6 +500,10 @@ function PricingCard({
   isLoggedIn?: boolean;
   userPlanType?: string | null;
   checkColor: string;
+  perMonthLabel: string;
+  currentPlanLabel: string;
+  upgradeLabel: string;
+  popularLabel: string;
 }) {
   const isCurrentPlan = isLoggedIn && userPlanType === planKey;
   const userRank = PLAN_RANK[userPlanType ?? "free"] ?? 0;
@@ -663,11 +516,11 @@ function PricingCard({
 
   if (isLoggedIn) {
     if (isCurrentPlan) {
-      resolvedLabel = "현재 플랜";
+      resolvedLabel = currentPlanLabel;
       resolvedHref = "/settings/billing";
       disabled = true;
     } else if (isUpgrade) {
-      resolvedLabel = "업그레이드";
+      resolvedLabel = upgradeLabel;
       resolvedHref = "/settings/billing";
     } else {
       resolvedLabel = ctaLabel;
@@ -686,7 +539,7 @@ function PricingCard({
       {isPopular && (
         <div className="absolute -top-px left-1/2 -translate-x-1/2">
           <span className="px-4 py-1 rounded-b-[10px] bg-gradient-to-br from-violet-500 to-cyan-500 text-[11px] font-bold text-white tracking-wide">
-            POPULAR
+            {popularLabel}
           </span>
         </div>
       )}
@@ -696,7 +549,7 @@ function PricingCard({
         <span className="text-[44px] font-extrabold text-text-primary tracking-[-2px]">
           {price}
         </span>
-        <span className="ml-1 text-sm text-text-faint">/월</span>
+        <span className="ml-1 text-sm text-text-faint">{perMonthLabel}</span>
       </div>
       <ul className="mt-6 space-y-3">
         {features.map((feature) => (

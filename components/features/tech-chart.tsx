@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   BarChart,
   Bar,
@@ -14,27 +15,27 @@ interface TechChartProps {
   data: Array<{ category: string; count: number }>;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  framework: "프레임워크",
-  language: "언어",
-  database: "DB",
-  auth: "인증",
-  deploy: "배포",
-  styling: "스타일링",
-  testing: "테스팅",
-  build_tool: "빌드",
-  library: "라이브러리",
-  other: "기타",
+const CATEGORY_KEYS: Record<string, string> = {
+  framework: "chart.framework",
+  language: "chart.language",
+  database: "chart.database",
+  auth: "chart.auth",
+  deploy: "chart.deploy",
+  styling: "chart.styling",
+  testing: "chart.testing",
+  build_tool: "chart.buildTool",
+  library: "chart.library",
+  other: "chart.other",
 };
 
-function translateCategory(category: string): string {
-  return CATEGORY_LABELS[category] ?? category;
-}
-
 export function TechChart({ data }: TechChartProps) {
+  const t = useTranslations('Projects');
+
   const chartData = data.map((item) => ({
     ...item,
-    label: translateCategory(item.category),
+    label: CATEGORY_KEYS[item.category]
+      ? t(CATEGORY_KEYS[item.category] as Parameters<typeof t>[0])
+      : item.category,
   }));
 
   return (
@@ -73,7 +74,7 @@ export function TechChart({ data }: TechChartProps) {
           />
           <Bar
             dataKey="count"
-            name="개수"
+            name={t('chart.count')}
             fill="#8B5CF6"
             radius={[4, 4, 0, 0]}
             maxBarSize={48}

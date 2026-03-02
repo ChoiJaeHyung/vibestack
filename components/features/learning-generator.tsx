@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   Loader2,
   Sparkles,
@@ -17,6 +18,7 @@ import { UpgradeModal } from "@/components/features/upgrade-modal";
 import { generateLearningPath } from "@/server/actions/learning";
 import { createClient } from "@/lib/supabase/client";
 import { invalidateCache } from "@/lib/hooks/use-cached-fetch";
+import { translateError } from "@/lib/utils/translate-error";
 import type { UsageData } from "@/server/actions/usage";
 
 type Difficulty = "beginner" | "intermediate" | "advanced";
@@ -37,34 +39,36 @@ interface GenerateResult {
 const DIFFICULTY_OPTIONS: Array<{
   value: Difficulty;
   label: string;
-  description: string;
+  descriptionKey: string;
 }> = [
   {
     value: "beginner",
     label: "Beginner",
-    description: "기초 개념부터 차근차근",
+    descriptionKey: "difficulty.beginner",
   },
   {
     value: "intermediate",
     label: "Intermediate",
-    description: "핵심 개념과 실전 활용",
+    descriptionKey: "difficulty.intermediate",
   },
   {
     value: "advanced",
     label: "Advanced",
-    description: "심화 패턴과 최적화",
+    descriptionKey: "difficulty.advanced",
   },
 ];
 
 // ─── Generation Progress Steps ─────────────────────────────────────
 
 const GENERATION_STEPS = [
-  { icon: FolderSearch, label: "프로젝트 분석 중...", threshold: 10 },
-  { icon: Brain, label: "학습 구조 설계 중...", threshold: 25 },
-  { icon: BookOpen, label: "모듈 콘텐츠 준비 중...", threshold: 45 },
+  { icon: FolderSearch, threshold: 10 },
+  { icon: Brain, threshold: 25 },
+  { icon: BookOpen, threshold: 45 },
 ];
 
 function GeneratingStepsUI({ elapsedSeconds }: { elapsedSeconds: number }) {
+  const t = useTranslations('Learning');
+  const stepLabels = [t('generator.step1'), t('generator.step2'), t('generator.step3')];
   const currentStep = GENERATION_STEPS.findIndex((s) => elapsedSeconds < s.threshold);
   const activeStep = currentStep === -1 ? GENERATION_STEPS.length - 1 : currentStep;
 
@@ -101,13 +105,13 @@ function GeneratingStepsUI({ elapsedSeconds }: { elapsedSeconds: number }) {
       </div>
 
       <p className="text-sm font-medium text-text-tertiary">
-        {GENERATION_STEPS[activeStep].label}
+        {stepLabels[activeStep]}
       </p>
 
       <div className="flex items-center gap-2 text-xs text-text-dim">
-        <span className="tabular-nums">{elapsedSeconds}초 경과</span>
+        <span className="tabular-nums">{t('generator.elapsed', { seconds: elapsedSeconds })}</span>
         <span>·</span>
-        <span>보통 30~60초 소요</span>
+        <span>{t('generator.usualTime')}</span>
       </div>
     </div>
   );
@@ -118,6 +122,8 @@ interface LearningGeneratorProps {
 }
 
 export function LearningGenerator({ hasExistingPaths = false }: LearningGeneratorProps) {
+  const t = useTranslations('Learning');
+  const te = useTranslations('Errors');
   const [expanded, setExpanded] = useState(!hasExistingPaths);
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
@@ -202,7 +208,7 @@ export function LearningGenerator({ hasExistingPaths = false }: LearningGenerato
 
   async function handleGenerate() {
     if (!selectedProjectId) {
-      setError("프로젝트를 선택해주세요");
+      setError(t('generator.selectProjectError'));
       return;
     }
 
@@ -224,14 +230,14 @@ export function LearningGenerator({ hasExistingPaths = false }: LearningGenerato
           setRemainingPaths((prev) => (prev !== null ? Math.max(prev - 1, 0) : null));
         }
       } else {
-        const errMsg = response.error ?? "로드맵 생성에 실패했습니다";
+        const errMsg = response.error ? translateError(response.error, te) : t('generator.defaultError');
         if (errMsg.toLowerCase().includes("limit") || errMsg.includes("한도")) {
           setShowUpgradeModal(true);
         }
         setError(errMsg);
       }
     } catch {
-      setError("로드맵 생성 중 오류가 발생했습니다. 다시 시도해 주세요.");
+      setError(t('generator.unknownError'));
     } finally {
       setLoading(false);
     }
@@ -246,10 +252,10 @@ export function LearningGenerator({ hasExistingPaths = false }: LearningGenerato
           </div>
           <div className="text-center">
             <p className="font-medium text-text-primary">
-              로드맵이 생성되었습니다!
+              {t('generator.resultSuccess')}
             </p>
             <p className="mt-1 text-sm text-text-muted">
-              &ldquo;{result.title}&rdquo; — 총 {result.total_modules}개 모듈
+              {t('generator.resultModules', { title: result.title, count: result.total_modules })}
             </p>
           </div>
           <div className="flex gap-2">
@@ -262,7 +268,7 @@ export function LearningGenerator({ hasExistingPaths = false }: LearningGenerato
             >
               <Button>
                 <GraduationCap className="mr-2 h-4 w-4" />
-                학습 시작
+                {t('generator.startLearning')}
               </Button>
             </Link>
             <Button
@@ -272,7 +278,7 @@ export function LearningGenerator({ hasExistingPaths = false }: LearningGenerato
                 setError(null);
               }}
             >
-              다른 로드맵 생성
+              {t('generator.createAnother')}
             </Button>
           </div>
         </div>
@@ -292,8 +298,8 @@ export function LearningGenerator({ hasExistingPaths = false }: LearningGenerato
             <Sparkles className="h-4 w-4 text-violet-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-text-primary text-sm">새 학습 로드맵 생성</h3>
-            <p className="text-xs text-text-faint">분석된 프로젝트를 기반으로 AI 맞춤 커리큘럼</p>
+            <h3 className="font-semibold text-text-primary text-sm">{t('generator.title')}</h3>
+            <p className="text-xs text-text-faint">{t('generator.subtitle')}</p>
           </div>
         </div>
         <ChevronDown className={`h-4 w-4 text-text-faint transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
@@ -308,21 +314,21 @@ export function LearningGenerator({ hasExistingPaths = false }: LearningGenerato
               htmlFor="project-select"
               className="mb-1.5 block text-sm font-medium text-text-tertiary"
             >
-              프로젝트 선택
+              {t('generator.selectProject')}
             </label>
             {loadingProjects ? (
               <div className="flex h-10 items-center gap-2 text-sm text-text-muted">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                프로젝트 목록을 불러오는 중...
+                {t('generator.loadingProjects')}
               </div>
             ) : projects.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border-default p-4 text-center">
                 <p className="text-sm text-text-muted">
-                  분석 완료된 프로젝트가 없습니다
+                  {t('generator.noAnalyzedProjects')}
                 </p>
                 <Link href="/projects" className="mt-2 inline-block">
                   <Button variant="secondary" size="sm">
-                    프로젝트 관리로 이동
+                    {t('generator.goToProjects')}
                   </Button>
                 </Link>
               </div>
@@ -348,7 +354,7 @@ export function LearningGenerator({ hasExistingPaths = false }: LearningGenerato
           {/* Difficulty selector */}
           <div>
             <label className="mb-1.5 block text-sm font-medium text-text-tertiary">
-              난이도
+              {t('generator.difficulty')}
             </label>
             <div className="grid grid-cols-3 gap-2">
               {DIFFICULTY_OPTIONS.map((option) => (
@@ -372,7 +378,7 @@ export function LearningGenerator({ hasExistingPaths = false }: LearningGenerato
                         : "text-text-faint"
                     }`}
                   >
-                    {option.description}
+                    {t(option.descriptionKey as Parameters<typeof t>[0])}
                   </span>
                 </button>
               ))}
@@ -387,7 +393,7 @@ export function LearningGenerator({ hasExistingPaths = false }: LearningGenerato
           {/* Usage hint */}
           {!isUnlimited && remainingPaths !== null && !loading && (
             <p className="text-xs text-text-faint">
-              남은 로드맵 생성: {remainingPaths}회
+              {t('generator.remainingPaths', { count: remainingPaths })}
             </p>
           )}
 
@@ -404,7 +410,7 @@ export function LearningGenerator({ hasExistingPaths = false }: LearningGenerato
               className="w-full"
             >
               <Sparkles className="mr-2 h-4 w-4" />
-              생성하기
+              {t('generator.generateButton')}
             </Button>
           )}
         </div>

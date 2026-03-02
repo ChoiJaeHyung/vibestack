@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Copy, Check, Plus, Trash2, Ban, Key, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -22,6 +23,7 @@ interface ApiKeyItem {
 }
 
 export function ApiKeyManager() {
+  const t = useTranslations("Settings");
   const [keys, setKeys] = useState<ApiKeyItem[]>([]);
   const [newKeyName, setNewKeyName] = useState("");
   const [createdKey, setCreatedKey] = useState<string | null>(null);
@@ -90,17 +92,17 @@ export function ApiKeyManager() {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Key className="h-5 w-5 text-text-muted" />
-          <CardTitle>API Keys</CardTitle>
+          <CardTitle>{t("apiKey.title")}</CardTitle>
         </div>
         <CardDescription>
-          MCP 서버 및 CLI에서 사용할 API 키를 관리합니다
+          {t("apiKey.description")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Create new key */}
         <div className="flex gap-2">
           <Input
-            placeholder="키 이름 (예: my-mcp-server)"
+            placeholder={t("apiKey.inputPlaceholder")}
             value={newKeyName}
             onChange={(e) => setNewKeyName(e.target.value)}
             onKeyDown={(e) => {
@@ -113,7 +115,7 @@ export function ApiKeyManager() {
             ) : (
               <Plus className="mr-2 h-4 w-4" />
             )}
-            생성
+            {t("apiKey.create")}
           </Button>
         </div>
 
@@ -125,7 +127,7 @@ export function ApiKeyManager() {
         {createdKey && (
           <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-4">
             <p className="mb-2 text-sm font-medium text-green-300">
-              API 키가 생성되었습니다. 이 키는 다시 표시되지 않으니 안전한 곳에 저장하세요.
+              {t("apiKey.createdMessage")}
             </p>
             <div className="flex items-center gap-2">
               <code className="flex-1 rounded-lg bg-[rgba(0,0,0,0.3)] px-3 py-2 font-mono text-sm text-green-200 border border-border-default">
@@ -148,7 +150,7 @@ export function ApiKeyManager() {
               onClick={() => setCreatedKey(null)}
               className="mt-2 text-xs text-green-400 underline hover:text-green-300 transition-colors"
             >
-              닫기
+              {t("apiKey.close")}
             </button>
           </div>
         )}
@@ -160,7 +162,7 @@ export function ApiKeyManager() {
           </div>
         ) : keys.length === 0 ? (
           <p className="py-4 text-center text-sm text-text-muted">
-            생성된 API 키가 없습니다
+            {t("apiKey.noKeys")}
           </p>
         ) : (
           <div className="divide-y divide-border-default">
@@ -176,18 +178,18 @@ export function ApiKeyManager() {
                     </span>
                     {!key.is_active && (
                       <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs text-red-400 border border-red-500/20">
-                        비활성
+                        {t("apiKey.inactive")}
                       </span>
                     )}
                   </div>
                   <div className="mt-0.5 flex items-center gap-3 text-xs text-text-faint">
                     <code className="font-mono">{key.key_prefix}...****</code>
                     <span>
-                      생성: {new Date(key.created_at).toLocaleDateString()}
+                      {t("apiKey.created")} {new Date(key.created_at).toLocaleDateString()}
                     </span>
                     {key.last_used_at && (
                       <span>
-                        마지막 사용:{" "}
+                        {t("apiKey.lastUsed")}{" "}
                         {new Date(key.last_used_at).toLocaleDateString()}
                       </span>
                     )}
@@ -199,7 +201,7 @@ export function ApiKeyManager() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRevoke(key.id)}
-                      title="비활성화"
+                      title={t("apiKey.deactivate")}
                     >
                       <Ban className="h-4 w-4 text-text-faint" />
                     </Button>
@@ -208,7 +210,7 @@ export function ApiKeyManager() {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDelete(key.id)}
-                    title="삭제"
+                    title={t("apiKey.delete")}
                   >
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>

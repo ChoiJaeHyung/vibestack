@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { X, Zap, Check } from "lucide-react";
 import { createPaymentRequest } from "@/server/actions/billing";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
@@ -11,25 +12,22 @@ interface UpgradeModalProps {
   feature: "analysis" | "learning" | "chat";
 }
 
-const FEATURE_MESSAGES: Record<UpgradeModalProps["feature"], string> = {
-  analysis: "프로젝트 등록 한도에 도달했어요",
-  learning: "이번 달 학습 로드맵 생성 한도에 도달했어요",
-  chat: "이번 달 AI 대화 한도에 도달했어요",
-};
-
-const PRO_BENEFITS = [
-  "무제한 프로젝트 분석",
-  "무제한 학습 로드맵",
-  "무제한 AI 대화",
-  "심화 분석 리포트",
-  "BYOK (자체 LLM 키)",
-];
-
 export function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
+  const t = useTranslations("Billing");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const featureMessage = t(`upgrade.feature.${feature}`);
+
+  const proBenefits = [
+    t("upgrade.benefits.analysis"),
+    t("upgrade.benefits.learningPaths"),
+    t("upgrade.benefits.aiChats"),
+    t("upgrade.benefits.report"),
+    t("upgrade.benefits.byok"),
+  ];
 
   async function handleUpgrade() {
     setLoading(true);
@@ -38,13 +36,13 @@ export function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
     try {
       const result = await createPaymentRequest("pro");
       if (!result.success || !result.data) {
-        setError(result.error ?? "결제 요청을 생성할 수 없습니다.");
+        setError(result.error ?? t("error.paymentRequest"));
         return;
       }
 
       const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
       if (!clientKey) {
-        setError("결제 설정이 올바르지 않습니다.");
+        setError(t("error.paymentConfig"));
         return;
       }
 
@@ -67,7 +65,7 @@ export function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
     } catch (err) {
       const code = (err as { code?: string })?.code;
       if (code !== "USER_CANCEL" && code !== "INVALID_REQUEST") {
-        setError("결제 창을 열 수 없습니다.");
+        setError(t("error.paymentWindow"));
       }
     } finally {
       setLoading(false);
@@ -93,12 +91,12 @@ export function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
             <Zap className="h-5 w-5 text-violet-400" />
           </div>
           <h2 className="text-lg font-semibold text-text-primary">
-            업그레이드가 필요해요
+            {t("upgrade.title")}
           </h2>
         </div>
 
         <p className="mb-5 text-sm text-text-muted">
-          {FEATURE_MESSAGES[feature]}
+          {featureMessage}
         </p>
 
         {error && (
@@ -108,7 +106,7 @@ export function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
         )}
 
         <ul className="mb-6 space-y-2">
-          {PRO_BENEFITS.map((benefit) => (
+          {proBenefits.map((benefit) => (
             <li
               key={benefit}
               className="flex items-center gap-2 text-sm text-text-tertiary"
@@ -124,14 +122,14 @@ export function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
           disabled={loading}
           className="w-full rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 px-4 py-2.5 text-sm font-medium text-white shadow-glow-purple-sm transition-all hover:shadow-glow-purple hover:scale-[1.01] disabled:opacity-50"
         >
-          {loading ? "처리 중..." : "Pro 시작하기 — ₩25,000/월"}
+          {loading ? t("upgrade.processing") : t("upgrade.cta")}
         </button>
 
         <button
           onClick={onClose}
           className="mt-3 w-full text-center text-sm text-text-faint hover:text-text-tertiary transition-colors"
         >
-          나중에
+          {t("upgrade.later")}
         </button>
       </div>
     </div>

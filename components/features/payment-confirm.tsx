@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { invalidateCache } from "@/lib/hooks/use-cached-fetch";
+import { translateError } from "@/lib/utils/translate-error";
 
 interface PaymentConfirmProps {
   paymentKey: string;
@@ -12,6 +14,8 @@ interface PaymentConfirmProps {
 }
 
 export function PaymentConfirm({ paymentKey, orderId, amount }: PaymentConfirmProps) {
+  const t = useTranslations("Billing");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const [status, setStatus] = useState<"confirming" | "success" | "error">("confirming");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -36,23 +40,23 @@ export function PaymentConfirm({ paymentKey, orderId, amount }: PaymentConfirmPr
           }, 1500);
         } else {
           setStatus("error");
-          setErrorMessage(data.error ?? "결제 승인에 실패했습니다");
+          setErrorMessage(data.error ? translateError(data.error, te) : t("confirm.error.default"));
         }
       } catch {
         setStatus("error");
-        setErrorMessage("결제 승인 중 오류가 발생했습니다");
+        setErrorMessage(t("confirm.error.processing"));
       }
     }
 
     confirm();
-  }, [paymentKey, orderId, amount, router]);
+  }, [paymentKey, orderId, amount, router, t, te]);
 
   if (status === "confirming") {
     return (
       <div className="flex items-center gap-3 rounded-xl border border-violet-500/30 bg-violet-500/10 p-4">
         <Loader2 className="h-5 w-5 animate-spin text-violet-400" />
         <p className="text-sm font-medium text-violet-300">
-          결제를 승인하고 있습니다...
+          {t("confirm.processing")}
         </p>
       </div>
     );
@@ -64,10 +68,10 @@ export function PaymentConfirm({ paymentKey, orderId, amount }: PaymentConfirmPr
         <CheckCircle className="h-5 w-5 flex-shrink-0 text-green-400" />
         <div>
           <p className="font-medium text-green-300">
-            결제가 완료되었습니다!
+            {t("confirm.success.title")}
           </p>
           <p className="mt-0.5 text-sm text-green-400">
-            잠시 후 페이지가 새로고침됩니다.
+            {t("confirm.success.description")}
           </p>
         </div>
       </div>
@@ -79,7 +83,7 @@ export function PaymentConfirm({ paymentKey, orderId, amount }: PaymentConfirmPr
       <XCircle className="h-5 w-5 flex-shrink-0 text-red-400" />
       <div>
         <p className="font-medium text-red-300">
-          결제 승인에 실패했습니다
+          {t("confirm.error.title")}
         </p>
         {errorMessage && (
           <p className="mt-0.5 text-sm text-red-400">

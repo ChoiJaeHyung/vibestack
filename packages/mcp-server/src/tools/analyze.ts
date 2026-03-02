@@ -42,11 +42,20 @@ export function registerAnalyze(server: McpServer, client: VibeUnivClient): void
             output += "\n";
           }
 
+          const locale = await client.getUserLocale();
+
           output += "To re-analyze, call vibeuniv_analyze with force: true.\n\n";
-          output += "📚 다음 단계: 학습 커리큘럼 생성\n";
-          output += "사용자에게 원하는 난이도를 물어보세요:\n";
-          output += "  - beginner (초급) / intermediate (중급) / advanced (고급)\n";
-          output += "난이도를 확인한 후 vibeuniv_generate_curriculum을 호출하세요.";
+          if (locale === "en") {
+            output += "📚 Next step: Generate a learning curriculum\n";
+            output += "Ask the user which difficulty level they prefer:\n";
+            output += "  - beginner / intermediate / advanced\n";
+            output += "After confirming the difficulty, call vibeuniv_generate_curriculum.";
+          } else {
+            output += "📚 다음 단계: 학습 커리큘럼 생성\n";
+            output += "사용자에게 원하는 난이도를 물어보세요:\n";
+            output += "  - beginner (초급) / intermediate (중급) / advanced (고급)\n";
+            output += "난이도를 확인한 후 vibeuniv_generate_curriculum을 호출하세요.";
+          }
 
           return {
             content: [{ type: "text" as const, text: output }],

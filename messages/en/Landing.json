@@ -1,0 +1,211 @@
+{
+  "nav": {
+    "howItWorks": "How it works",
+    "features": "Features",
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "dashboard": "Dashboard",
+    "logout": "Sign out"
+  },
+  "metadata": {
+    "title": "VibeUniv — Learn Your AI-Built App Through Your Own Code",
+    "description": "Built an app with Cursor or Claude Code? Connect your project and AI analyzes your tech stack, turning your code into a personalized learning curriculum. Start free today."
+  },
+  "hero": {
+    "badge": "A Learning Platform for Vibe Coders",
+    "title": {
+      "prefix": "You're ",
+      "highlight": "halfway there",
+      "line2": "Complete the rest",
+      "line3": "right here"
+    },
+    "description": {
+      "line1": "Built an app with AI coding tools?",
+      "line2": "Connect your project and AI analyzes your tech stack, teaching you exactly what you need"
+    },
+    "cta": {
+      "dashboard": "Go to Dashboard",
+      "guide": "View Guide",
+      "signup": "Get Started in 5 min",
+      "guideArrow": "View Guide →"
+    }
+  },
+  "stats": {
+    "projects": "Projects Analyzed",
+    "aiModelsSuffix": "",
+    "aiModels": "AI Models Supported",
+    "modules": "Learning Modules Created"
+  },
+  "how": {
+    "title": {
+      "prefix": "How Does It ",
+      "highlight": "Work",
+      "suffix": "?"
+    },
+    "subtitle": "Understand your project in 3 steps"
+  },
+  "steps": {
+    "0": {
+      "title": "Connect Your Project",
+      "description": "One-click setup via MCP from your coding tool. Set up once in Claude Code, Cursor, etc.",
+      "code": "// claude_desktop_config.json\n{\n  \"mcpServers\": {\n    \"vibeuniv\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"@vibeuniv/mcp-server@latest\"],\n      \"env\": { \"VIBEUNIV_API_KEY\": \"your-key\" }\n    }\n  }\n}"
+    },
+    "1": {
+      "title": "AI Analyzes",
+      "description": "Automatically identifies tech stack, architecture, and patterns. Choose from 11 AI models.",
+      "code": "✓ Scanning project files...\n📦 package.json → Next.js 15, React 19\n📦 tsconfig.json → TypeScript (strict)\n📦 tailwind.config → Tailwind CSS v4\n📦 supabase/ → Supabase (PostgreSQL)\n✓ 4 technologies detected"
+    },
+    "2": {
+      "title": "Learn From Your Code",
+      "description": "Your project code becomes your textbook. Ask the AI tutor anything.",
+      "code": "🎓 Learning Path: \"Next.js Fullstack Master\"\n├── Module 1: Understanding App Router\n├── Module 2: Server Components vs Client\n├── Module 3: Supabase Auth Integration\n├── Module 4: API Routes Design\n├── Module 5: Deployment & Optimization\n└── Module 6: Security Best Practices"
+    }
+  },
+  "features": {
+    "0": {
+      "title": "One-Click Project Sync",
+      "description": "Set up once in Claude Code, Cursor, etc. Auto-connected via MCP."
+    },
+    "1": {
+      "title": "11 AI Models Supported",
+      "description": "Analyze and learn with Anthropic, OpenAI, Google, and more."
+    },
+    "2": {
+      "title": "Your Code Is Your Textbook",
+      "description": "Instead of abstract tutorials, learn from the code you built. Real understanding."
+    },
+    "3": {
+      "title": "AI Tutor",
+      "description": "Ask anything. Get explanations in the context of your own code."
+    },
+    "4": {
+      "title": "AES-256 Encryption",
+      "description": "All API keys and code data are encrypted with AES-256-GCM for security."
+    },
+    "5": {
+      "title": "BYOK (Bring Your Own Key)",
+      "description": "Register your own API keys on the Pro plan and use any model freely."
+    },
+    "title": {
+      "prefix": "Key ",
+      "highlight": "Features"
+    },
+    "subtitle": "An all-in-one learning platform for vibe coders"
+  },
+  "pricing": {
+    "title": {
+      "prefix": "Plans & ",
+      "highlight": "Pricing"
+    },
+    "subtitle": "Start free, upgrade when you need to",
+    "perMonth": "/mo",
+    "popular": "POPULAR",
+    "currentPlan": "Current Plan",
+    "upgrade": "Upgrade",
+    "free": {
+      "description": "Start with a side project",
+      "price": "$0",
+      "cta": "Start for Free",
+      "features": {
+        "0": "3 projects",
+        "1": "Basic tech stack analysis",
+        "2": "1 learning roadmap/month",
+        "3": "20 AI conversations/month"
+      }
+    },
+    "pro": {
+      "description": "Level up your learning",
+      "price": "$19",
+      "cta": "Start Pro",
+      "features": {
+        "0": "Unlimited projects",
+        "1": "Advanced analysis",
+        "2": "Unlimited learning roadmaps",
+        "3": "Unlimited AI conversations",
+        "4": "BYOK (Bring Your Own Key)"
+      }
+    },
+    "team": {
+      "description": "Learn together as a team",
+      "price": "$45",
+      "cta": "Start Team",
+      "features": {
+        "0": "All Pro features",
+        "1": "Team project sharing",
+        "2": "Team learning dashboard",
+        "3": "Priority support"
+      }
+    }
+  },
+  "faq": {
+    "0": {
+      "question": "What is vibe coding?",
+      "answer": "<p>Vibe coding is building apps using AI coding tools (Claude Code, Cursor, Bolt, etc.) <strong>just by writing prompts</strong>. Say \"build this feature\" and AI generates the code.</p><p>The problem? You might not understand <em>why</em> your app works. VibeUniv fills that gap.</p>"
+    },
+    "1": {
+      "question": "How do I connect my project with MCP?",
+      "answer": "<p>MCP (Model Context Protocol) lets you automatically connect your project from your coding tool to VibeUniv.</p><step>Step 1: Get API Key</step><p>Sign up for VibeUniv, then go to Settings > API Keys to generate your key.</p><step>Step 2: Configure MCP Server</step><p>Add the vibeuniv server to your coding tool's MCP config file.</p><step>Step 3: Sync Your Project</step><p>Restart your coding tool and it connects automatically. Check your dashboard!</p>"
+    },
+    "2": {
+      "question": "Which AI models are supported?",
+      "answer": "<p>We support <strong>11 LLM providers</strong> in total.</p><p>Anthropic (Claude), OpenAI (GPT), Google (Gemini), Groq, Mistral, DeepSeek, Cohere, Together AI, Fireworks AI, xAI (Grok), OpenRouter</p><p>On the Pro plan, you can use BYOK to register your own API keys.</p>"
+    },
+    "3": {
+      "question": "Is the Free plan enough?",
+      "answer": "<p>For learning 1-2 personal side projects, absolutely! It includes 3 projects, basic analysis, 1 roadmap/month, and 20 AI conversations/month.</p><p>If you need more projects or unlimited AI conversations, we recommend Pro ($19/mo).</p>"
+    },
+    "4": {
+      "question": "Is my code kept safe?",
+      "answer": "<p>Security is our top priority.</p><p>All data is encrypted in transit and at rest. Sensitive files (.env, etc.) are automatically excluded, and LLM API keys are encrypted with AES-256-GCM. You can delete your data at any time.</p>"
+    },
+    "5": {
+      "question": "What is BYOK (Bring Your Own Key)?",
+      "answer": "<p>BYOK lets you <strong>register your own LLM API keys</strong> for use on the platform. Available on Pro plan and above.</p><p>Go to Settings > LLM Keys, select your provider, enter your API key, and start using it right away.</p>"
+    },
+    "title": {
+      "prefix": "Frequently Asked ",
+      "highlight": "Questions"
+    }
+  },
+  "finalCta": {
+    "title": "Get Started Today",
+    "description": {
+      "line1": "Your AI-built project — it's time to truly understand it.",
+      "line2": "Start your first analysis in just 5 minutes."
+    },
+    "dashboard": "Go to Dashboard",
+    "signup": "Start for Free"
+  },
+  "footer": {
+    "copyright": "© 2026 VibeUniv. All rights reserved.",
+    "company": "Company: VibeUniv.Inc | CEO: Jaehyung Choi | Business Reg. No.: 257-37-01450"
+  },
+  "jsonLd": {
+    "faq": {
+      "0": {
+        "question": "What is vibe coding?",
+        "answer": "Vibe coding is building apps using AI coding tools (Claude Code, Cursor, Bolt, etc.) just by writing prompts. The problem is you might not understand why your app works. VibeUniv fills that gap."
+      },
+      "1": {
+        "question": "How do I connect my project with MCP?",
+        "answer": "MCP (Model Context Protocol) lets you automatically connect your project from your coding tool to VibeUniv. Step 1: Get API key, Step 2: Configure MCP server, Step 3: Sync your project. Restart your coding tool and it connects automatically."
+      },
+      "2": {
+        "question": "Which AI models are supported?",
+        "answer": "We support 11 LLM providers: Anthropic (Claude), OpenAI (GPT), Google (Gemini), Groq, Mistral, DeepSeek, Cohere, Together AI, Fireworks AI, xAI (Grok), OpenRouter. On the Pro plan, you can use BYOK to register your own API keys."
+      },
+      "3": {
+        "question": "Is the Free plan enough?",
+        "answer": "For learning 1-2 personal side projects, absolutely! It includes 3 projects, basic analysis, 1 roadmap/month, and 20 AI conversations/month. If you need more, we recommend Pro ($19/mo)."
+      },
+      "4": {
+        "question": "Is my code kept safe?",
+        "answer": "Security is our top priority. All data is encrypted in transit and at rest. Sensitive files (.env, etc.) are automatically excluded, and LLM API keys are encrypted with AES-256-GCM. You can delete your data at any time."
+      },
+      "5": {
+        "question": "What is BYOK (Bring Your Own Key)?",
+        "answer": "BYOK lets you register your own LLM API keys for use on the platform. Available on Pro plan and above. Go to Settings > LLM Keys, select your provider, enter your API key, and start using it right away."
+      }
+    }
+  }
+}

@@ -33,11 +33,39 @@ function matchRateLimitPrefix(pathname: string): string | null {
 // Public pages that never need auth checks (skip Supabase round-trip)
 const PUBLIC_PATHS = ["/callback", "/guide", "/robots.txt", "/sitemap.xml", "/icon.png", "/apple-icon.png", "/manifest.webmanifest"];
 
+function detectLocaleFromHeader(request: NextRequest): "ko" | "en" {
+  const acceptLang = request.headers.get("accept-language");
+  if (!acceptLang) return "en";
+  const preferred = acceptLang
+    .split(",")
+    .map((part) => {
+      const [lang, q] = part.trim().split(";q=");
+      return { lang: lang.trim().split("-")[0].toLowerCase(), quality: q ? parseFloat(q) : 1.0 };
+    })
+    .sort((a, b) => b.quality - a.quality);
+  for (const { lang } of preferred) {
+    if (lang === "ko") return "ko";
+    if (lang === "en") return "en";
+  }
+  return "en";
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip Supabase session check for public/static paths
   if (PUBLIC_PATHS.includes(pathname)) {
+    // Still set locale cookie on first visit for public pages
+    if (!request.cookies.has("locale")) {
+      const locale = detectLocaleFromHeader(request);
+      const response = NextResponse.next();
+      response.cookies.set("locale", locale, {
+        path: "/",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 365,
+      });
+      return response;
+    }
     return NextResponse.next();
   }
 
@@ -73,7 +101,19 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  return await updateSession(request);
+  const response = await updateSession(request);
+
+  // Set locale cookie on first visit for non-API paths
+  if (!request.cookies.has("locale") && !pathname.startsWith("/api/")) {
+    const locale = detectLocaleFromHeader(request);
+    response.cookies.set("locale", locale, {
+      path: "/",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 365,
+    });
+  }
+
+  return response;
 }
 
 export const config = {

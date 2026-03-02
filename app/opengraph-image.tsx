@@ -1,10 +1,13 @@
 import { ImageResponse } from "next/og";
+import { getTranslations } from "next-intl/server";
 
-export const alt = "VibeUniv — AI로 만든 앱, 내 코드로 제대로 배우기";
+export const alt = "VibeUniv";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default function OgImage() {
+export default async function OgImage() {
+  const t = await getTranslations("Metadata");
+
   return new ImageResponse(
     (
       <div
@@ -104,9 +107,9 @@ export default function OgImage() {
               padding: "0 60px",
             }}
           >
-            만들었으면 반은 왔어요.
+            {t("og.imageTitle1")}
             <br />
-            나머지 반, 여기서 채워요
+            {t("og.imageTitle2")}
           </h1>
           <p
             style={{
@@ -117,7 +120,7 @@ export default function OgImage() {
               letterSpacing: "-0.3px",
             }}
           >
-            AI로 만든 앱, 내 코드로 배우는 맞춤 학습 플랫폼
+            {t("og.imageSubtitle")}
           </p>
         </div>
 

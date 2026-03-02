@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Menu, X, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
@@ -10,6 +11,7 @@ interface LandingNavProps {
 }
 
 export function LandingNav({ userEmail }: LandingNavProps) {
+  const t = useTranslations("Landing");
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -41,16 +43,16 @@ export function LandingNav({ userEmail }: LandingNavProps) {
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-6">
           <a href="#how" className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors tracking-[0.2px]">
-            작동 방식
+            {t("nav.howItWorks")}
           </a>
           <a href="#features" className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors tracking-[0.2px]">
-            기능
+            {t("nav.features")}
           </a>
           <a href="#pricing" className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors tracking-[0.2px]">
-            가격
+            {t("nav.pricing")}
           </a>
           <a href="#faq" className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors tracking-[0.2px]">
-            FAQ
+            {t("nav.faq")}
           </a>
         </nav>
 
@@ -63,13 +65,13 @@ export function LandingNav({ userEmail }: LandingNavProps) {
                 href="/dashboard"
                 className="px-5 py-2 rounded-[10px] bg-gradient-to-br from-violet-500 to-cyan-500 text-[13px] font-semibold text-white shadow-glow-purple-sm hover:opacity-90 transition-all"
               >
-                대시보드
+                {t("nav.dashboard")}
               </Link>
               <form action="/api/auth/signout" method="post">
                 <button
                   type="submit"
                   className="flex items-center gap-1.5 text-sm font-medium text-text-muted hover:text-text-primary transition-colors"
-                  aria-label="Sign out"
+                  aria-label={t("nav.logout")}
                 >
                   <LogOut className="h-4 w-4" />
                 </button>
@@ -107,16 +109,16 @@ export function LandingNav({ userEmail }: LandingNavProps) {
       {mobileOpen && (
         <div className="md:hidden glass-nav border-t border-border-default px-4 py-4 space-y-3">
           <a href="#how" onClick={() => setMobileOpen(false)} className="block text-sm text-text-muted hover:text-text-primary py-2">
-            작동 방식
+            {t("nav.howItWorks")}
           </a>
           <a href="#features" onClick={() => setMobileOpen(false)} className="block text-sm text-text-muted hover:text-text-primary py-2">
-            기능
+            {t("nav.features")}
           </a>
           <a href="#pricing" onClick={() => setMobileOpen(false)} className="block text-sm text-text-muted hover:text-text-primary py-2">
-            가격
+            {t("nav.pricing")}
           </a>
           <a href="#faq" onClick={() => setMobileOpen(false)} className="block text-sm text-text-muted hover:text-text-primary py-2">
-            FAQ
+            {t("nav.faq")}
           </a>
           <div className="pt-2 border-t border-border-default space-y-2">
             {userEmail ? (
@@ -126,7 +128,7 @@ export function LandingNav({ userEmail }: LandingNavProps) {
                   onClick={() => setMobileOpen(false)}
                   className="block w-full text-center px-5 py-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 text-sm font-semibold text-white"
                 >
-                  대시보드
+                  {t("nav.dashboard")}
                 </Link>
                 <form action="/api/auth/signout" method="post">
                   <button
@@ -134,7 +136,7 @@ export function LandingNav({ userEmail }: LandingNavProps) {
                     className="flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm text-text-muted hover:text-text-primary border border-border-default transition-colors"
                   >
                     <LogOut className="h-4 w-4" />
-                    로그아웃
+                    {t("nav.logout")}
                   </button>
                 </form>
               </>

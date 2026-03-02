@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { X, Sparkles, Zap, ArrowRight } from "lucide-react";
 
 const STORAGE_KEY = "vibeuniv-upgrade-banner-dismissed";
@@ -14,6 +15,7 @@ interface DashboardUpgradeBannerProps {
 export function DashboardUpgradeBanner({
   planType,
 }: DashboardUpgradeBannerProps) {
+  const t = useTranslations("Dashboard");
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -50,17 +52,17 @@ export function DashboardUpgradeBanner({
 
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold text-text-primary">
-            Pro로 업그레이드
+            {t("upgradeBanner.title")}
           </h3>
           <p className="mt-1 text-sm text-text-muted">
-            무제한 프로젝트 분석, AI 대화, 학습 로드맵으로 더 빠르게 성장하세요
+            {t("upgradeBanner.description")}
           </p>
           <Link
             href="/settings/billing"
             className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-500 to-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-glow-purple-sm transition-all hover:shadow-glow-purple hover:scale-[1.01]"
           >
             <Sparkles className="h-3.5 w-3.5" />
-            Pro 시작하기
+            {t("upgradeBanner.cta")}
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>

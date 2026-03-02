@@ -1,0 +1,23 @@
+{
+  "title": "VibeUniv | Learn Your Code by Building with AI",
+  "description": "Built an app with Cursor or Claude Code but don't understand the code? Connect your project and AI analyzes your tech stack, turning your actual code into a personalized learning roadmap. Free to start in 5 minutes.",
+  "og": {
+    "title": "You're halfway there. Complete the other half here. | VibeUniv",
+    "description": "Built an app with AI coding tools? Now it's time to truly understand your code. Connect your project — AI analyzes your tech stack and creates a 1:1 personalized learning experience using your own code.",
+    "imageAlt": "VibeUniv — Learn Your Code by Building with AI",
+    "imageTitle1": "You're halfway there.",
+    "imageTitle2": "Complete the rest here",
+    "imageSubtitle": "A personalized learning platform for AI-built apps"
+  },
+  "twitter": {
+    "title": "Built an app with AI? Learn from your own code | VibeUniv",
+    "description": "Connect your Cursor or Claude Code project — AI analyzes your tech stack and creates a personalized learning roadmap from your actual code."
+  },
+  "jsonLd": {
+    "appDescription": "A learning platform for vibe coders — analyzes tech stacks from AI-built projects and provides personalized learning roadmaps using your own code as curriculum",
+    "offerDescription": "Start for free"
+  },
+  "manifest": {
+    "description": "Learn your AI-built app through your own code. Connect your project and AI analyzes your tech stack, creating a personalized learning roadmap."
+  }
+}

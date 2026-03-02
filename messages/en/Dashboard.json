@@ -1,0 +1,92 @@
+{
+  "greeting": {
+    "dawn": "Burning the midnight oil!",
+    "morning": "Good morning",
+    "afternoon": "Good afternoon",
+    "evening": "Good evening",
+    "suffix": "{name}"
+  },
+  "subtitle": "Ready to learn from your projects today?",
+  "learningCta": {
+    "title": "Project analysis complete! Start your personalized learning",
+    "description": "AI will generate a learning roadmap tailored to your project's tech stack",
+    "button": "Start learning"
+  },
+  "nudge": {
+    "title": "You haven't started learning today!",
+    "continueLearning": "Continue learning"
+  },
+  "stats": {
+    "totalProjects": "Total Projects",
+    "detectedTech": "Technologies",
+    "learningProgress": "Learning Progress",
+    "aiChats": "AI Chats"
+  },
+  "section": {
+    "learningStatus": "Learning Status",
+    "usage": "Usage",
+    "recentProjects": "Recent Projects",
+    "techDistribution": "Tech Distribution",
+    "myBadges": "My Badges"
+  },
+  "continueLearning": "Continue learning",
+  "noLearning": {
+    "title": "No learning in progress",
+    "start": "Start learning →"
+  },
+  "usage": {
+    "projects": "Projects",
+    "learningPaths": "Learning Paths (this month)",
+    "aiChats": "AI Chats (this month)",
+    "unlimited": "Unlimited",
+    "loading": "Loading data..."
+  },
+  "viewAll": "View all",
+  "techDistribution": {
+    "empty": "Analyze a project to see your tech distribution",
+    "centerLabel": "Tech",
+    "more": "+{count} more"
+  },
+  "onboarding": {
+    "mcpSetup": { "label": "MCP Setup", "desc": "Connect from Claude Code or Cursor" },
+    "syncProject": { "label": "Sync Project", "desc": "Auto-collect & analyze files" },
+    "startLearning": { "label": "Start Learning", "desc": "AI-powered custom curriculum" }
+  },
+  "category": {
+    "framework": "Framework",
+    "language": "Language",
+    "database": "DB",
+    "auth": "Auth",
+    "deploy": "Deploy",
+    "styling": "Styling",
+    "testing": "Testing",
+    "build_tool": "Build",
+    "library": "Library",
+    "other": "Other"
+  },
+  "streak": {
+    "activeStreak": "{count}-day streak",
+    "startToday": "Start learning today!",
+    "longest": "Best: {count}d",
+    "weeklyGoal": "Weekly Goal",
+    "goalReached": "Weekly goal reached!",
+    "progress": "{active}/{target} days",
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
+  },
+  "badge": {
+    "earned": "New badge earned!"
+  },
+  "upgradeBanner": {
+    "title": "Upgrade to Pro",
+    "description": "Grow faster with unlimited project analysis, AI chats, and learning roadmaps",
+    "cta": "Start Pro"
+  }
+}

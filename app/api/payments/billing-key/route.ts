@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     if (!issueResponse.ok) {
       return errorResponse(
-        issueData.message ?? "빌링키 발급에 실패했습니다",
+        issueData.message ?? "billing_key_issue_failed",
         issueResponse.status,
       );
     }
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     return successResponse({ registered: true });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "빌링키 발급 중 오류가 발생했습니다";
+      error instanceof Error ? error.message : "billing_key_issue_error";
     return errorResponse(message, 500);
   }
 }

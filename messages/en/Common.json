@@ -1,0 +1,26 @@
+{
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "confirm": "OK",
+  "close": "Close",
+  "loading": "Loading...",
+  "error": "An error occurred",
+  "retry": "Retry",
+  "back": "Back",
+  "next": "Next",
+  "previous": "Previous",
+  "search": "Search",
+  "copy": "Copy",
+  "copied": "Copied",
+  "unlimited": "Unlimited",
+  "upgrade": "Upgrade",
+  "timeAgo": {
+    "justNow": "Just now",
+    "minutesAgo": "{count}m ago",
+    "hoursAgo": "{count}h ago",
+    "daysAgo": "{count}d ago",
+    "weeksAgo": "{count}w ago",
+    "monthsAgo": "{count}mo ago"
+  }
+}

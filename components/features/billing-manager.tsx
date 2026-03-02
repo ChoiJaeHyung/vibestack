@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, CreditCard, AlertTriangle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +11,7 @@ import {
 } from "@/server/actions/billing";
 import { invalidateCache } from "@/lib/hooks/use-cached-fetch";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
+import { translateError } from "@/lib/utils/translate-error";
 
 interface BillingManagerProps {
   currentPlan: string;
@@ -28,6 +30,9 @@ interface PaymentRecord {
 }
 
 export function BillingManager({ currentPlan, hasBillingKey }: BillingManagerProps) {
+  const t = useTranslations("Billing");
+  const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showCancelWarning, setShowCancelWarning] = useState(false);
@@ -61,14 +66,14 @@ export function BillingManager({ currentPlan, hasBillingKey }: BillingManagerPro
     try {
       const result = await createPaymentRequest(plan);
       if (!result.success || !result.data) {
-        setError(result.error ?? "결제 요청을 생성할 수 없습니다.");
+        setError(result.error ? translateError(result.error, te) : t("error.paymentRequest"));
         setLoadingPlan(null);
         return;
       }
 
       const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
       if (!clientKey) {
-        setError("결제 설정이 올바르지 않습니다.");
+        setError(t("error.paymentConfig"));
         setLoadingPlan(null);
         return;
       }
@@ -93,7 +98,7 @@ export function BillingManager({ currentPlan, hasBillingKey }: BillingManagerPro
       // 사용자가 결제창을 닫은 경우 에러 표시하지 않음
       const code = (err as { code?: string })?.code;
       if (code !== "USER_CANCEL" && code !== "INVALID_REQUEST") {
-        setError("결제 창을 열 수 없습니다.");
+        setError(t("error.paymentWindow"));
       }
       setLoadingPlan(null);
     }
@@ -110,14 +115,36 @@ export function BillingManager({ currentPlan, hasBillingKey }: BillingManagerPro
         invalidateCache();
         window.location.reload();
       } else {
-        setError(result.error ?? "구독 취소에 실패했습니다.");
+        setError(result.error ? translateError(result.error, te) : t("error.cancelFailed"));
         setLoadingPlan(null);
       }
     } catch {
-      setError("예기치 않은 오류가 발생했습니다.");
+      setError(t("error.unexpected"));
       setLoadingPlan(null);
     }
   }
+
+  const freeFeatures = [
+    t("plan.free.features.projects"),
+    t("plan.free.features.analysis"),
+    t("plan.free.features.learningPaths"),
+    t("plan.free.features.aiChats"),
+  ];
+
+  const proFeatures = [
+    t("plan.pro.features.projects"),
+    t("plan.pro.features.analysis"),
+    t("plan.pro.features.learningPaths"),
+    t("plan.pro.features.aiChats"),
+    t("plan.pro.features.byok"),
+  ];
+
+  const teamFeatures = [
+    t("plan.team.features.pro"),
+    t("plan.team.features.share"),
+    t("plan.team.features.dashboard"),
+    t("plan.team.features.support"),
+  ];
 
   return (
     <div className="space-y-6">
@@ -133,15 +160,12 @@ export function BillingManager({ currentPlan, hasBillingKey }: BillingManagerPro
         <PlanCard
           name="Free"
           price="₩0"
-          period="/월"
-          features={[
-            "프로젝트 3개",
-            "기본 기술 스택 분석",
-            "월 1회 학습 로드맵",
-            "월 20회 AI 대화",
-          ]}
+          period={t("plan.perMonth")}
+          features={freeFeatures}
           isCurrent={currentPlan === "free"}
-          ctaLabel={currentPlan === "free" ? "현재 플랜" : "무료로 시작하기"}
+          currentPlanLabel={t("plan.currentPlan")}
+          popularLabel={t("plan.popular")}
+          ctaLabel={currentPlan === "free" ? t("plan.currentPlan") : t("plan.free.cta")}
           ctaDisabled={currentPlan === "free"}
           loading={false}
         />
@@ -150,22 +174,18 @@ export function BillingManager({ currentPlan, hasBillingKey }: BillingManagerPro
         <PlanCard
           name="Pro"
           price="₩25,000"
-          period="/월"
-          features={[
-            "무제한 프로젝트",
-            "심화 분석",
-            "무제한 학습 로드맵",
-            "무제한 AI 대화",
-            "BYOK (자체 LLM 키)",
-          ]}
+          period={t("plan.perMonth")}
+          features={proFeatures}
           isCurrent={currentPlan === "pro"}
           isPopular
+          currentPlanLabel={t("plan.currentPlan")}
+          popularLabel={t("plan.popular")}
           ctaLabel={
             currentPlan === "pro"
-              ? "현재 플랜"
+              ? t("plan.currentPlan")
               : currentPlan === "team"
-                ? "다운그레이드"
-                : "Pro 시작하기"
+                ? t("plan.pro.downgrade")
+                : t("plan.pro.cta")
           }
           ctaDisabled={currentPlan === "pro"}
           loading={loadingPlan === "pro"}
@@ -176,15 +196,12 @@ export function BillingManager({ currentPlan, hasBillingKey }: BillingManagerPro
         <PlanCard
           name="Team"
           price="₩59,000"
-          period="/월"
-          features={[
-            "Pro 전체 기능",
-            "팀 프로젝트 공유",
-            "팀 학습 대시보드",
-            "우선 지원",
-          ]}
+          period={t("plan.perMonth")}
+          features={teamFeatures}
           isCurrent={currentPlan === "team"}
-          ctaLabel={currentPlan === "team" ? "현재 플랜" : "Team 시작하기"}
+          currentPlanLabel={t("plan.currentPlan")}
+          popularLabel={t("plan.popular")}
+          ctaLabel={currentPlan === "team" ? t("plan.currentPlan") : t("plan.team.cta")}
           ctaDisabled={currentPlan === "team"}
           loading={loadingPlan === "team"}
           onCtaClick={() => handleCheckout("team")}
@@ -196,7 +213,7 @@ export function BillingManager({ currentPlan, hasBillingKey }: BillingManagerPro
         <div className="space-y-4">
           <div className="rounded-2xl border border-border-default bg-bg-surface p-6">
             <h3 className="mb-4 text-lg font-semibold text-text-primary">
-              구독 관리
+              {t("subscriptionManagement.title")}
             </h3>
 
             <div className="space-y-3">
@@ -204,7 +221,7 @@ export function BillingManager({ currentPlan, hasBillingKey }: BillingManagerPro
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm text-text-muted">
                     <CreditCard className="h-4 w-4" />
-                    <span>자동결제 등록됨</span>
+                    <span>{t("subscriptionManagement.autoPayment")}</span>
                   </div>
                   <Button
                     variant="secondary"
@@ -217,14 +234,14 @@ export function BillingManager({ currentPlan, hasBillingKey }: BillingManagerPro
                     ) : (
                       <XCircle className="mr-2 h-4 w-4" />
                     )}
-                    구독 취소
+                    {t("subscriptionManagement.cancelSubscription")}
                   </Button>
                 </div>
               )}
 
               {!hasBillingKey && (
                 <p className="text-sm text-text-muted">
-                  자동결제가 등록되어 있지 않습니다. 만료일 이후 Free 플랜으로 전환됩니다.
+                  {t("subscriptionManagement.noAutoPayment")}
                 </p>
               )}
             </div>
@@ -236,15 +253,15 @@ export function BillingManager({ currentPlan, hasBillingKey }: BillingManagerPro
                   <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-400" />
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-amber-300">
-                      Free 플랜으로 변경하면 다음 제한이 적용됩니다:
+                      {t("subscriptionManagement.cancelWarning.title")}
                     </p>
                     <ul className="list-inside list-disc space-y-1 text-sm text-amber-400">
-                      <li>프로젝트 3개</li>
-                      <li>월 1회 학습 로드맵</li>
-                      <li>월 20회 AI 대화</li>
+                      <li>{t("subscriptionManagement.cancelWarning.projects")}</li>
+                      <li>{t("subscriptionManagement.cancelWarning.learningPaths")}</li>
+                      <li>{t("subscriptionManagement.cancelWarning.aiChats")}</li>
                     </ul>
                     <p className="text-sm text-amber-400">
-                      현재 구독 기간이 끝날 때까지는 기존 플랜이 유지됩니다.
+                      {t("subscriptionManagement.cancelWarning.notice")}
                     </p>
                     <div className="flex gap-2 pt-1">
                       <Button
@@ -256,14 +273,14 @@ export function BillingManager({ currentPlan, hasBillingKey }: BillingManagerPro
                         {loadingPlan === "cancel" ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : null}
-                        확인
+                        {tc("confirm")}
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setShowCancelWarning(false)}
                       >
-                        취소
+                        {tc("cancel")}
                       </Button>
                     </div>
                   </div>
@@ -276,7 +293,7 @@ export function BillingManager({ currentPlan, hasBillingKey }: BillingManagerPro
           <div className="rounded-2xl border border-border-default overflow-hidden">
             <div className="p-6">
               <h3 className="mb-4 text-lg font-semibold text-text-primary">
-                결제 내역
+                {t("paymentHistory.title")}
               </h3>
 
               {loadingHistory ? (
@@ -285,7 +302,7 @@ export function BillingManager({ currentPlan, hasBillingKey }: BillingManagerPro
                 </div>
               ) : payments.length === 0 ? (
                 <p className="text-sm text-text-muted">
-                  결제 내역이 없습니다.
+                  {t("paymentHistory.noHistory")}
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -303,7 +320,7 @@ export function BillingManager({ currentPlan, hasBillingKey }: BillingManagerPro
                           <p className="text-xs text-text-muted">
                             {new Date(payment.created_at).toLocaleDateString("ko-KR")}
                             {payment.method ? ` · ${payment.method}` : ""}
-                            {payment.is_recurring ? " · 자동결제" : ""}
+                            {payment.is_recurring ? ` · ${t("paymentHistory.autoPayment")}` : ""}
                           </p>
                         </div>
                         <p className="text-sm font-medium text-text-primary">
@@ -332,6 +349,8 @@ function PlanCard({
   ctaDisabled,
   loading,
   onCtaClick,
+  currentPlanLabel,
+  popularLabel,
 }: {
   name: string;
   price: string;
@@ -343,6 +362,8 @@ function PlanCard({
   ctaDisabled: boolean;
   loading: boolean;
   onCtaClick?: () => void;
+  currentPlanLabel: string;
+  popularLabel: string;
 }) {
   return (
     <div
@@ -357,7 +378,7 @@ function PlanCard({
       {isPopular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
           <span className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 px-3 py-1 text-xs font-medium text-white">
-            인기
+            {popularLabel}
           </span>
         </div>
       )}
@@ -365,7 +386,7 @@ function PlanCard({
       {isCurrent && (
         <div className="absolute -top-3 right-4">
           <span className="rounded-full bg-violet-500/20 border border-violet-500/30 px-3 py-1 text-xs font-medium text-violet-300">
-            현재 플랜
+            {currentPlanLabel}
           </span>
         </div>
       )}

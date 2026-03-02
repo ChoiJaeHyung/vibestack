@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { ArrowLeft, FileText, Code, Settings2, FileJson, File, Clock } from "lucide-react";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectAnalysis } from "@/components/features/project-analysis";
@@ -19,17 +20,18 @@ const fileTypeIcons: Record<string, React.ComponentType<{ className?: string }>>
   other: File,
 };
 
-const statusLabels: Record<string, { label: string; color: string }> = {
-  created: { label: "Created", color: "bg-zinc-500/10 text-text-tertiary border border-zinc-500/20" },
-  uploaded: { label: "Uploaded", color: "bg-amber-500/10 text-amber-300 border border-amber-500/20" },
-  analyzing: { label: "Analyzing", color: "bg-violet-500/10 text-violet-300 border border-violet-500/20" },
-  analyzed: { label: "Analyzed", color: "bg-green-500/10 text-green-300 border border-green-500/20" },
-  error: { label: "Error", color: "bg-red-500/10 text-red-300 border border-red-500/20" },
+const statusColors: Record<string, string> = {
+  created: "bg-zinc-500/10 text-text-tertiary border border-zinc-500/20",
+  uploaded: "bg-amber-500/10 text-amber-300 border border-amber-500/20",
+  analyzing: "bg-violet-500/10 text-violet-300 border border-violet-500/20",
+  analyzed: "bg-green-500/10 text-green-300 border border-green-500/20",
+  error: "bg-red-500/10 text-red-300 border border-red-500/20",
 };
 
 export default async function ProjectDetailPage({
   params,
 }: ProjectDetailPageProps) {
+  const t = await getTranslations('Projects');
   const { id } = await params;
 
   if (!id) {
@@ -114,7 +116,9 @@ export default async function ProjectDetailPage({
     notFound();
   }
 
-  const statusInfo = statusLabels[project.status] ?? statusLabels.created;
+  const statusColor = statusColors[project.status] ?? statusColors.created;
+  const statusKey = project.status as "created" | "uploaded" | "analyzing" | "analyzed" | "error";
+  const statusLabel = t(`detail.status.${statusKey}`);
 
   return (
     <div className="space-y-6">
@@ -122,7 +126,7 @@ export default async function ProjectDetailPage({
         <Link href="/projects">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            {t('detail.back')}
           </Button>
         </Link>
         <div className="flex-1">
@@ -130,8 +134,8 @@ export default async function ProjectDetailPage({
             <h1 className="text-2xl font-bold text-text-primary">
               {project.name}
             </h1>
-            <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusInfo.color}`}>
-              {statusInfo.label}
+            <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColor}`}>
+              {statusLabel}
             </span>
             <div className="ml-auto">
               <DeleteProjectButton projectId={project.id} />
@@ -148,30 +152,30 @@ export default async function ProjectDetailPage({
       {/* Project Info */}
       <Card>
         <CardHeader>
-          <CardTitle>프로젝트 정보</CardTitle>
+          <CardTitle>{t('detail.projectInfo')}</CardTitle>
         </CardHeader>
         <CardContent>
           <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
             <div>
-              <dt className="text-text-muted">소스</dt>
+              <dt className="text-text-muted">{t('detail.source')}</dt>
               <dd className="mt-1 font-medium text-text-primary">
                 {project.source_platform ?? "-"}
               </dd>
             </div>
             <div>
-              <dt className="text-text-muted">채널</dt>
+              <dt className="text-text-muted">{t('detail.channel')}</dt>
               <dd className="mt-1 font-medium text-text-primary">
                 {project.source_channel ?? "-"}
               </dd>
             </div>
             <div>
-              <dt className="text-text-muted">생성일</dt>
+              <dt className="text-text-muted">{t('detail.createdAt')}</dt>
               <dd className="mt-1 font-medium text-text-primary">
                 {new Date(project.created_at).toLocaleDateString()}
               </dd>
             </div>
             <div>
-              <dt className="text-text-muted">마지막 동기화</dt>
+              <dt className="text-text-muted">{t('detail.lastSync')}</dt>
               <dd className="mt-1 font-medium text-text-primary">
                 {project.last_synced_at
                   ? new Date(project.last_synced_at).toLocaleDateString()
@@ -194,13 +198,13 @@ export default async function ProjectDetailPage({
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>파일 ({files.length})</CardTitle>
+            <CardTitle>{t('detail.files', { count: files.length })}</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           {files.length === 0 ? (
             <p className="text-sm text-text-muted">
-              업로드된 파일이 없습니다
+              {t('detail.noFiles')}
             </p>
           ) : (
             <div className="divide-y divide-border-default">

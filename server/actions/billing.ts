@@ -176,7 +176,7 @@ export async function cancelSubscription(): Promise<CancelResult> {
     }
 
     if (userData.plan_type === "free") {
-      return { success: false, error: "이미 Free 플랜입니다" };
+      return { success: false, error: "already_free_plan" };
     }
 
     // 빌링키 삭제 (자동결제 중단)
@@ -202,7 +202,7 @@ export async function cancelSubscription(): Promise<CancelResult> {
     return {
       success: true,
       data: {
-        message: "구독이 취소되었습니다",
+        message: "subscription_cancelled",
         expiresAt: userData.plan_expires_at,
       },
     };

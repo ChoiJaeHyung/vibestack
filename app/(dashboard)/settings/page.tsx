@@ -1,17 +1,22 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { User, CreditCard, Mail, Target } from "lucide-react";
+import { User, CreditCard, Mail, Target, Globe } from "lucide-react";
 import { ApiKeyManager } from "@/components/features/api-key-manager";
 import { LlmKeyManager } from "@/components/features/llm-key-manager";
 import { WeeklyTargetSetting } from "@/components/features/weekly-target-setting";
+import { LocaleSelector } from "@/components/features/locale-selector";
 import { getCurrentPlan } from "@/server/actions/billing";
 import { getStreak } from "@/server/actions/streak";
+import { getAuthUserLocale } from "@/server/actions/learning";
 import { getAuthUser } from "@/lib/supabase/auth";
 
 export default async function SettingsPage() {
-  const [planResult, authUser] = await Promise.all([
+  const t = await getTranslations("Settings");
+  const [planResult, authUser, userLocale] = await Promise.all([
     getCurrentPlan(),
     getAuthUser(),
+    getAuthUserLocale(),
   ]);
   const planType = planResult.data?.plan_type ?? "free";
   const planLabel = planType.charAt(0).toUpperCase() + planType.slice(1);
@@ -22,10 +27,10 @@ export default async function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-text-primary">
-          Settings
+          {t("title")}
         </h1>
         <p className="mt-1 text-sm text-text-muted">
-          계정 설정 및 API 키를 관리하세요
+          {t("subtitle")}
         </p>
       </div>
 
@@ -34,9 +39,9 @@ export default async function SettingsPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <User className="h-5 w-5 text-text-muted" />
-              <CardTitle>프로필</CardTitle>
+              <CardTitle>{t("profile.title")}</CardTitle>
             </div>
-            <CardDescription>계정 정보를 확인합니다</CardDescription>
+            <CardDescription>{t("profile.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-3">
@@ -44,9 +49,9 @@ export default async function SettingsPage() {
                 <Mail className="h-4 w-4 text-violet-400" />
               </div>
               <div>
-                <p className="text-xs text-text-faint">이메일</p>
+                <p className="text-xs text-text-faint">{t("profile.email")}</p>
                 <p className="text-sm font-medium text-text-primary">
-                  {authUser?.email ?? "알 수 없음"}
+                  {authUser?.email ?? t("profile.unknown")}
                 </p>
               </div>
             </div>
@@ -62,10 +67,10 @@ export default async function SettingsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Target className="h-5 w-5 text-text-muted" />
-                <CardTitle>학습 목표</CardTitle>
+                <CardTitle>{t("learningGoal.title")}</CardTitle>
               </div>
               <CardDescription>
-                주간 학습 목표를 설정하세요
+                {t("learningGoal.description")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -77,15 +82,32 @@ export default async function SettingsPage() {
           </Card>
         )}
 
+        {authUser && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-text-muted" />
+                <CardTitle>{t("locale.sectionTitle")}</CardTitle>
+              </div>
+              <CardDescription>
+                {t("locale.sectionDescription")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <LocaleSelector currentLocale={userLocale} />
+            </CardContent>
+          </Card>
+        )}
+
         <Link href="/settings/billing">
           <Card className="hover:border-border-hover hover:shadow-glow-card-purple transition-all cursor-pointer">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-text-muted" />
-                <CardTitle>구독 플랜</CardTitle>
+                <CardTitle>{t("subscription.title")}</CardTitle>
               </div>
               <CardDescription>
-                현재 플랜: {planLabel} — 클릭하여 관리
+                {t("subscription.description", { plan: planLabel })}
               </CardDescription>
             </CardHeader>
           </Card>

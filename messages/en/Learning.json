@@ -1,0 +1,114 @@
+{
+  "pathDetail": {
+    "backLink": "Learning",
+    "modulesCompleted": "{completed} / {total} modules completed",
+    "estimatedTime": "Estimated time: {hours} hours",
+    "moduleList": "Module List",
+    "minutes": "{minutes} min",
+    "aiTutorButton": "Learn with AI Tutor"
+  },
+  "moduleType": {
+    "concept": "Concept",
+    "practical": "Practical",
+    "quiz": "Quiz",
+    "project_walkthrough": "Walkthrough"
+  },
+  "sectionType": {
+    "explanation": "Explanation",
+    "code_example": "Code Example",
+    "quiz_question": "Quiz",
+    "challenge": "Challenge",
+    "reflection": "Reflection"
+  },
+  "quiz": {
+    "checkAnswer": "Check Answer",
+    "correct": "Correct!",
+    "incorrect": "Incorrect. The answer is {answer}.",
+    "explanation": "Explanation"
+  },
+  "challenge": {
+    "codeEditor": "Code Editor",
+    "showAnswer": "Show Answer",
+    "hideAnswer": "Hide Answer",
+    "answerCode": "Answer Code",
+    "completed": "Done"
+  },
+  "generation": {
+    "step1": "Analyzing project code...",
+    "step2": "Generating custom content...",
+    "step3": "Final review and optimization...",
+    "elapsed": "{seconds}s elapsed",
+    "usualTime": "Usually takes 30-60 seconds",
+    "failedTitle": "Content generation failed",
+    "retry": "Retry",
+    "preparing": "Preparing content...",
+    "generateButton": "Generate Content",
+    "notReady": "Learning content is not ready yet.",
+    "defaultError": "Failed to generate content.",
+    "unknownError": "An error occurred while generating content."
+  },
+  "module": {
+    "completed": "Completed",
+    "minutes": "{minutes} min"
+  },
+  "askTutor": {
+    "tooltip": "Ask AI Tutor",
+    "prompt": "Please explain more about this:\n\n\"{text}\""
+  },
+  "bottomBar": {
+    "aiTutor": "AI Tutor",
+    "prevModule": "Previous",
+    "complete": "Complete",
+    "nextModule": "Next Module",
+    "backToPath": "Back to Path"
+  },
+  "progress": {
+    "saveError": "Failed to save progress. Please try again."
+  },
+  "generator": {
+    "step1": "Analyzing project...",
+    "step2": "Designing learning structure...",
+    "step3": "Preparing module content...",
+    "elapsed": "{seconds}s elapsed",
+    "usualTime": "Usually takes 30-60 seconds",
+    "resultSuccess": "Roadmap created!",
+    "resultModules": "\u201C{title}\u201D \u2014 {count} modules total",
+    "startLearning": "Start Learning",
+    "createAnother": "Create Another Roadmap",
+    "title": "Create New Learning Roadmap",
+    "subtitle": "AI-customized curriculum based on analyzed projects",
+    "selectProject": "Select Project",
+    "loadingProjects": "Loading projects...",
+    "noAnalyzedProjects": "No analyzed projects found",
+    "goToProjects": "Go to Projects",
+    "difficulty": "Difficulty",
+    "selectProjectError": "Please select a project",
+    "defaultError": "Failed to create roadmap",
+    "unknownError": "An error occurred while creating the roadmap. Please try again.",
+    "remainingPaths": "Remaining roadmaps: {count}",
+    "generateButton": "Generate"
+  },
+  "difficulty": {
+    "beginner": "Step by step from basics",
+    "intermediate": "Core concepts and practical use",
+    "advanced": "Advanced patterns and optimization"
+  },
+  "page": {
+    "title": "Learning",
+    "subtitle": "Learn with AI-generated custom roadmaps"
+  },
+  "empty": {
+    "title": "No learning roadmaps yet",
+    "description": "Analyze a project first, then create a roadmap above",
+    "goToProjects": "Go to Projects"
+  },
+  "list": {
+    "title": "My Learning Roadmaps"
+  },
+  "celebration": {
+    "title": "Congratulations!",
+    "subtitle": "{name} completed",
+    "score": "Quiz score: {score}",
+    "nextModule": "Next Module"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "already_free_plan": "You are already on the Free plan",
+  "subscription_cancelled": "Subscription has been cancelled",
+  "module_metadata_missing": "This module has no metadata. Please regenerate the roadmap.",
+  "content_parse_error": "Failed to parse generated content. Please try again.",
+  "billing_key_not_registered": "No billing key registered. Please register a card first.",
+  "auto_payment_failed": "Auto-payment failed",
+  "payment_record_save_failed": "Payment completed but failed to save record. Please contact support.",
+  "plan_update_failed": "Payment completed but failed to update plan. Please contact support.",
+  "auto_payment_error": "An error occurred during auto-payment",
+  "subscription_cancel_error": "An error occurred while cancelling subscription",
+  "billing_key_issue_failed": "Failed to issue billing key",
+  "billing_key_issue_error": "An error occurred while issuing billing key",
+  "payment_confirm_failed": "Payment confirmation failed",
+  "payment_confirm_error": "An error occurred during payment confirmation"
+}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deleteProject } from "@/server/actions/projects";
@@ -13,6 +14,7 @@ interface DeleteProjectButtonProps {
 }
 
 export function DeleteProjectButton({ projectId, projectName }: DeleteProjectButtonProps) {
+  const t = useTranslations('Projects');
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -47,7 +49,7 @@ export function DeleteProjectButton({ projectId, projectName }: DeleteProjectBut
         className="text-red-400 hover:bg-red-500/10 hover:text-red-300"
       >
         <Trash2 className="mr-2 h-4 w-4" />
-        삭제
+        {t('delete.button')}
       </Button>
 
       {/* Custom Delete Confirmation Modal */}
@@ -59,17 +61,18 @@ export function DeleteProjectButton({ projectId, projectName }: DeleteProjectBut
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 ring-1 ring-red-500/20">
                 <Trash2 className="h-6 w-6 text-red-400" />
               </div>
-              <h3 className="mt-4 text-lg font-semibold text-text-primary">프로젝트 삭제</h3>
+              <h3 className="mt-4 text-lg font-semibold text-text-primary">{t('delete.title')}</h3>
               <p className="mt-2 text-sm text-text-muted">
                 {projectName ? (
-                  <>
-                    <span className="font-medium text-text-secondary">{projectName}</span>을(를) 삭제하시겠습니까?
-                  </>
+                  t.rich('delete.confirmWithName', {
+                    name: projectName,
+                    b: (chunks) => <span className="font-medium text-text-secondary">{chunks}</span>,
+                  })
                 ) : (
-                  "이 프로젝트를 삭제하시겠습니까?"
+                  t('delete.confirmGeneric')
                 )}
                 <br />
-                모든 파일, 분석 결과, 학습 데이터가 영구 삭제됩니다.
+                {t('delete.warning')}
               </p>
             </div>
             <div className="mt-6 flex gap-3">
@@ -79,7 +82,7 @@ export function DeleteProjectButton({ projectId, projectName }: DeleteProjectBut
                 onClick={() => setShowModal(false)}
                 disabled={isDeleting}
               >
-                취소
+                {t('delete.cancel')}
               </Button>
               <button
                 onClick={handleDelete}
@@ -91,7 +94,7 @@ export function DeleteProjectButton({ projectId, projectName }: DeleteProjectBut
                 ) : (
                   <Trash2 className="h-4 w-4" />
                 )}
-                삭제
+                {t('delete.button')}
               </button>
             </div>
           </div>

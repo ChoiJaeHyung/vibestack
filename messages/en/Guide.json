@@ -1,0 +1,145 @@
+{
+  "metadata": {
+    "title": "Getting Started — Connect Your Project in 5 Minutes",
+    "description": "How to connect your project via MCP from Claude Code or Cursor and start AI-powered learning. From API key setup to your first tech stack analysis."
+  },
+  "hero": {
+    "back": "Back to Home",
+    "title": "VibeUniv Getting Started Guide",
+    "description": "Follow along step by step to connect your project and start AI-powered learning. No worries if you're new!"
+  },
+  "step0": {
+    "title": "Before You Start",
+    "intro": "You just need these 3 things to get started.",
+    "check1": "<strong>AI Coding Tool</strong> — Claude Code, Cursor, Windsurf, Cline, Kimi Code, or OpenAI Codex installed",
+    "check2": "<strong>An AI-Built Project</strong> — The project folder you want to analyze should be on your local machine",
+    "check3": "<strong>LLM API Key</strong> — API key for Anthropic, OpenAI, Google, etc. (for Pro plan BYOK; not needed for Free plan)"
+  },
+  "step1": {
+    "title": "Sign Up & Log In",
+    "description": "Sign up with your email at <signupLink>vibeuniv.com/signup</signupLink>. Already have an account? Just <loginLink>log in</loginLink>."
+  },
+  "step2": {
+    "title": "Register LLM API Key (Optional)",
+    "description": "To use BYOK (Bring Your Own Key) on Pro plan or above, register your LLM API key. If you're on the Free plan, you can skip this step.",
+    "ol1": "1. After logging in, go to <strong>Settings > LLM Keys</strong>",
+    "ol2": "2. Select your provider (Anthropic, OpenAI, etc.)",
+    "ol3": "3. Enter your API key and save",
+    "info": "Your keys are encrypted with AES-256-GCM before storage. VibeUniv never stores keys in plaintext or sends them externally."
+  },
+  "step3": {
+    "title": "Generate VibeUniv API Key",
+    "description": "The MCP server needs a VibeUniv API key to link projects to your account.",
+    "ol1": "1. Go to <strong>Settings > API Keys</strong>",
+    "ol2": "2. Click <strong>\"Create new key\"</strong>",
+    "ol3": "3. Copy the generated key and store it somewhere safe",
+    "warning": "The API key is shown only once after creation. Make sure to copy it! If lost, you'll need to generate a new one."
+  },
+  "step4": {
+    "title": "Connect MCP Server",
+    "description": "Add the MCP server configuration to your AI coding tool. The config file path varies by tool.",
+    "configLabel": "Config file:",
+    "apiKeyPlaceholder": "YOUR_API_KEY_HERE",
+    "cline": {
+      "description": "In VS Code, open <code>Cline > MCP Servers > Edit Config</code> and add the following."
+    },
+    "kimiCode": {
+      "cliDescription": "Or add directly via CLI: manage MCP servers with <code>kimi mcp</code> and check connection status with <code>/mcp</code>."
+    },
+    "codex": {
+      "format": "(TOML format)",
+      "cliDescription": "Or add with a single CLI command:",
+      "projectNote": "For project-specific settings, add to <code>.codex/config.toml</code> (project root). Both CLI and IDE extension share the same config file."
+    },
+    "info": "If editing config files manually is difficult, just ask your AI coding tool to do it. For example, tell Claude Code <strong>\"Add vibeuniv to MCP server settings\"</strong> or tell Cursor <strong>\"Add this config to mcp.json\"</strong> — the AI will find and update the config file for you. Paste the JSON config code above for best results!"
+  },
+  "step5": {
+    "title": "Sync Your Project",
+    "description": "Once you've saved the MCP config, follow these steps.",
+    "ol1": "1. Fully quit and restart your AI coding tool",
+    "ol2": "2. In your project folder, ask the AI to call <code>vibeuniv_sync_project</code>",
+    "ol3": "3. Check the VibeUniv dashboard to confirm the project is registered",
+    "info": "Sync only transmits config files and source code structure. Sensitive files like <code>.env</code> and certificates are automatically excluded."
+  },
+  "step6": {
+    "title": "Tech Stack Analysis",
+    "description": "Once your project is registered, AI can analyze your tech stack.",
+    "method1": "<strong>Method 1:</strong> Open your project in the dashboard and click the <strong>\"Analyze\"</strong> button",
+    "method2": "<strong>Method 2:</strong> Call the <code>vibeuniv_analyze</code> MCP tool from your AI tool",
+    "result": "Once analysis is complete, you can see frameworks, libraries, and architecture patterns at a glance."
+  },
+  "step7": {
+    "title": "Start Learning!",
+    "description": "After analysis, the really fun part begins.",
+    "ol1": "1. Go to the <strong>Learning</strong> tab of your project",
+    "ol2": "2. Review the AI-generated personalized learning roadmap",
+    "ol3": "3. Start learning module by module based on your code",
+    "ol4": "4. Ask the <strong>AI Tutor</strong> any question",
+    "conclusion": "Not abstract tutorials — your own code becomes your textbook."
+  },
+  "restApi": {
+    "title": "Connect via REST API Without MCP",
+    "description": "If you can't use MCP, you can send your project directly via REST API. All you need is an API key.",
+    "step1": "1. Create Project",
+    "step2": "2. Upload Files",
+    "step3": "3. Request Tech Stack Analysis",
+    "projectIdComment": "# Use the project ID from the response",
+    "conclusion": "Once analysis is complete, you can view results in the dashboard and generate a learning roadmap."
+  },
+  "troubleshooting": {
+    "0": {
+      "title": "MCP server won't connect",
+      "item1": "Check that the config file JSON format is valid (commas, braces, etc.)",
+      "item2": "Make sure the <code>VIBEUNIV_API_KEY</code> value is correct",
+      "item3": "Check that Node.js is installed (<code>npx</code> is required)",
+      "item4": "Fully quit and restart your AI coding tool"
+    },
+    "1": {
+      "title": "Project doesn't appear in dashboard",
+      "item1": "Try calling <code>vibeuniv_sync_project</code> again",
+      "item2": "Make sure the API key belongs to the correct account",
+      "item3": "Refresh the dashboard in your browser"
+    },
+    "2": {
+      "title": "Analysis fails",
+      "item1": "Check that the project has dependency files like <code>package.json</code> or <code>requirements.txt</code>",
+      "item2": "If using BYOK, verify that the registered LLM API key is valid",
+      "item3": "Try again later — it might be a temporary LLM provider error"
+    },
+    "3": {
+      "title": "I was using VIBESTACK_API_KEY before",
+      "item1": "The old <code>VIBESTACK_API_KEY</code> still works (backwards compatible)",
+      "item2": "We recommend switching to <code>VIBEUNIV_API_KEY</code> when you have time"
+    },
+    "title": "Troubleshooting"
+  },
+  "security": {
+    "title": "Security",
+    "collected": {
+      "title": "Files We Collect",
+      "item1": "<code>package.json</code>, <code>requirements.txt</code> and other dependency files",
+      "item2": "<code>tsconfig.json</code>, <code>next.config.ts</code> and other config files",
+      "item3": "<code>CLAUDE.md</code>, <code>.cursorrules</code> and other AI project files",
+      "item4": "Source code (<code>.ts</code>, <code>.tsx</code>, <code>.py</code>, etc. — up to 50 files)"
+    },
+    "excluded": {
+      "title": "Automatically Excluded Files",
+      "item1": "<code>.env</code>, <code>.env.*</code> — environment variable files",
+      "item2": "<code>*.pem</code>, <code>*.key</code>, <code>id_rsa*</code> — certificate/key files",
+      "item3": "<code>credentials.json</code>, <code>secrets.*</code> — credential files",
+      "item4": "<code>node_modules/</code>, <code>.git/</code>, <code>dist/</code> — build/dependencies"
+    },
+    "info": "All data is transmitted via HTTPS and LLM API keys are encrypted with AES-256-GCM. You can completely delete your project data at any time."
+  },
+  "cta": {
+    "title": "Ready to Go?",
+    "description": "Connect your project and start learning from your own code.",
+    "button": "Get Started"
+  },
+  "footer": {
+    "copyright": "© 2026 VibeUniv. All rights reserved."
+  },
+  "jsonLd": {
+    "guide": "Getting Started Guide"
+  }
+}

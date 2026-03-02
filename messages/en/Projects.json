@@ -1,0 +1,84 @@
+{
+  "detail": {
+    "back": "Back",
+    "projectInfo": "Project Info",
+    "source": "Source",
+    "channel": "Channel",
+    "createdAt": "Created",
+    "lastSync": "Last Synced",
+    "files": "Files ({count})",
+    "noFiles": "No files uploaded",
+    "status": {
+      "created": "Created",
+      "uploaded": "Uploaded",
+      "analyzing": "Analyzing",
+      "analyzed": "Analyzed",
+      "error": "Error"
+    }
+  },
+  "list": {
+    "title": "Projects",
+    "projectCount": "{count} projects",
+    "newProject": "New Project"
+  },
+  "limit": {
+    "title": "Project limit reached",
+    "description": "Upgrade to Pro for unlimited projects",
+    "upgrade": "Upgrade"
+  },
+  "empty": {
+    "title": "Add your first project",
+    "description": "Connect via MCP from Claude Code, Cursor, etc.\nor upload your project directly",
+    "viewGuide": "View Guide",
+    "mcpSetup": "MCP Setup"
+  },
+  "filter": {
+    "noResults": "No projects with this status",
+    "showAll": "Show All"
+  },
+  "analysis": {
+    "title": "Tech Stack Analysis",
+    "description": "AI analyzes project files to automatically detect your tech stack",
+    "noFiles": "No files",
+    "noFilesDescription": "Upload files first to start analysis.\nYou can send project files via MCP or API.",
+    "uploadFirst": "Please upload files first",
+    "startButton": "Start Analysis",
+    "readyTitle": "Ready to analyze",
+    "readyDescription": "Analyzing tech stack based on {count} uploaded files",
+    "analyzingTitle": "Analyzing...",
+    "analyzingDescription": "AI is analyzing your project files. Please wait.",
+    "errorTitle": "An error occurred during analysis",
+    "defaultError": "Something went wrong during analysis. Please try again.",
+    "retry": "Retry",
+    "startError": "Unable to start analysis",
+    "completedBanner": "Analysis complete!",
+    "resultTitle": "Tech Stack Analysis Results",
+    "reanalyze": "Re-analyze",
+    "techCount": "{count} technologies detected",
+    "noTechStacks": "No tech stacks detected",
+    "errorGuidanceLlm": "Please check your LLM API key. Register or re-enter your key in settings.",
+    "errorGuidanceFile": "Not enough files to analyze. Please upload more files to the project.",
+    "errorDefault": "An error occurred during analysis. Please try again."
+  },
+  "delete": {
+    "button": "Delete",
+    "title": "Delete Project",
+    "confirmWithName": "Delete <b>{name}</b>?",
+    "confirmGeneric": "Delete this project?",
+    "warning": "All files, analysis results, and learning data will be permanently deleted.",
+    "cancel": "Cancel"
+  },
+  "chart": {
+    "framework": "Framework",
+    "language": "Language",
+    "database": "DB",
+    "auth": "Auth",
+    "deploy": "Deploy",
+    "styling": "Styling",
+    "testing": "Testing",
+    "buildTool": "Build",
+    "library": "Library",
+    "other": "Other",
+    "count": "Count"
+  }
+}

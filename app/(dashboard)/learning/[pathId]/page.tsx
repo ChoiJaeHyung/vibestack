@@ -10,36 +10,32 @@ import {
   CheckCircle2,
   Brain,
 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { getLearningPathDetail } from "@/server/actions/learning";
 import { DIFFICULTY_STYLES } from "@/components/features/learning-path-card";
 
-const MODULE_TYPE_CONFIG: Record<
+const MODULE_TYPE_ICONS: Record<
   string,
   {
     icon: React.ComponentType<{ className?: string }>;
-    label: string;
     className: string;
   }
 > = {
   concept: {
     icon: BookOpen,
-    label: "Concept",
     className: "bg-blue-500/10 text-blue-300 border border-blue-500/20",
   },
   practical: {
     icon: Code,
-    label: "Practical",
     className: "bg-violet-500/10 text-violet-300 border border-violet-500/20",
   },
   quiz: {
     icon: HelpCircle,
-    label: "Quiz",
     className: "bg-orange-500/10 text-orange-300 border border-orange-500/20",
   },
   project_walkthrough: {
     icon: FolderOpen,
-    label: "Walkthrough",
     className: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20",
   },
 };
@@ -49,6 +45,7 @@ interface PageProps {
 }
 
 export default async function LearningPathDetailPage({ params }: PageProps) {
+  const t = await getTranslations('Learning');
   const { pathId } = await params;
   const result = await getLearningPathDetail(pathId);
 
@@ -84,7 +81,7 @@ export default async function LearningPathDetailPage({ params }: PageProps) {
           className="mb-4 inline-flex items-center gap-1 text-sm text-text-muted hover:text-violet-400 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Learning
+          {t('pathDetail.backLink')}
         </Link>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -127,7 +124,7 @@ export default async function LearningPathDetailPage({ params }: PageProps) {
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-text-tertiary">
-                {completedCount} / {path.total_modules} 모듈 완료
+                {t('pathDetail.modulesCompleted', { completed: completedCount, total: path.total_modules })}
               </span>
               <span className="text-sm font-bold text-text-primary tabular-nums">{progressPercent}%</span>
             </div>
@@ -140,7 +137,7 @@ export default async function LearningPathDetailPage({ params }: PageProps) {
             {path.estimated_hours !== null && (
               <p className="mt-1.5 flex items-center gap-1 text-xs text-text-faint">
                 <Clock className="h-3 w-3" />
-                예상 소요 시간: {path.estimated_hours}시간
+                {t('pathDetail.estimatedTime', { hours: path.estimated_hours })}
               </p>
             )}
           </div>
@@ -150,7 +147,7 @@ export default async function LearningPathDetailPage({ params }: PageProps) {
       {/* Timeline-style module list */}
       <div>
         <h2 className="text-lg font-semibold text-text-primary mb-4">
-          모듈 목록
+          {t('pathDetail.moduleList')}
         </h2>
         <div className="relative space-y-0">
           {/* Vertical timeline line */}
@@ -160,9 +157,10 @@ export default async function LearningPathDetailPage({ params }: PageProps) {
             const isCompleted = mod.progress?.status === "completed";
             const isInProgress = mod.progress?.status === "in_progress";
             const typeConfig = mod.module_type
-              ? MODULE_TYPE_CONFIG[mod.module_type]
+              ? MODULE_TYPE_ICONS[mod.module_type]
               : null;
             const TypeIcon = typeConfig?.icon ?? BookOpen;
+            const typeLabel = mod.module_type ? t(`moduleType.${mod.module_type}` as Parameters<typeof t>[0]) : null;
 
             return (
               <Link
@@ -203,14 +201,14 @@ export default async function LearningPathDetailPage({ params }: PageProps) {
                         )}
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
-                        {typeConfig && (
+                        {typeConfig && typeLabel && (
                           <span className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${typeConfig.className}`}>
                             <TypeIcon className="h-3 w-3" />
-                            {typeConfig.label}
+                            {typeLabel}
                           </span>
                         )}
                         {mod.estimated_minutes !== null && (
-                          <span className="text-xs text-text-dim tabular-nums">{mod.estimated_minutes}분</span>
+                          <span className="text-xs text-text-dim tabular-nums">{t('pathDetail.minutes', { minutes: mod.estimated_minutes })}</span>
                         )}
                       </div>
                     </div>
@@ -227,7 +225,7 @@ export default async function LearningPathDetailPage({ params }: PageProps) {
         <Link href={`/learning/${pathId}/${path.modules[0]?.id ?? ""}`}>
           <Button variant="secondary" size="lg">
             <Brain className="mr-2 h-5 w-5" />
-            AI 튜터와 학습하기
+            {t('pathDetail.aiTutorButton')}
           </Button>
         </Link>
       </div>

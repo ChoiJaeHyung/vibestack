@@ -1,0 +1,92 @@
+{
+  "greeting": {
+    "dawn": "새벽에도 열심히!",
+    "morning": "좋은 아침이에요",
+    "afternoon": "좋은 오후에요",
+    "evening": "좋은 저녁이에요",
+    "suffix": "{name}님"
+  },
+  "subtitle": "오늘도 프로젝트로 배워볼까요?",
+  "learningCta": {
+    "title": "프로젝트 분석이 완료되었어요! 맞춤 학습을 시작해보세요",
+    "description": "AI가 프로젝트 기술 스택에 맞는 학습 로드맵을 생성해드려요",
+    "button": "학습 시작"
+  },
+  "nudge": {
+    "title": "오늘 아직 학습을 시작하지 않았어요!",
+    "continueLearning": "이어서 학습하기"
+  },
+  "stats": {
+    "totalProjects": "총 프로젝트",
+    "detectedTech": "감지된 기술",
+    "learningProgress": "학습 진행률",
+    "aiChats": "AI 대화"
+  },
+  "section": {
+    "learningStatus": "학습 현황",
+    "usage": "사용량",
+    "recentProjects": "최근 프로젝트",
+    "techDistribution": "기술 분포",
+    "myBadges": "내 배지"
+  },
+  "continueLearning": "이어서 학습하기",
+  "noLearning": {
+    "title": "진행 중인 학습이 없습니다",
+    "start": "학습 시작하기 →"
+  },
+  "usage": {
+    "projects": "프로젝트",
+    "learningPaths": "학습 로드맵 (이번 달)",
+    "aiChats": "AI 대화 (이번 달)",
+    "unlimited": "무제한",
+    "loading": "데이터를 불러오는 중..."
+  },
+  "viewAll": "전체 보기",
+  "techDistribution": {
+    "empty": "프로젝트를 분석하면 기술 분포를 확인할 수 있어요",
+    "centerLabel": "기술",
+    "more": "+{count} more"
+  },
+  "onboarding": {
+    "mcpSetup": { "label": "MCP 설정", "desc": "Claude Code나 Cursor에서 연결" },
+    "syncProject": { "label": "프로젝트 동기화", "desc": "자동으로 파일 수집 & 분석" },
+    "startLearning": { "label": "학습 시작", "desc": "AI 맞춤 커리큘럼 생성" }
+  },
+  "category": {
+    "framework": "프레임워크",
+    "language": "언어",
+    "database": "DB",
+    "auth": "인증",
+    "deploy": "배포",
+    "styling": "스타일링",
+    "testing": "테스팅",
+    "build_tool": "빌드",
+    "library": "라이브러리",
+    "other": "기타"
+  },
+  "streak": {
+    "activeStreak": "{count}일 연속 학습 중",
+    "startToday": "오늘 학습을 시작해보세요!",
+    "longest": "최장: {count}일",
+    "weeklyGoal": "주간 목표",
+    "goalReached": "이번 주 목표 달성!",
+    "progress": "{active}/{target}일",
+    "days": {
+      "mon": "월",
+      "tue": "화",
+      "wed": "수",
+      "thu": "목",
+      "fri": "금",
+      "sat": "토",
+      "sun": "일"
+    }
+  },
+  "badge": {
+    "earned": "새 배지 획득!"
+  },
+  "upgradeBanner": {
+    "title": "Pro로 업그레이드",
+    "description": "무제한 프로젝트 분석, AI 대화, 학습 로드맵으로 더 빠르게 성장하세요",
+    "cta": "Pro 시작하기"
+  }
+}

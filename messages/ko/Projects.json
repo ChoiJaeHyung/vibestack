@@ -1,0 +1,84 @@
+{
+  "detail": {
+    "back": "뒤로",
+    "projectInfo": "프로젝트 정보",
+    "source": "소스",
+    "channel": "채널",
+    "createdAt": "생성일",
+    "lastSync": "마지막 동기화",
+    "files": "파일 ({count})",
+    "noFiles": "업로드된 파일이 없습니다",
+    "status": {
+      "created": "생성됨",
+      "uploaded": "업로드됨",
+      "analyzing": "분석 중",
+      "analyzed": "분석 완료",
+      "error": "오류"
+    }
+  },
+  "list": {
+    "title": "프로젝트",
+    "projectCount": "{count}개 프로젝트",
+    "newProject": "새 프로젝트"
+  },
+  "limit": {
+    "title": "프로젝트 등록 한도에 도달했어요",
+    "description": "Pro로 업그레이드하면 무제한으로 프로젝트를 추가할 수 있어요",
+    "upgrade": "업그레이드"
+  },
+  "empty": {
+    "title": "첫 프로젝트를 추가하세요",
+    "description": "Claude Code, Cursor 등에서 MCP로 연결하거나\n직접 프로젝트를 업로드하세요",
+    "viewGuide": "가이드 보기",
+    "mcpSetup": "MCP 설정"
+  },
+  "filter": {
+    "noResults": "해당 상태의 프로젝트가 없습니다",
+    "showAll": "전체 보기"
+  },
+  "analysis": {
+    "title": "기술 스택 분석",
+    "description": "AI가 프로젝트 파일을 분석하여 기술 스택을 자동으로 감지합니다",
+    "noFiles": "파일이 없습니다",
+    "noFilesDescription": "분석을 시작하려면 먼저 파일을 업로드해주세요.\nMCP 또는 API를 통해 프로젝트 파일을 전송할 수 있습니다.",
+    "uploadFirst": "파일을 먼저 업로드해주세요",
+    "startButton": "분석 시작",
+    "readyTitle": "분석 준비 완료",
+    "readyDescription": "업로드된 {count}개 파일을 기반으로 기술 스택을 분석합니다",
+    "analyzingTitle": "분석 중...",
+    "analyzingDescription": "AI가 프로젝트 파일을 분석하고 있습니다. 잠시 기다려주세요.",
+    "errorTitle": "분석 중 오류가 발생했습니다",
+    "defaultError": "분석 과정에서 문제가 발생했습니다. 다시 시도해주세요.",
+    "retry": "다시 시도",
+    "startError": "분석을 시작할 수 없습니다",
+    "completedBanner": "분석이 완료되었습니다!",
+    "resultTitle": "기술 스택 분석 결과",
+    "reanalyze": "재분석",
+    "techCount": "총 {count}개의 기술이 감지되었습니다",
+    "noTechStacks": "감지된 기술 스택이 없습니다",
+    "errorGuidanceLlm": "LLM API 키를 확인해주세요. 설정에서 키를 등록하거나 다시 입력해주세요.",
+    "errorGuidanceFile": "분석할 파일이 부족합니다. 프로젝트에 더 많은 파일을 업로드해주세요.",
+    "errorDefault": "분석 과정에서 문제가 발생했습니다. 다시 시도해주세요."
+  },
+  "delete": {
+    "button": "삭제",
+    "title": "프로젝트 삭제",
+    "confirmWithName": "<b>{name}</b>을(를) 삭제하시겠습니까?",
+    "confirmGeneric": "이 프로젝트를 삭제하시겠습니까?",
+    "warning": "모든 파일, 분석 결과, 학습 데이터가 영구 삭제됩니다.",
+    "cancel": "취소"
+  },
+  "chart": {
+    "framework": "프레임워크",
+    "language": "언어",
+    "database": "DB",
+    "auth": "인증",
+    "deploy": "배포",
+    "styling": "스타일링",
+    "testing": "테스팅",
+    "buildTool": "빌드",
+    "library": "라이브러리",
+    "other": "기타",
+    "count": "개수"
+  }
+}

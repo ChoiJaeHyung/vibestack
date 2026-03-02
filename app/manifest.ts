@@ -1,11 +1,13 @@
 import { MetadataRoute } from "next";
+import { getTranslations } from "next-intl/server";
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const t = await getTranslations("Metadata");
+
   return {
     name: "VibeUniv",
     short_name: "VibeUniv",
-    description:
-      "AI 코딩 도구로 만든 앱, 내 코드로 제대로 배우기. 프로젝트를 연결하면 AI가 기술 스택을 분석하고 맞춤 학습 로드맵을 만들어 드려요.",
+    description: t("manifest.description"),
     start_url: "/",
     display: "standalone",
     background_color: "#09090b",
