@@ -16,6 +16,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { LocaleToggle } from "@/components/ui/locale-toggle";
 import type { UserRole } from "@/types/database";
 
 interface SidebarProps {
@@ -156,6 +157,7 @@ export function Sidebar({ userEmail, userRole }: SidebarProps) {
               </p>
             </div>
             <ThemeToggle />
+            <LocaleToggle />
             <form action="/api/auth/signout" method="post">
               <button
                 type="submit"

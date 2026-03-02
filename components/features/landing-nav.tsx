@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Menu, X, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { LocaleToggle } from "@/components/ui/locale-toggle";
 
 interface LandingNavProps {
   userEmail: string | null;
@@ -59,6 +60,7 @@ export function LandingNav({ userEmail }: LandingNavProps) {
         {/* Right buttons */}
         <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
+          <LocaleToggle />
           {userEmail ? (
             <>
               <Link
@@ -121,6 +123,10 @@ export function LandingNav({ userEmail }: LandingNavProps) {
             {t("nav.faq")}
           </a>
           <div className="pt-2 border-t border-border-default space-y-2">
+            <div className="flex items-center gap-2 pb-1">
+              <ThemeToggle />
+              <LocaleToggle />
+            </div>
             {userEmail ? (
               <>
                 <Link
