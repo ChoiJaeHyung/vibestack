@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { updateUserLocale } from "@/server/actions/learning";
 import type { Locale } from "@/types/database";
@@ -17,7 +16,6 @@ const LOCALE_OPTIONS = [
 
 export function LocaleSelector({ currentLocale }: LocaleSelectorProps) {
   const t = useTranslations("Settings");
-  const router = useRouter();
   const [selected, setSelected] = useState<Locale>(currentLocale);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
@@ -30,11 +28,8 @@ export function LocaleSelector({ currentLocale }: LocaleSelectorProps) {
     startTransition(async () => {
       const result = await updateUserLocale(value);
       if (result.success) {
-        // Sync cookie with DB locale
-        document.cookie = `locale=${value}; path=/; samesite=lax; max-age=31536000`;
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
-        router.refresh();
       }
     });
   }

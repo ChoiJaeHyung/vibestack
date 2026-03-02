@@ -25,7 +25,7 @@
   },
   "locale": {
     "sectionTitle": "Content Language",
-    "sectionDescription": "Choose the language for AI-generated learning content",
+    "sectionDescription": "Choose the language for AI-generated content (curriculum, tutor responses). To change the UI language, use the language toggle in the sidebar.",
     "label": "Content Language",
     "saved": "Saved",
     "notice": "Applies to newly generated content only. Existing content will not change."
