@@ -239,6 +239,47 @@ html {
 }
 
 /* ── Prose overrides ───────────────────────────── */
+/* Theme-aware prose colors — auto-switch with light/dark via CSS variables.
+   Works alongside dark:prose-invert for extra reliability. */
+.prose {
+  color: var(--text-primary);
+}
+.prose :where(h1, h2, h3, h4, h5, h6, th) {
+  color: var(--text-primary);
+}
+.prose :where(strong, b) {
+  color: var(--text-primary);
+}
+.prose :where(a) {
+  color: var(--accent-purple);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose :where(a):hover {
+  color: var(--accent-cyan);
+}
+.prose :where(blockquote) {
+  color: var(--text-tertiary);
+  border-left-color: var(--border-strong);
+}
+.prose :where(ol > li)::marker {
+  color: var(--text-muted);
+}
+.prose :where(ul > li)::marker {
+  color: var(--text-dim);
+}
+.prose :where(hr) {
+  border-color: var(--border-default);
+}
+.prose :where(thead) {
+  border-bottom-color: var(--border-strong);
+}
+.prose :where(tbody tr) {
+  border-bottom-color: var(--border-default);
+}
+.prose :where(figcaption) {
+  color: var(--text-muted);
+}
 .prose :where(code):not(:where(pre *)) {
   font-weight: 400;
   cursor: text;
@@ -256,6 +297,7 @@ html {
   border-radius: 0.75rem;
   padding: 1rem 1.25rem;
   overflow-x: auto;
+  color: var(--text-tertiary);
   background: var(--prose-pre-bg);
   border: 1px solid var(--prose-pre-border);
 }
