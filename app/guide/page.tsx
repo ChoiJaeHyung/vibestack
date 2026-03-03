@@ -166,16 +166,19 @@ export default async function GuidePage() {
             >
               <p>{t("step4.description")}</p>
 
-              <h4 className="mt-6 text-sm font-semibold text-text-primary">
-                Claude Code
-              </h4>
-              <p className="mt-1 text-sm">
-                {t("step4.configLabel")}{" "}
-                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
-                  ~/.claude.json
-                </code>
-              </p>
-              <CodeBlock>
+              {/* Claude Code */}
+              <ToolSection title="Claude Code">
+                <AiPromptBox label={t("step4.aiPromptLabel")}>
+                  {t("step4.claudeCode.aiPrompt", { apiKey: t("step4.apiKeyPlaceholder") })}
+                </AiPromptBox>
+                <ManualToggle label={t("step4.manualLabel")}>
+                  <p className="text-sm">
+                    {t("step4.configLabel")}{" "}
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
+                      ~/.claude.json
+                    </code>
+                  </p>
+                  <CodeBlock>
 {`{
   "mcpServers": {
     "vibeuniv": {
@@ -187,24 +190,29 @@ export default async function GuidePage() {
     }
   }
 }`}
-              </CodeBlock>
-              <p className="mt-2 text-sm">
-                {t("step4.claudeCode.cliLabel")}
-              </p>
-              <CodeBlock>
+                  </CodeBlock>
+                  <p className="mt-2 text-sm">
+                    {t("step4.claudeCode.cliLabel")}
+                  </p>
+                  <CodeBlock>
 {`claude mcp add vibeuniv -s user -e VIBEUNIV_API_KEY=${t("step4.apiKeyPlaceholder")} -- npx -y @vibeuniv/mcp-server@latest`}
-              </CodeBlock>
+                  </CodeBlock>
+                </ManualToggle>
+              </ToolSection>
 
-              <h4 className="mt-6 text-sm font-semibold text-text-primary">
-                Cursor
-              </h4>
-              <p className="mt-1 text-sm">
-                {t("step4.configLabel")}{" "}
-                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
-                  ~/.cursor/mcp.json
-                </code>
-              </p>
-              <CodeBlock>
+              {/* Cursor */}
+              <ToolSection title="Cursor">
+                <AiPromptBox label={t("step4.aiPromptLabel")}>
+                  {t("step4.cursor.aiPrompt", { apiKey: t("step4.apiKeyPlaceholder") })}
+                </AiPromptBox>
+                <ManualToggle label={t("step4.manualLabel")}>
+                  <p className="text-sm">
+                    {t("step4.configLabel")}{" "}
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
+                      ~/.cursor/mcp.json
+                    </code>
+                  </p>
+                  <CodeBlock>
 {`{
   "mcpServers": {
     "vibeuniv": {
@@ -216,18 +224,23 @@ export default async function GuidePage() {
     }
   }
 }`}
-              </CodeBlock>
+                  </CodeBlock>
+                </ManualToggle>
+              </ToolSection>
 
-              <h4 className="mt-6 text-sm font-semibold text-text-primary">
-                Windsurf
-              </h4>
-              <p className="mt-1 text-sm">
-                {t("step4.configLabel")}{" "}
-                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
-                  ~/.codeium/windsurf/mcp_config.json
-                </code>
-              </p>
-              <CodeBlock>
+              {/* Windsurf */}
+              <ToolSection title="Windsurf">
+                <AiPromptBox label={t("step4.aiPromptLabel")}>
+                  {t("step4.windsurf.aiPrompt", { apiKey: t("step4.apiKeyPlaceholder") })}
+                </AiPromptBox>
+                <ManualToggle label={t("step4.manualLabel")}>
+                  <p className="text-sm">
+                    {t("step4.configLabel")}{" "}
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
+                      ~/.codeium/windsurf/mcp_config.json
+                    </code>
+                  </p>
+                  <CodeBlock>
 {`{
   "mcpServers": {
     "vibeuniv": {
@@ -239,15 +252,20 @@ export default async function GuidePage() {
     }
   }
 }`}
-              </CodeBlock>
+                  </CodeBlock>
+                </ManualToggle>
+              </ToolSection>
 
-              <h4 className="mt-6 text-sm font-semibold text-text-primary">
-                Cline (VS Code)
-              </h4>
-              <p className="mt-1 text-sm">
-                {t.rich("step4.cline.description", richTags)}
-              </p>
-              <CodeBlock>
+              {/* Cline */}
+              <ToolSection title="Cline (VS Code)">
+                <AiPromptBox label={t("step4.aiPromptLabel")}>
+                  {t("step4.cline.aiPrompt", { apiKey: t("step4.apiKeyPlaceholder") })}
+                </AiPromptBox>
+                <ManualToggle label={t("step4.manualLabel")}>
+                  <p className="text-sm">
+                    {t.rich("step4.cline.description", richTags)}
+                  </p>
+                  <CodeBlock>
 {`{
   "mcpServers": {
     "vibeuniv": {
@@ -259,18 +277,23 @@ export default async function GuidePage() {
     }
   }
 }`}
-              </CodeBlock>
+                  </CodeBlock>
+                </ManualToggle>
+              </ToolSection>
 
-              <h4 className="mt-6 text-sm font-semibold text-text-primary">
-                Kimi Code CLI
-              </h4>
-              <p className="mt-1 text-sm">
-                {t("step4.configLabel")}{" "}
-                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
-                  ~/.kimi/mcp.json
-                </code>
-              </p>
-              <CodeBlock>
+              {/* Kimi Code */}
+              <ToolSection title="Kimi Code CLI">
+                <AiPromptBox label={t("step4.aiPromptLabel")}>
+                  {t("step4.kimiCode.aiPrompt", { apiKey: t("step4.apiKeyPlaceholder") })}
+                </AiPromptBox>
+                <ManualToggle label={t("step4.manualLabel")}>
+                  <p className="text-sm">
+                    {t("step4.configLabel")}{" "}
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
+                      ~/.kimi/mcp.json
+                    </code>
+                  </p>
+                  <CodeBlock>
 {`{
   "mcpServers": {
     "vibeuniv": {
@@ -282,41 +305,48 @@ export default async function GuidePage() {
     }
   }
 }`}
-              </CodeBlock>
-              <p className="mt-2 text-sm">
-                {t.rich("step4.kimiCode.cliDescription", richTags)}
-              </p>
+                  </CodeBlock>
+                  <p className="mt-2 text-sm">
+                    {t.rich("step4.kimiCode.cliDescription", richTags)}
+                  </p>
+                </ManualToggle>
+              </ToolSection>
 
-              <h4 className="mt-6 text-sm font-semibold text-text-primary">
-                OpenAI Codex CLI
-              </h4>
-              <p className="mt-1 text-sm">
-                {t("step4.configLabel")}{" "}
-                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
-                  ~/.codex/config.toml
-                </code>{" "}
-                {t("step4.codex.format")}
-              </p>
-              <CodeBlock>
+              {/* OpenAI Codex */}
+              <ToolSection title="OpenAI Codex CLI">
+                <AiPromptBox label={t("step4.aiPromptLabel")}>
+                  {t("step4.codex.aiPrompt", { apiKey: t("step4.apiKeyPlaceholder") })}
+                </AiPromptBox>
+                <ManualToggle label={t("step4.manualLabel")}>
+                  <p className="text-sm">
+                    {t("step4.configLabel")}{" "}
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
+                      ~/.codex/config.toml
+                    </code>{" "}
+                    {t("step4.codex.format")}
+                  </p>
+                  <CodeBlock>
 {`[mcp_servers.vibeuniv]
 command = "npx"
 args = ["-y", "@vibeuniv/mcp-server@latest"]
 
 [mcp_servers.vibeuniv.env]
 VIBEUNIV_API_KEY = "${t("step4.apiKeyPlaceholder")}"`}
-              </CodeBlock>
-              <p className="mt-2 text-sm">
-                {t("step4.codex.cliDescription")}
-              </p>
-              <CodeBlock>
+                  </CodeBlock>
+                  <p className="mt-2 text-sm">
+                    {t("step4.codex.cliDescription")}
+                  </p>
+                  <CodeBlock>
 {`codex mcp add vibeuniv --env VIBEUNIV_API_KEY=${t("step4.apiKeyPlaceholder")} -- npx -y @vibeuniv/mcp-server@latest`}
-              </CodeBlock>
-              <p className="mt-2 text-sm">
-                {t.rich("step4.codex.projectNote", richTags)}
-              </p>
+                  </CodeBlock>
+                  <p className="mt-2 text-sm">
+                    {t.rich("step4.codex.projectNote", richTags)}
+                  </p>
+                </ManualToggle>
+              </ToolSection>
 
               <InfoBox>
-                {t.rich("step4.info", richTags)}
+                {t("step4.info")}
               </InfoBox>
             </StepSection>
 
@@ -685,5 +715,54 @@ function TroubleshootItem({
         {children}
       </div>
     </div>
+  );
+}
+
+function ToolSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mt-6 rounded-2xl border border-border-default bg-bg-surface p-5">
+      <h4 className="text-sm font-semibold text-text-primary">{title}</h4>
+      <div className="mt-3 space-y-3">{children}</div>
+    </div>
+  );
+}
+
+function AiPromptBox({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <p className="text-xs font-medium text-violet-400">{label}</p>
+      <div className="mt-1.5 rounded-xl border border-violet-500/30 bg-violet-500/10 p-3 text-sm text-text-primary">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function ManualToggle({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <details className="group">
+      <summary className="cursor-pointer text-xs font-medium text-text-muted transition-colors hover:text-text-secondary">
+        <span className="ml-1">{label}</span>
+      </summary>
+      <div className="mt-2 space-y-2">{children}</div>
+    </details>
   );
 }
