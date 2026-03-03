@@ -52,9 +52,7 @@
       "projectNote": "For project-specific settings, add to <code>.codex/config.toml</code> (project root). Both CLI and IDE extension share the same config file."
     },
     "claudeCode": {
-      "cliLabel": "Run in terminal:",
-      "cliDescription": "Claude Code officially recommends adding MCP servers via CLI command.",
-      "projectFileNote": "To share the config with your team, you can create a <code>.mcp.json</code> file at the project root:"
+      "cliLabel": "Or add via CLI command:"
     },
     "info": "If editing config files manually is difficult, just ask your AI coding tool to do it. For example, tell Claude Code <strong>\"Add vibeuniv to MCP server settings\"</strong> or tell Cursor <strong>\"Add this config to mcp.json\"</strong> — the AI will find and update the config file for you. Paste the JSON config code above for best results!"
   },
