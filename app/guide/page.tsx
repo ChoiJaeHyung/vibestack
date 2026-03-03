@@ -31,6 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function GuidePage() {
   const t = await getTranslations("Guide");
+  const tLanding = await getTranslations("Landing");
 
   let userEmail: string | null = null;
   try {
@@ -169,10 +170,16 @@ export default async function GuidePage() {
                 Claude Code
               </h4>
               <p className="mt-1 text-sm">
-                {t("step4.configLabel")}{" "}
-                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
-                  ~/.claude/settings.json
-                </code>
+                {t("step4.claudeCode.cliDescription")}
+              </p>
+              <p className="mt-2 text-sm">
+                {t("step4.claudeCode.cliLabel")}
+              </p>
+              <CodeBlock>
+{`claude mcp add vibeuniv -s user -e VIBEUNIV_API_KEY=${t("step4.apiKeyPlaceholder")} -- npx -y @vibeuniv/mcp-server@latest`}
+              </CodeBlock>
+              <p className="mt-3 text-sm">
+                {t.rich("step4.claudeCode.projectFileNote", richTags)}
               </p>
               <CodeBlock>
 {`{
@@ -539,6 +546,18 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
               </span>
             </div>
             <div className="flex items-center gap-6 text-sm text-text-muted">
+              <Link
+                href="/privacy"
+                className="transition-colors hover:text-text-primary"
+              >
+                {tLanding("footer.privacy")}
+              </Link>
+              <Link
+                href="/terms"
+                className="transition-colors hover:text-text-primary"
+              >
+                {tLanding("footer.terms")}
+              </Link>
               <a
                 href="https://github.com/vibestack"
                 target="_blank"
