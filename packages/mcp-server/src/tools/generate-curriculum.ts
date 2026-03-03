@@ -211,26 +211,24 @@ function buildLevelGuidance(difficulty: string, locale: "ko" | "en"): string {
     return en
       ? `**[Core Principle] Explain as if to a 5-6 year old. Assume they know nothing.**
    - 3-step concept breakdown: ①Analogy (food/LEGO/school/play) → ②One-sentence definition → ③Code connection
-   - "What if this didn't exist?" before/after comparison required (e.g., "No middleware? → Anyone can access secret pages 😱")
-   - Translate every line of code into plain English (e.g., \`const x = 5\` → "Put the number 5 in a box called x 📦")
+   - "What if this didn't exist?" before/after comparison (e.g., "No middleware? → Anyone can access secret pages 😱")
+   - Translate key code lines into plain English (e.g., \`const x = 5\` → "Put the number 5 in a box called x 📦")
    - Give friendly nicknames to technical terms: useState→"memory box", props→"delivery package", middleware→"security checkpoint"
    - concept 40%+, quiz 20%+, practical 15%↓(very easy only)
-   - 50%+ analogy-based quizzes, challenges with only 1-2 blanks + very specific hints
-   - explanation 400+ chars, 8-12 paragraphs, 7-12 sections per module
-   - Use emojis actively: 🎯summary, 💡tip, ⚠️warning, 👏praise, 🎉celebration
+   - explanation 400+ chars, 5-7 sections per module
+   - Use emojis actively: 🎯summary, 💡tip, ⚠️warning, 👏praise
    - Tone: like reading a picture book, short sentences, lots of encouragement
-   - estimated_minutes: 25-45 min (detailed explanations)`
+   - estimated_minutes: 20-35 min`
       : `**[대원칙] 5~6세 아이에게 설명하듯. 아무것도 모른다고 가정.**
-   - 개념 3단계 쪼개기 필수: ①비유(음식/레고/학교/놀이) → ②한 문장 정의 → ③코드 연결
-   - "이게 없으면?" before/after 비교 필수 (예: "미들웨어 없으면? → 아무나 비밀 페이지 접근 😱")
-   - 코드 한 줄마다 "우리말 번역" (예: \`const x = 5\` → "x 상자에 숫자 5를 넣어요 📦")
+   - 개념 3단계 쪼개기: ①비유(음식/레고/학교/놀이) → ②한 문장 정의 → ③코드 연결
+   - "이게 없으면?" before/after 비교 (예: "미들웨어 없으면? → 아무나 비밀 페이지 접근 😱")
+   - 주요 코드 라인에 "우리말 번역" (예: \`const x = 5\` → "x 상자에 숫자 5를 넣어요 📦")
    - 기술 용어에 한국어 별명: useState→"기억 상자", props→"택배 상자", middleware→"보안 검문소"
    - concept 40%↑, quiz 20%↑, practical 15%↓(아주 쉬운 것만)
-   - quiz 50%+ 비유 기반, challenge 빈칸 1-2개만+매우 구체적 힌트
-   - explanation 400자↑, 8-12문단, 모듈당 7-12섹션
-   - 이모지 적극 활용: 🎯한줄정리, 💡팁, ⚠️주의, 👏칭찬, 🎉축하
+   - explanation 400자↑, 모듈당 5-7섹션
+   - 이모지 적극 활용: 🎯한줄정리, 💡팁, ⚠️주의, 👏칭찬
    - 톤: 그림책 읽어주듯, 짧은 문장, 격려·칭찬 대폭
-   - estimated_minutes: 25-45분 (상세한 설명)`;
+   - estimated_minutes: 20-35분`;
   }
   if (difficulty === "intermediate") {
     return en
@@ -366,9 +364,9 @@ ${curriculumFiles.map((f) => `#### ${f.file_path}\n\`\`\`\n${f.content}\n\`\`\``
 
         const learnMoreLabel = en ? "📚 Learn More" : "📚 더 알아보기";
         const minBodyChars = difficulty === "beginner" ? "400" : "200";
-        const sectionsPerModule = difficulty === "beginner" ? "7-12" : "5-8";
+        const sectionsPerModule = difficulty === "beginner" ? "5-7" : "3-5";
         const minSections = difficulty === "beginner" ? "5" : "3";
-        const paragraphs = difficulty === "beginner" ? "8-12" : "5-8";
+        const paragraphs = difficulty === "beginner" ? "6-8" : "4-6";
 
         const instructions = en
           ? `Please generate a learning curriculum for this project.
@@ -388,8 +386,8 @@ ${filesSection}${eduSection}${kbSection}
 ## Design Principles
 
 **Module Count (Required — server will reject if below minimum):**
-- Minimum 15 modules total
-- Core technologies: at least 3 modules each
+- Minimum 10 modules total (aim for 10-15)
+- Core technologies: at least 2 modules each
 - Supporting technologies: at least 1 module each
 
 **Module Design — Focus on project features:**
@@ -482,14 +480,12 @@ Follow the structure below exactly. All string values in English. Output ONLY JS
 
 **Required Rules:**
 - At least 1 code_example + 1 quiz_question per module
-- Minimum 15 modules, minimum 3 sections per module
+- Minimum 10 modules, minimum ${minSections} sections per module
 - explanation body must be at least ${minBodyChars} characters${difficulty === "beginner" ? `
 
 **[Beginner-only Additional Rules — Must Follow]:**
 - Every concept must have "What if this didn't exist?" before/after comparison
 - Every line of code in code_example must have a plain-English translation
-- 50%+ of quizzes must be analogy-based
-- Insert a reflection after every 2 explanations
 - Challenges must have only 1-2 blanks with very specific hints
 - All technical terms must have friendly nicknames` : ""}
 
@@ -511,8 +507,8 @@ ${filesSection}${eduSection}${kbSection}
 ## 설계 원칙
 
 **모듈 수량 (필수 — 미달 시 서버에서 거부됨):**
-- 전체 최소 15개 모듈
-- Core 기술: 각 최소 3개 모듈
+- 전체 최소 10개 모듈 (10-15개 권장)
+- Core 기술: 각 최소 2개 모듈
 - Supporting 기술: 각 최소 1개 모듈
 
 **모듈 구성 — 프로젝트 기능 중심으로 설계:**
@@ -605,14 +601,12 @@ ${eduInstruction}${kbInstruction}
 
 **필수 규칙:**
 - 모듈당 code_example 최소 1개 + quiz_question 최소 1개
-- 최소 15개 모듈, 모듈당 최소 3개 섹션
+- 최소 10개 모듈, 모듈당 최소 ${minSections}개 섹션
 - explanation body는 ${minBodyChars}자 이상${difficulty === "beginner" ? `
 
 **[초급 전용 추가 규칙 — 반드시 준수]:**
 - 모든 개념에 "이게 없으면?" before/after 비교 필수
 - code_example 모든 코드 라인에 "우리말 번역" 필수
-- quiz 50%+ 비유 기반 문제
-- explanation 2개마다 reflection 1개 삽입
 - challenge 빈칸 1-2개만, 힌트 매우 구체적
 - 기술 용어에 한국어 별명 필수` : ""}
 

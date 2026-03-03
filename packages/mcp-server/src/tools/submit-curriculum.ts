@@ -75,11 +75,39 @@ export function registerSubmitCurriculum(server: McpServer, client: VibeUnivClie
         };
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
+        const locale = await client.getUserLocale().catch(() => "ko");
+
+        const hint = locale === "en"
+          ? [
+              ``,
+              `--- Validation Guide ---`,
+              `Server minimum requirements:`,
+              `• 10+ modules (aim for 10-15)`,
+              `• Beginner: 5+ sections/module, 400+ chars/explanation`,
+              `• Other: 3+ sections/module, 200+ chars/explanation`,
+              `• Each module needs at least 1 code_example + 1 quiz_question`,
+              `• quiz_question needs exactly 4 options + quiz_explanation`,
+              ``,
+              `Fix the failing module/section and resubmit — no need to regenerate everything.`,
+            ]
+          : [
+              ``,
+              `--- 검증 가이드 ---`,
+              `서버 최소 요구사항:`,
+              `• 10개 이상 모듈 (10-15개 권장)`,
+              `• 초급: 모듈당 5개↑ 섹션, explanation 400자↑`,
+              `• 그 외: 모듈당 3개↑ 섹션, explanation 200자↑`,
+              `• 모듈당 code_example 1개↑ + quiz_question 1개↑ 필수`,
+              `• quiz_question은 정확히 4개 선택지 + quiz_explanation 필수`,
+              ``,
+              `실패한 모듈/섹션만 수정해서 다시 제출하세요 — 전체 재생성 불필요.`,
+            ];
+
         return {
           content: [
             {
               type: "text" as const,
-              text: `Failed to submit curriculum: ${message}`,
+              text: `Failed to submit curriculum: ${message}\n${hint.join("\n")}`,
             },
           ],
           isError: true,
