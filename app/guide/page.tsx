@@ -692,7 +692,7 @@ function InfoBox({
     <div
       className={`mt-4 rounded-xl border p-4 text-sm ${
         variant === "warning"
-          ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+          ? "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200"
           : "border-border-default bg-bg-input text-text-muted"
       }`}
     >
