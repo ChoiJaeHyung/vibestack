@@ -155,7 +155,7 @@ function QuizSection({
   return (
     <div className="space-y-4">
       {/* Quiz body */}
-      <div className="prose dark:prose-invert max-w-none">
+      <div className="prose max-w-none">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {section.body ?? ""}
         </ReactMarkdown>
@@ -252,7 +252,7 @@ function QuizSection({
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-text-faint">
                 {t('quiz.explanation')}
               </p>
-              <div className="prose dark:prose-invert max-w-none">
+              <div className="prose max-w-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {section.quiz_explanation}
                 </ReactMarkdown>
@@ -345,7 +345,7 @@ function ChallengeSection({
 
   return (
     <div className="space-y-4">
-      <div className="prose dark:prose-invert max-w-none">
+      <div className="prose max-w-none">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {section.body ?? ""}
         </ReactMarkdown>
@@ -795,7 +795,7 @@ export function ModuleContent({
     }
     return (
       <div className="space-y-4">
-        <div className="prose dark:prose-invert max-w-none">
+        <div className="prose max-w-none">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeHighlight]}
