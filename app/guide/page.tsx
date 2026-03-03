@@ -170,16 +170,10 @@ export default async function GuidePage() {
                 Claude Code
               </h4>
               <p className="mt-1 text-sm">
-                {t("step4.claudeCode.cliDescription")}
-              </p>
-              <p className="mt-2 text-sm">
-                {t("step4.claudeCode.cliLabel")}
-              </p>
-              <CodeBlock>
-{`claude mcp add vibeuniv -s user -e VIBEUNIV_API_KEY=${t("step4.apiKeyPlaceholder")} -- npx -y @vibeuniv/mcp-server@latest`}
-              </CodeBlock>
-              <p className="mt-3 text-sm">
-                {t.rich("step4.claudeCode.projectFileNote", richTags)}
+                {t("step4.configLabel")}{" "}
+                <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
+                  ~/.claude.json
+                </code>
               </p>
               <CodeBlock>
 {`{
@@ -193,6 +187,12 @@ export default async function GuidePage() {
     }
   }
 }`}
+              </CodeBlock>
+              <p className="mt-2 text-sm">
+                {t("step4.claudeCode.cliLabel")}
+              </p>
+              <CodeBlock>
+{`claude mcp add vibeuniv -s user -e VIBEUNIV_API_KEY=${t("step4.apiKeyPlaceholder")} -- npx -y @vibeuniv/mcp-server@latest`}
               </CodeBlock>
 
               <h4 className="mt-6 text-sm font-semibold text-text-primary">
