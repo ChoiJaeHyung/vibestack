@@ -465,7 +465,7 @@ export function TutorChat({
                 {msg.role === "assistant" ? (
                   <div className="max-w-[80%]">
                     <div className="rounded-xl bg-bg-input px-3 py-2 text-text-primary">
-                      <div className="prose prose-sm prose-invert max-w-none">
+                      <div className="prose prose-sm max-w-none">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {msg.content}
                         </ReactMarkdown>
