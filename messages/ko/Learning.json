@@ -110,5 +110,18 @@
     "subtitle": "{name} 완료",
     "score": "퀴즈 점수: {score}점",
     "nextModule": "다음 모듈로"
+  },
+  "regenerate": {
+    "button": "다시 생성",
+    "title": "모듈 콘텐츠 다시 생성",
+    "reason_too_difficult": "내용이 너무 어려워요",
+    "reason_too_easy": "너무 쉬워요, 더 깊이 있는 내용을 원해요",
+    "reason_need_more_code": "코드 예제가 더 필요해요",
+    "reason_not_relevant": "제 프로젝트와 관련이 없어요",
+    "warning": "다시 생성하면 현재 콘텐츠가 교체됩니다. 퀴즈 진행도 초기화됩니다.",
+    "remaining": "남은 재생성 횟수: {count}회",
+    "cancel": "취소",
+    "confirm": "다시 생성",
+    "limitReachedPaid": "재생성 횟수를 모두 사용했습니다"
   }
 }

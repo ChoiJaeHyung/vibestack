@@ -36,6 +36,28 @@
     "aiModels": "AI Models Supported",
     "modules": "Learning Modules Created"
   },
+  "painPoint": {
+    "title": {
+      "prefix": "Why ",
+      "highlight": "VibeUniv",
+      "suffix": "?"
+    },
+    "problem": {
+      "label": "Problem",
+      "title": "Built it, but don't get it",
+      "description": "AI wrote the code, but you don't understand why it works. When errors hit, you're stuck asking AI again."
+    },
+    "solution": {
+      "label": "Solution",
+      "title": "AI analyzes your code",
+      "description": "Connect your project and we automatically detect your tech stack, architecture, and patterns — then build a learning path just for you."
+    },
+    "outcome": {
+      "label": "Outcome",
+      "title": "Your code becomes your textbook",
+      "description": "No abstract tutorials. Learn from the code you actually built. Ask the AI tutor anything, anytime."
+    }
+  },
   "how": {
     "title": {
       "prefix": "How Does It ",
@@ -67,8 +89,8 @@
       "description": "Set up once in Claude Code, Cursor, etc. Auto-connected via MCP."
     },
     "1": {
-      "title": "11 AI Models Supported",
-      "description": "Analyze and learn with Anthropic, OpenAI, Google, and more."
+      "title": "11 AI Providers Supported",
+      "description": "Choose from 11 providers including Anthropic, OpenAI, Google, and more."
     },
     "2": {
       "title": "Your Code Is Your Textbook",
@@ -84,7 +106,7 @@
     },
     "5": {
       "title": "BYOK (Bring Your Own Key)",
-      "description": "Register your own API keys on the Pro plan and use any model freely."
+      "description": "Register your own API key on any plan and unlock all features for free — unlimited."
     },
     "title": {
       "prefix": "Key ",
@@ -178,7 +200,9 @@
   },
   "footer": {
     "copyright": "© 2026 VibeUniv. All rights reserved.",
-    "company": "Company: VibeUniv.Inc | CEO: Jaehyung Choi | Business Reg. No.: 257-37-01450"
+    "company": "Company: VibeUniv.Inc | CEO: Jaehyung Choi | Business Reg. No.: 257-37-01450",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
   },
   "jsonLd": {
     "faq": {

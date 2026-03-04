@@ -36,6 +36,28 @@
     "aiModels": "AI 모델 지원",
     "modules": "학습 모듈 생성"
   },
+  "painPoint": {
+    "title": {
+      "prefix": "왜 ",
+      "highlight": "VibeUniv",
+      "suffix": "인가요?"
+    },
+    "problem": {
+      "label": "고민",
+      "title": "만들긴 했는데, 모르겠어요",
+      "description": "AI가 코드를 짜줬는데, 왜 이렇게 돌아가는지 모르겠어요. 에러 나면 막막하고, 고치려면 또 AI한테 물어봐야 해요."
+    },
+    "solution": {
+      "label": "해결",
+      "title": "AI가 내 코드를 분석해줘요",
+      "description": "프로젝트를 연결하면 기술 스택, 구조, 패턴을 자동으로 파악하고 딱 맞는 학습 로드맵을 만들어 드려요."
+    },
+    "outcome": {
+      "label": "결과",
+      "title": "내 코드가 교재가 돼요",
+      "description": "추상적인 튜토리얼 말고, 내가 만든 코드로 배워요. AI 튜터가 모르는 건 바로바로 설명해줘요."
+    }
+  },
   "how": {
     "title": {
       "prefix": "어떻게 ",
@@ -67,8 +89,8 @@
       "description": "Claude Code, Cursor 등에서 한 번만 설정하면 끝. MCP로 자동 연결됩니다."
     },
     "1": {
-      "title": "11개 AI 모델 지원",
-      "description": "Anthropic, OpenAI, Google 등 원하는 모델로 분석하고 학습하세요."
+      "title": "11개 AI 프로바이더 지원",
+      "description": "Anthropic, OpenAI, Google 등 11개 프로바이더의 다양한 모델로 분석하고 학습하세요."
     },
     "2": {
       "title": "내 코드가 교과서",
@@ -84,7 +106,7 @@
     },
     "5": {
       "title": "BYOK (자체 LLM 키)",
-      "description": "Pro 플랜에서 본인의 API 키를 등록해 원하는 모델로 자유롭게 사용하세요."
+      "description": "플랜 상관없이 본인의 API 키를 등록하면 모든 기능을 무제한 무료로 사용할 수 있어요."
     },
     "title": {
       "prefix": "주요 ",
@@ -178,7 +200,9 @@
   },
   "footer": {
     "copyright": "© 2026 VibeUniv. All rights reserved.",
-    "company": "상호명: VibeUniv.Inc | 대표: 최재형 | 사업자등록번호: 257-37-01450"
+    "company": "상호명: VibeUniv.Inc | 대표: 최재형 | 사업자등록번호: 257-37-01450",
+    "privacy": "개인정보처리방침",
+    "terms": "이용약관"
   },
   "jsonLd": {
     "faq": {

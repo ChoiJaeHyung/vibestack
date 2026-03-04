@@ -265,6 +265,59 @@ function QuizSection({
   );
 }
 
+// ─── IDE Code Window ────────────────────────────────────────────────
+
+function IdeCodeWindow({ children, filename }: { children: React.ReactNode; filename?: string }) {
+  return (
+    <div className="rounded-xl border border-zinc-700/50 bg-zinc-900 overflow-hidden shadow-lg">
+      {/* Title bar */}
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-zinc-800/80 border-b border-zinc-700/50">
+        <div className="flex items-center gap-1.5">
+          <div className="h-3 w-3 rounded-full bg-red-500/80" />
+          <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
+          <div className="h-3 w-3 rounded-full bg-green-500/80" />
+        </div>
+        {filename && (
+          <span className="ml-2 text-xs text-zinc-400 font-mono">{filename}</span>
+        )}
+      </div>
+      {/* Code content */}
+      <div className="not-prose overflow-x-auto [&_pre]:!m-0 [&_pre]:!rounded-none [&_pre]:!border-0 [&_pre]:!bg-zinc-900 [&_pre]:!text-[#c9d1d9] [&_code]:!text-[#c9d1d9] [&_pre]:!p-4 [&_pre]:!text-sm [&_pre]:!leading-relaxed">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** Extract filename hint from the first comment line of code (e.g. "// app/page.tsx") */
+function extractFilename(code: string): string | undefined {
+  const match = code.match(/^\/\/\s*(\S+\.\w+)/);
+  if (match) return match[1];
+  const match2 = code.match(/^\/\*\s*(\S+\.\w+)/);
+  if (match2) return match2[1];
+  return undefined;
+}
+
+/** Custom ReactMarkdown components with IDE-style code blocks */
+const markdownComponents = {
+  pre: ({ children, ...props }: React.ComponentPropsWithoutRef<"pre"> & { children?: React.ReactNode }) => {
+    // Extract code text from children for filename detection
+    let codeText = "";
+    if (children && typeof children === "object" && "props" in (children as React.ReactElement)) {
+      const childProps = (children as React.ReactElement).props as { children?: string };
+      if (typeof childProps.children === "string") {
+        codeText = childProps.children;
+      }
+    }
+    const filename = extractFilename(codeText);
+    return (
+      <IdeCodeWindow filename={filename}>
+        <pre {...props}>{children}</pre>
+      </IdeCodeWindow>
+    );
+  },
+};
+
 // ─── Challenge Section Component ────────────────────────────────────
 
 function highlightCode(code: string): string {
@@ -799,19 +852,20 @@ export function ModuleContent({
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeHighlight]}
+            components={markdownComponents}
           >
             {section.body ?? ""}
           </ReactMarkdown>
         </div>
         {section.code && (
-          <div className="overflow-x-auto rounded-xl">
+          <IdeCodeWindow filename={extractFilename(section.code)}>
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeHighlight]}
             >
               {"```\n" + section.code + "\n```"}
             </ReactMarkdown>
-          </div>
+          </IdeCodeWindow>
         )}
       </div>
     );

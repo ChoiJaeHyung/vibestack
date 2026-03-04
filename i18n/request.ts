@@ -38,6 +38,7 @@ const NAMESPACES = [
   "Billing",
   "Tutor",
   "Guide",
+  "Legal",
   "NotFound",
   "Errors",
 ] as const;

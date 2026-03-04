@@ -11,7 +11,7 @@
   "step0": {
     "title": "Before You Start",
     "intro": "You just need these 3 things to get started.",
-    "check1": "<strong>AI Coding Tool</strong> — Claude Code, Cursor, Windsurf, Cline, Kimi Code, or OpenAI Codex installed",
+    "check1": "<strong>AI Coding Tool</strong> — Claude Code, Cursor, Windsurf, Cline, Gemini CLI, Kimi Code, or OpenAI Codex installed",
     "check2": "<strong>An AI-Built Project</strong> — The project folder you want to analyze should be on your local machine",
     "check3": "<strong>LLM API Key</strong> — API key for Anthropic, OpenAI, Google, etc. (for Pro plan BYOK; not needed for Free plan)"
   },
@@ -43,29 +43,42 @@
     "manualLabel": "Manual setup:",
     "apiKeyPlaceholder": "YOUR_API_KEY_HERE",
     "claudeCode": {
-      "aiPrompt": "Add an MCP server called vibeuniv. The command is npx -y @vibeuniv/mcp-server@latest with env var VIBEUNIV_API_KEY set to {apiKey}.",
+      "aiPrompt": "Add an MCP server called vibeuniv. Use npx (not npm install). The command is npx -y @vibeuniv/mcp-server@latest with env var VIBEUNIV_API_KEY set to {apiKey}.",
       "cliLabel": "Or add via CLI command:"
     },
     "cursor": {
-      "aiPrompt": "Add vibeuniv MCP server to mcp.json. Command is npx -y @vibeuniv/mcp-server@latest, with env var VIBEUNIV_API_KEY set to {apiKey}."
+      "aiPrompt": "Add vibeuniv MCP server to mcp.json. Use npx (not npm install). Command is npx -y @vibeuniv/mcp-server@latest, with env var VIBEUNIV_API_KEY set to {apiKey}."
     },
     "windsurf": {
-      "aiPrompt": "Add vibeuniv to MCP config. Command is npx -y @vibeuniv/mcp-server@latest, with env var VIBEUNIV_API_KEY set to {apiKey}."
+      "aiPrompt": "Add vibeuniv to MCP config. Use npx (not npm install). Command is npx -y @vibeuniv/mcp-server@latest, with env var VIBEUNIV_API_KEY set to {apiKey}."
     },
     "cline": {
       "description": "In VS Code, open <code>Cline > MCP Servers > Edit Config</code> and add the following.",
-      "aiPrompt": "Add vibeuniv MCP server. Command is npx -y @vibeuniv/mcp-server@latest, with env var VIBEUNIV_API_KEY set to {apiKey}."
+      "aiPrompt": "Add vibeuniv MCP server. Use npx (not npm install). Command is npx -y @vibeuniv/mcp-server@latest, with env var VIBEUNIV_API_KEY set to {apiKey}."
     },
     "kimiCode": {
-      "aiPrompt": "Add an MCP server called vibeuniv. Command is npx -y @vibeuniv/mcp-server@latest, with env var VIBEUNIV_API_KEY set to {apiKey}.",
+      "aiPrompt": "Add an MCP server called vibeuniv. Use npx (not npm install). Command is npx -y @vibeuniv/mcp-server@latest, with env var VIBEUNIV_API_KEY set to {apiKey}.",
       "cliDescription": "Or add directly via CLI: manage MCP servers with <code>kimi mcp</code> and check connection status with <code>/mcp</code>."
     },
+    "geminiCli": {
+      "aiPrompt": "Add an MCP server called vibeuniv. Use npx (not npm install). Command is npx -y @vibeuniv/mcp-server@latest, with env var VIBEUNIV_API_KEY set to {apiKey}."
+    },
     "codex": {
-      "aiPrompt": "Add vibeuniv MCP server. Package is @vibeuniv/mcp-server@latest, with env var VIBEUNIV_API_KEY set to {apiKey}.",
+      "aiPrompt": "Add vibeuniv MCP server. Use npx (not npm install). Package is @vibeuniv/mcp-server@latest, with env var VIBEUNIV_API_KEY set to {apiKey}.",
       "format": "(TOML format)",
       "cliDescription": "Or add with a single CLI command:",
       "projectNote": "For project-specific settings, add to <code>.codex/config.toml</code> (project root). Both CLI and IDE extension share the same config file."
     },
+    "npxTitle": "npx vs npm — Why npx?",
+    "npxRecommend": "Always use npx for MCP server configuration.",
+    "npxExplain1": "<strong>npx</strong> — Runs the package without installing it. Thanks to the <code>@latest</code> tag, it always uses the newest version with zero maintenance.",
+    "npxExplain2": "<strong>npm install -g</strong> — Installs the package globally on your machine. Once installed, the version is locked and you must manually update to get new features or bug fixes.",
+    "npxExplain3": "npx automatically downloads and runs the latest server every time, so you always have the newest features without worrying about version management.",
+    "npmFallbackTitle": "If npx doesn't work — npm global install",
+    "npmFallbackDesc": "Only use this method if npx fails due to corporate networks, firewalls, etc.",
+    "npmFallbackStep1": "1. Install globally:",
+    "npmFallbackStep2": "2. Change <code>command</code> and <code>args</code> in your config file:",
+    "npmFallbackStep3": "3. When you need to update, just run the install command again.",
     "info": "Config file paths may change with tool updates. Asking the AI ensures it uses the correct path automatically."
   },
   "step5": {

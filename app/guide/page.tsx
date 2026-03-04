@@ -312,6 +312,34 @@ export default async function GuidePage() {
                 </ManualToggle>
               </ToolSection>
 
+              {/* Gemini CLI */}
+              <ToolSection title="Gemini CLI">
+                <AiPromptBox label={t("step4.aiPromptLabel")}>
+                  {t("step4.geminiCli.aiPrompt", { apiKey: t("step4.apiKeyPlaceholder") })}
+                </AiPromptBox>
+                <ManualToggle label={t("step4.manualLabel")}>
+                  <p className="text-sm">
+                    {t("step4.configLabel")}{" "}
+                    <code className="rounded-lg bg-bg-code px-1.5 py-0.5 text-xs font-mono">
+                      ~/.gemini/settings.json
+                    </code>
+                  </p>
+                  <CodeBlock>
+{`{
+  "mcpServers": {
+    "vibeuniv": {
+      "command": "npx",
+      "args": ["-y", "@vibeuniv/mcp-server@latest"],
+      "env": {
+        "VIBEUNIV_API_KEY": "${t("step4.apiKeyPlaceholder")}"
+      }
+    }
+  }
+}`}
+                  </CodeBlock>
+                </ManualToggle>
+              </ToolSection>
+
               {/* OpenAI Codex */}
               <ToolSection title="OpenAI Codex CLI">
                 <AiPromptBox label={t("step4.aiPromptLabel")}>
@@ -344,6 +372,46 @@ VIBEUNIV_API_KEY = "${t("step4.apiKeyPlaceholder")}"`}
                   </p>
                 </ManualToggle>
               </ToolSection>
+
+              {/* npx vs npm 설명 */}
+              <div className="mt-8 rounded-2xl border border-violet-500/20 bg-violet-500/[0.04] p-6">
+                <h4 className="text-sm font-bold text-text-primary">
+                  {t("step4.npxTitle")}
+                </h4>
+                <p className="mt-2 text-sm font-medium text-violet-400">
+                  {t("step4.npxRecommend")}
+                </p>
+                <ul className="mt-3 space-y-2 text-sm text-text-muted">
+                  <li>{t.rich("step4.npxExplain1", richTags)}</li>
+                  <li>{t.rich("step4.npxExplain2", richTags)}</li>
+                  <li>{t("step4.npxExplain3")}</li>
+                </ul>
+              </div>
+
+              {/* npm 폴백 */}
+              <div className="mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-6">
+                <h4 className="text-sm font-bold text-text-primary">
+                  {t("step4.npmFallbackTitle")}
+                </h4>
+                <p className="mt-2 text-sm text-text-muted">
+                  {t("step4.npmFallbackDesc")}
+                </p>
+                <p className="mt-3 text-sm text-text-muted">{t("step4.npmFallbackStep1")}</p>
+                <CodeBlock>
+{`npm install -g @vibeuniv/mcp-server@latest`}
+                </CodeBlock>
+                <p className="mt-3 text-sm text-text-muted">{t.rich("step4.npmFallbackStep2", richTags)}</p>
+                <CodeBlock>
+{`{
+  "command": "vibeuniv-mcp",
+  "args": [],
+  "env": {
+    "VIBEUNIV_API_KEY": "${t("step4.apiKeyPlaceholder")}"
+  }
+}`}
+                </CodeBlock>
+                <p className="mt-3 text-sm text-text-muted">{t("step4.npmFallbackStep3")}</p>
+              </div>
 
               <InfoBox>
                 {t("step4.info")}
