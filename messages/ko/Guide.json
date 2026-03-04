@@ -87,6 +87,16 @@
     "ol1": "1. AI 코딩 도구를 완전히 종료 후 다시 시작",
     "ol2": "2. 프로젝트 폴더에서 AI에게 <code>vibeuniv_sync_project</code>를 호출하도록 요청",
     "ol3": "3. VibeUniv 대시보드에서 프로젝트가 등록되었는지 확인",
+    "promptTitle": "AI에게 이렇게 말해보세요",
+    "prompt1": "내 프로젝트를 VibeUniv에 동기화해줘",
+    "prompt1Desc": "프로젝트 등록 + 파일 업로드",
+    "prompt2": "이 프로젝트의 기술 스택을 분석해줘",
+    "prompt2Desc": "기술 스택 분석 (동기화 후)",
+    "prompt3": "초급 난이도로 학습 커리큘럼을 만들어줘",
+    "prompt3Desc": "맞춤 학습 로드맵 생성",
+    "prompt4": "이 코드가 뭐하는 건지 알려줘",
+    "prompt4Desc": "AI 튜터에게 질문",
+    "promptTip": "MCP가 연결되어 있으면, AI가 자동으로 VibeUniv 도구를 호출합니다. 별도의 명령어를 외울 필요 없어요!",
     "info": "동기화는 프로젝트의 설정 파일과 소스 코드 구조만 전송합니다. <code>.env</code>, 인증서 등 민감한 파일은 자동으로 제외돼요."
   },
   "step6": {
