@@ -203,6 +203,65 @@ export default async function LandingPage() {
           </div>
         </SectionReveal>
 
+        {/* Pain Point: Problem → Solution → Outcome */}
+        <section className="py-[100px] px-8 max-md:px-4 flex justify-center">
+          <div className="max-w-[1120px] w-full">
+            <SectionReveal className="text-center mb-16">
+              <h2 className="text-4xl font-extrabold text-text-primary tracking-tight">
+                {t("painPoint.title.prefix")}<span className="gradient-text">{t("painPoint.title.highlight")}</span>{t("painPoint.title.suffix")}
+              </h2>
+            </SectionReveal>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+              {/* Problem */}
+              <SectionReveal delay={0}>
+                <div className="relative h-full rounded-2xl border border-red-500/20 bg-red-500/[0.04] px-7 py-8 transition-all duration-300 hover:border-red-500/30 hover:scale-[1.02]">
+                  <span className="inline-block px-3 py-1 rounded-full bg-red-500/10 text-[12px] font-bold text-red-400 mb-4 tracking-wide">
+                    {t("painPoint.problem.label")}
+                  </span>
+                  <h3 className="text-xl font-bold text-text-primary mb-3">
+                    {t("painPoint.problem.title")}
+                  </h3>
+                  <p className="text-[15px] leading-relaxed text-text-muted">
+                    {t("painPoint.problem.description")}
+                  </p>
+                </div>
+              </SectionReveal>
+
+              {/* Solution */}
+              <SectionReveal delay={150}>
+                <div className="relative h-full rounded-2xl border border-violet-500/20 bg-violet-500/[0.04] px-7 py-8 transition-all duration-300 hover:border-violet-500/30 hover:scale-[1.02]">
+                  <span className="inline-block px-3 py-1 rounded-full bg-violet-500/10 text-[12px] font-bold text-violet-400 mb-4 tracking-wide">
+                    {t("painPoint.solution.label")}
+                  </span>
+                  <h3 className="text-xl font-bold text-text-primary mb-3">
+                    {t("painPoint.solution.title")}
+                  </h3>
+                  <p className="text-[15px] leading-relaxed text-text-muted">
+                    {t("painPoint.solution.description")}
+                  </p>
+                </div>
+              </SectionReveal>
+
+              {/* Outcome */}
+              <SectionReveal delay={300}>
+                <div className="relative h-full rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] px-7 py-8 transition-all duration-300 hover:border-emerald-500/30 hover:scale-[1.02]">
+                  <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 text-[12px] font-bold text-emerald-400 mb-4 tracking-wide">
+                    {t("painPoint.outcome.label")}
+                  </span>
+                  <h3 className="text-xl font-bold text-text-primary mb-3">
+                    {t("painPoint.outcome.title")}
+                  </h3>
+                  <p className="text-[15px] leading-relaxed text-text-muted">
+                    {t("painPoint.outcome.description")}
+                  </p>
+                </div>
+              </SectionReveal>
+            </div>
+
+          </div>
+        </section>
+
         {/* How It Works */}
         <section id="how" className="py-[100px] px-8 max-md:px-4 flex justify-center">
           <div className="max-w-[1120px] w-full">
@@ -232,7 +291,7 @@ export default async function LandingPage() {
                       </p>
                     </div>
                     <div className="flex-[1_1_280px] min-w-[260px]">
-                      <div className="dark bg-[rgba(0,0,0,0.3)] rounded-[10px] p-4 border border-[rgba(255,255,255,0.05)] font-mono text-xs leading-relaxed text-zinc-400 whitespace-pre-wrap">
+                      <div className="rounded-[10px] p-4 border border-zinc-700/50 bg-zinc-900 font-mono text-xs leading-relaxed text-zinc-300 whitespace-pre-wrap">
                         {step.code}
                       </div>
                     </div>
@@ -430,6 +489,18 @@ export default async function LandingPage() {
             <span className="text-sm font-semibold text-text-faint">VibeUniv</span>
           </div>
           <div className="flex gap-6 text-[13px] text-text-dim">
+            <Link
+              href="/privacy"
+              className="hover:text-text-tertiary transition-colors"
+            >
+              {t("footer.privacy")}
+            </Link>
+            <Link
+              href="/terms"
+              className="hover:text-text-tertiary transition-colors"
+            >
+              {t("footer.terms")}
+            </Link>
             <a
               href="https://github.com/vibestack"
               target="_blank"

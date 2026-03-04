@@ -31,7 +31,7 @@ function matchRateLimitPrefix(pathname: string): string | null {
 }
 
 // Public pages that never need auth checks (skip Supabase round-trip)
-const PUBLIC_PATHS = ["/callback", "/guide", "/robots.txt", "/sitemap.xml", "/icon.png", "/apple-icon.png", "/manifest.webmanifest"];
+const PUBLIC_PATHS = ["/callback", "/guide", "/privacy", "/terms", "/robots.txt", "/sitemap.xml", "/icon.png", "/apple-icon.png", "/manifest.webmanifest"];
 
 function detectLocaleFromHeader(request: NextRequest): "ko" | "en" {
   const acceptLang = request.headers.get("accept-language");

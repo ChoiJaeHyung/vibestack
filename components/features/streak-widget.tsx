@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Flame, Trophy } from "lucide-react";
+import { Flame, Trophy, ArrowRight, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -11,6 +13,8 @@ interface StreakWidgetProps {
   weeklyTarget: number;
   weekActiveDays: number;
   lastActiveDate: string | null;
+  /** Link to continue learning (module detail page) */
+  currentLearningHref?: string | null;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────
@@ -79,6 +83,7 @@ export function StreakWidget({
   weeklyTarget,
   weekActiveDays,
   lastActiveDate,
+  currentLearningHref,
 }: StreakWidgetProps) {
   const t = useTranslations("Dashboard");
   const todayIdx = getDayOfWeekIndexKST();
@@ -88,7 +93,35 @@ export function StreakWidget({
     ? Math.min((weekActiveDays / weeklyTarget) * 100, 100)
     : 0;
 
+  const hasActivity = weekActiveDays > 0;
   const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+
+  // No activity this week — show CTA instead of empty calendar
+  if (!hasActivity) {
+    return (
+      <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/[0.06] to-cyan-500/[0.04] p-5">
+        <div className="flex items-center gap-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-500/10">
+            <Sparkles className="h-5 w-5 text-violet-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-text-primary">
+              {t("streak.emptyCta.title")}
+            </p>
+            <p className="mt-0.5 text-xs text-text-muted">
+              {t("streak.emptyCta.description")}
+            </p>
+          </div>
+          <Link href={currentLearningHref ?? "/learning"}>
+            <Button variant="primary" size="sm" className="shrink-0">
+              {t("streak.emptyCta.button")}
+              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl border border-border-default bg-bg-surface p-5">

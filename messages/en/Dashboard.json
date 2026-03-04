@@ -79,6 +79,11 @@
       "fri": "Fri",
       "sat": "Sat",
       "sun": "Sun"
+    },
+    "emptyCta": {
+      "title": "Start your first streak!",
+      "description": "Complete a learning module today and your streak begins",
+      "button": "Start Learning"
     }
   },
   "badge": {

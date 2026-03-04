@@ -7,6 +7,7 @@ import { Plus, FolderOpen, BookOpen, Settings, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/features/project-card";
 import { UpgradeModal } from "@/components/features/upgrade-modal";
+import { GeoAd } from "@/components/features/geo-ad";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
 import type { ProjectsListData } from "@/app/api/projects-list/route";
 import type { UsageData } from "@/server/actions/usage";
@@ -48,6 +49,7 @@ export function ProjectsContent() {
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isAtLimit, setIsAtLimit] = useState(false);
+  const [planType, setPlanType] = useState<"free" | "pro" | "team">("free");
 
   // Fetch usage data to check if user is at project limit
   useEffect(() => {
@@ -57,6 +59,7 @@ export function ProjectsContent() {
         const json = await res.json();
         if (json.success && json.data) {
           const usage = json.data as UsageData;
+          setPlanType(usage.planType);
           if (
             usage.projects.limit !== null &&
             usage.projects.used >= usage.projects.limit
@@ -248,6 +251,9 @@ export function ProjectsContent() {
           })}
         </div>
       )}
+
+      {/* Ad Banner */}
+      <GeoAd planType={planType} className="mt-2" />
 
       <UpgradeModal
         isOpen={showUpgradeModal}

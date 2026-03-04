@@ -110,5 +110,18 @@
     "subtitle": "{name} completed",
     "score": "Quiz score: {score}",
     "nextModule": "Next Module"
+  },
+  "regenerate": {
+    "button": "Regenerate",
+    "title": "Regenerate Module Content",
+    "reason_too_difficult": "Too difficult to understand",
+    "reason_too_easy": "Too easy, I want more depth",
+    "reason_need_more_code": "Need more code examples",
+    "reason_not_relevant": "Not relevant to my project",
+    "warning": "Regenerating will replace the current content. Quiz progress will be reset.",
+    "remaining": "{count} regenerations remaining",
+    "cancel": "Cancel",
+    "confirm": "Regenerate",
+    "limitReachedPaid": "Regeneration limit reached"
   }
 }

@@ -1,11 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LearningPathCard } from "@/components/features/learning-path-card";
 import { LearningGenerator } from "@/components/features/learning-generator";
+import { GeoAd } from "@/components/features/geo-ad";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
 import type { LearningPathsData } from "@/app/api/learning-paths/route";
 
@@ -22,6 +24,22 @@ export function LearningContent() {
     "/api/learning-paths",
     fetchLearningPaths,
   );
+  const [planType, setPlanType] = useState<"free" | "pro" | "team">("free");
+
+  useEffect(() => {
+    async function fetchUsage() {
+      try {
+        const res = await fetch("/api/usage");
+        const json = await res.json();
+        if (json.success && json.data) {
+          setPlanType(json.data.planType);
+        }
+      } catch {
+        // Ignore fetch errors
+      }
+    }
+    fetchUsage();
+  }, []);
 
   if (isLoading) {
     return (
@@ -79,6 +97,9 @@ export function LearningContent() {
 
       {/* Generator */}
       <LearningGenerator hasExistingPaths={paths.length > 0} />
+
+      {/* Ad Banner */}
+      <GeoAd planType={planType} />
 
       {/* Learning paths list */}
       {paths.length === 0 ? (

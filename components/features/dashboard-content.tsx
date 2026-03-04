@@ -21,6 +21,7 @@ import {
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
 import { BadgeGrid } from "@/components/features/badge-grid";
 import { StreakWidget } from "@/components/features/streak-widget";
+import { GeoAd } from "@/components/features/geo-ad";
 import type { DashboardData } from "@/app/api/dashboard/route";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -397,6 +398,11 @@ export function DashboardContent() {
           weeklyTarget={stats.streak.weeklyTarget}
           weekActiveDays={stats.streak.weekActiveDays}
           lastActiveDate={stats.streak.lastActiveDate}
+          currentLearningHref={
+            stats.currentLearning
+              ? `/learning/${stats.currentLearning.pathId}/${stats.currentLearning.moduleId}`
+              : null
+          }
         />
       )}
 
@@ -557,6 +563,9 @@ export function DashboardContent() {
           />
         </div>
       )}
+
+      {/* Ad Banner */}
+      <GeoAd planType={usageData?.planType} className="mt-2" />
     </div>
   );
 }
