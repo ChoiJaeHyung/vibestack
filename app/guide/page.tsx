@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   Shield,
   ExternalLink,
+  MessageSquare,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { LandingNav } from "@/components/features/landing-nav";
@@ -430,6 +431,23 @@ VIBEUNIV_API_KEY = "${t("step4.apiKeyPlaceholder")}"`}
                 <li>{t.rich("step5.ol2", richTags)}</li>
                 <li>{t("step5.ol3")}</li>
               </ol>
+
+              {/* AI 프롬프트 예시 */}
+              <div className="mt-6 rounded-2xl border border-violet-500/20 bg-violet-500/[0.04] p-6">
+                <h4 className="text-sm font-bold text-text-primary">
+                  {t("step5.promptTitle")}
+                </h4>
+                <div className="mt-4 space-y-3">
+                  <PromptExample prompt={t("step5.prompt1")} desc={t("step5.prompt1Desc")} />
+                  <PromptExample prompt={t("step5.prompt2")} desc={t("step5.prompt2Desc")} />
+                  <PromptExample prompt={t("step5.prompt3")} desc={t("step5.prompt3Desc")} />
+                  <PromptExample prompt={t("step5.prompt4")} desc={t("step5.prompt4Desc")} />
+                </div>
+                <p className="mt-4 text-xs text-text-muted">
+                  {t("step5.promptTip")}
+                </p>
+              </div>
+
               <InfoBox>
                 {t.rich("step5.info", richTags)}
               </InfoBox>
@@ -813,6 +831,18 @@ function AiPromptBox({
       <p className="text-xs font-medium text-violet-400">{label}</p>
       <div className="mt-1.5 rounded-xl border border-violet-500/30 bg-violet-500/10 p-3 text-sm text-text-primary">
         {children}
+      </div>
+    </div>
+  );
+}
+
+function PromptExample({ prompt, desc }: { prompt: string; desc: string }) {
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-violet-500/20 bg-violet-500/[0.06] p-3">
+      <MessageSquare className="mt-0.5 h-4 w-4 flex-shrink-0 text-violet-400" />
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-text-primary">&ldquo;{prompt}&rdquo;</p>
+        <p className="mt-0.5 text-xs text-text-muted">{desc}</p>
       </div>
     </div>
   );

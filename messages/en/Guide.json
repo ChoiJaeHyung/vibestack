@@ -87,6 +87,16 @@
     "ol1": "1. Fully quit and restart your AI coding tool",
     "ol2": "2. In your project folder, ask the AI to call <code>vibeuniv_sync_project</code>",
     "ol3": "3. Check the VibeUniv dashboard to confirm the project is registered",
+    "promptTitle": "Example prompts to tell the AI",
+    "prompt1": "Sync my project to VibeUniv",
+    "prompt1Desc": "Project registration + file upload",
+    "prompt2": "Analyze the tech stack of this project",
+    "prompt2Desc": "Tech stack analysis (after sync)",
+    "prompt3": "Generate a beginner learning curriculum for me",
+    "prompt3Desc": "Personalized learning roadmap",
+    "prompt4": "Explain what this code does",
+    "prompt4Desc": "Ask the AI Tutor",
+    "promptTip": "With MCP connected, the AI automatically calls VibeUniv tools. No need to memorize any commands!",
     "info": "Sync only transmits config files and source code structure. Sensitive files like <code>.env</code> and certificates are automatically excluded."
   },
   "step6": {
