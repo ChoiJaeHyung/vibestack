@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import {
   getLearningModule,
   getLearningPathDetail,
@@ -68,8 +69,11 @@ export default async function ModuleDetailPage({ params }: PageProps) {
   const contentJson = mod.content as unknown as Record<string, unknown>;
   const regenerationCount = (typeof contentJson._regeneration_count === "number" ? contentJson._regeneration_count : 0);
 
+  const t = await getTranslations("Learning");
+
   // Find the previous and next modules
   const currentIndex = path.modules.findIndex((m) => m.id === moduleId);
+  const currentModule = currentIndex >= 0 ? path.modules[currentIndex] : null;
   const prevModule =
     currentIndex > 0
       ? path.modules[currentIndex - 1]
@@ -78,6 +82,12 @@ export default async function ModuleDetailPage({ params }: PageProps) {
     currentIndex >= 0 && currentIndex < path.modules.length - 1
       ? path.modules[currentIndex + 1]
       : null;
+
+  // Check if prerequisites are unmet
+  const hasUnmetPrereqs =
+    currentModule &&
+    !currentModule.isUnlocked &&
+    currentModule.prerequisiteNames.length > 0;
 
   return (
     <div className="space-y-6">
@@ -89,6 +99,18 @@ export default async function ModuleDetailPage({ params }: PageProps) {
         <ArrowLeft className="h-4 w-4" />
         {path.title}
       </Link>
+
+      {/* Prerequisite warning banner (dismissible via soft-lock) */}
+      {hasUnmetPrereqs && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+          <p className="text-sm text-amber-300">
+            {t("pathDetail.prerequisiteBanner", {
+              names: currentModule.prerequisiteNames.join(", "),
+            })}
+          </p>
+        </div>
+      )}
 
       {/* Module content (client component) */}
       <ModuleContent

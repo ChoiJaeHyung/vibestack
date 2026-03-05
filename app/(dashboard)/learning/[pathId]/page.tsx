@@ -9,6 +9,7 @@ import {
   Clock,
   CheckCircle2,
   Brain,
+  Lock,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
@@ -156,6 +157,7 @@ export default async function LearningPathDetailPage({ params }: PageProps) {
           {path.modules.map((mod, idx) => {
             const isCompleted = mod.progress?.status === "completed";
             const isInProgress = mod.progress?.status === "in_progress";
+            const isLocked = !mod.isUnlocked && !isCompleted;
             const typeConfig = mod.module_type
               ? MODULE_TYPE_ICONS[mod.module_type]
               : null;
@@ -167,12 +169,16 @@ export default async function LearningPathDetailPage({ params }: PageProps) {
                 key={mod.id}
                 href={`/learning/${pathId}/${mod.id}`}
               >
-                <div className="group relative flex gap-4 pb-6 last:pb-0">
+                <div className={`group relative flex gap-4 pb-6 last:pb-0 ${isLocked ? "opacity-60" : ""}`}>
                   {/* Timeline dot */}
                   <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center">
                     {isCompleted ? (
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/20 ring-2 ring-green-500/40">
                         <CheckCircle2 className="h-4 w-4 text-green-400" />
+                      </div>
+                    ) : isLocked ? (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input ring-1 ring-border-strong">
+                        <Lock className="h-3.5 w-3.5 text-text-dim" />
                       </div>
                     ) : isInProgress ? (
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-500/20 ring-2 ring-violet-500/40 animate-pulse">
@@ -198,6 +204,12 @@ export default async function LearningPathDetailPage({ params }: PageProps) {
                         </h3>
                         {mod.description && (
                           <p className="mt-0.5 text-sm text-text-faint line-clamp-1">{mod.description}</p>
+                        )}
+                        {isLocked && mod.prerequisiteNames.length > 0 && (
+                          <p className="mt-1 flex items-center gap-1 text-xs text-amber-400/80">
+                            <Lock className="h-3 w-3" />
+                            {t('pathDetail.prerequisiteHint', { names: mod.prerequisiteNames.join(", ") })}
+                          </p>
                         )}
                       </div>
                       <div className="flex shrink-0 items-center gap-2">

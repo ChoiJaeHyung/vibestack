@@ -32,7 +32,7 @@ export interface NewlyEarnedBadge {
 }
 
 export interface BadgeCheckContext {
-  event: "module_complete" | "streak_update" | "tutor_chat";
+  event: "module_complete" | "streak_update" | "tutor_chat" | "concept_mastery";
   moduleScore?: number;
   timeSpentSeconds?: number;
   currentStreak?: number;
@@ -77,6 +77,7 @@ export async function getAllBadges(): Promise<BadgeInfo[]> {
   const { data, error } = await supabase
     .from("badges")
     .select("id, slug, name, description, icon, condition_type, condition_value")
+    .eq("is_active", true)
     .order("created_at", { ascending: true });
 
   if (error || !data) {
@@ -104,7 +105,8 @@ export async function checkAndAwardBadges(
   const [allBadgesResult, earnedResult] = await Promise.all([
     serviceClient
       .from("badges")
-      .select("id, slug, name, description, icon, condition_type, condition_value"),
+      .select("id, slug, name, description, icon, condition_type, condition_value")
+      .eq("is_active", true),
     serviceClient
       .from("user_badges")
       .select("badge_id")
@@ -190,6 +192,9 @@ async function checkCondition(
         context.timeSpentSeconds !== undefined &&
         context.timeSpentSeconds / 60 <= conditionValue
       );
+
+    case "concept_mastery_total":
+      return checkConceptMasteryTotal(supabase, userId, conditionValue);
 
     default:
       return false;
@@ -306,6 +311,21 @@ async function checkTutorChats(
     .from("ai_conversations")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId);
+
+  return (count ?? 0) >= conditionValue;
+}
+
+async function checkConceptMasteryTotal(
+  supabase: SupabaseServiceClient,
+  userId: string,
+  conditionValue: number,
+): Promise<boolean> {
+  const { count } = await supabase
+    .from("user_concept_mastery")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .not("concept_key", "is", null)
+    .gte("mastery_level", MASTERY.MASTERED_THRESHOLD);
 
   return (count ?? 0) >= conditionValue;
 }

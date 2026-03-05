@@ -118,7 +118,7 @@ export default async function KnowledgeMapPage({
       </div>
 
       {hasNodes ? (
-        <KnowledgeGraph initialData={result.data} />
+        <KnowledgeGraph initialData={result.data} projectId={targetProjectId} />
       ) : (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border-default py-16">
           <Network className="h-8 w-8 text-text-faint" />

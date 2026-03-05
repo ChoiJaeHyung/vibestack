@@ -5,7 +5,30 @@
     "estimatedTime": "Estimated time: {hours} hours",
     "moduleList": "Module List",
     "minutes": "{minutes} min",
-    "aiTutorButton": "Learn with AI Tutor"
+    "aiTutorButton": "Learn with AI Tutor",
+    "prerequisiteHint": "Recommended: complete {names} first",
+    "prerequisiteBanner": "We recommend completing these prerequisite modules first: {names}",
+    "back": "Back"
+  },
+  "knowledgeMap": {
+    "title": "Knowledge Graph",
+    "description": "Visualize concept relationships in your project's tech stack",
+    "mastery": "Mastery",
+    "keyPoints": "Key Points",
+    "markKnown": "I know this",
+    "markUnlearned": "Learn again",
+    "goToLearning": "Go to Learning",
+    "learnConcept": "Learn this concept",
+    "noProject": "No analyzed projects found",
+    "goToProjects": "Go to Projects",
+    "error": "Failed to load knowledge graph",
+    "empty": "No concepts to display",
+    "emptyHint": "Create a learning roadmap to see the knowledge graph",
+    "legend": {
+      "mastered": "Mastered",
+      "inProgress": "In Progress",
+      "notStarted": "Not Started"
+    }
   },
   "moduleType": {
     "concept": "Concept",

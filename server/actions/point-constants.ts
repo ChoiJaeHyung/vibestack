@@ -9,8 +9,8 @@ export const POINT_AWARDS = {
   STREAK_14: 200,
   STREAK_30: 500,
   BADGE_EARNED: 200,
-  ARCH_CHALLENGE: 200,
-  REFACTOR_CHALLENGE: 50,
+  ARCH_CHALLENGE: 200, // UI 미구현 — 현재 사용 안 됨
+  REFACTOR_CHALLENGE: 50, // UI 미구현 — 현재 사용 안 됨
 } as const;
 
 export interface PointBalance {

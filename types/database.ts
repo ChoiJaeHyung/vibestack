@@ -47,6 +47,7 @@ export interface Database {
           icon: string;
           condition_type: BadgeConditionType;
           condition_value: number;
+          is_active: boolean;
           created_at: string;
         };
         Insert: {
@@ -57,6 +58,7 @@ export interface Database {
           icon: string;
           condition_type: BadgeConditionType;
           condition_value: number;
+          is_active?: boolean;
           created_at?: string;
         };
         Update: {
@@ -67,6 +69,7 @@ export interface Database {
           icon?: string;
           condition_type?: BadgeConditionType;
           condition_value?: number;
+          is_active?: boolean;
           created_at?: string;
         };
         Relationships: [];
