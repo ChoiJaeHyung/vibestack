@@ -125,9 +125,10 @@ function buildFlowEdges(
 
 interface KnowledgeGraphProps {
   initialData: ConceptGraphData;
+  projectId?: string;
 }
 
-export function KnowledgeGraph({ initialData }: KnowledgeGraphProps) {
+export function KnowledgeGraph({ initialData, projectId }: KnowledgeGraphProps) {
   const t = useTranslations("Learning");
   const [graphData, setGraphData] = useState(initialData);
   const [selectedNode, setSelectedNode] = useState<ConceptGraphNode | null>(
@@ -237,6 +238,7 @@ export function KnowledgeGraph({ initialData }: KnowledgeGraphProps) {
       {selectedNode && (
         <ConceptDetailPanel
           node={selectedNode}
+          projectId={projectId}
           onClose={() => setSelectedNode(null)}
           onMasteryUpdate={handleMasteryUpdate}
         />

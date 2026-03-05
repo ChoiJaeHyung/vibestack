@@ -390,6 +390,13 @@ export async function generateLearningPath(
     // Use service client for inserting records (bypass RLS)
     const serviceClient = createServiceClient();
 
+    // Compute estimated_hours from module minutes (more accurate than LLM guess)
+    const totalMinutes = structure.modules.reduce(
+      (sum: number, m: { estimated_minutes?: number }) => sum + (m.estimated_minutes ?? 30),
+      0,
+    );
+    const computedHours = Math.ceil(totalMinutes / 60);
+
     // Create learning_paths record
     const pathInsert: LearningPathInsert = {
       project_id: projectId,
@@ -397,7 +404,7 @@ export async function generateLearningPath(
       title: structure.title,
       description: structure.description ?? null,
       difficulty: roadmapDifficulty,
-      estimated_hours: structure.estimated_hours ?? null,
+      estimated_hours: computedHours,
       total_modules: structure.modules.length,
       llm_provider: provider.providerName,
       status: "active",

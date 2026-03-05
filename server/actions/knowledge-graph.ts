@@ -4,6 +4,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { MASTERY } from "./mastery-constants";
+import { checkAndAwardBadges } from "./badges";
 import type { ConceptHint } from "@/lib/knowledge/types";
 
 /**
@@ -355,30 +356,46 @@ export async function updateMastery(
       return { success: false, error: "Knowledge entry not found" };
     }
 
-    // Upsert mastery (use typed service client for user_concept_mastery)
+    // Select → Insert/Update mastery (expression index not compatible with upsert onConflict)
     const serviceClient = createServiceClient();
 
     if (conceptKey) {
-      // Concept-level mastery upsert
-      // Use raw SQL-style upsert via unique index idx_ucm_user_knowledge_concept
-      const { error: upsertError } = await serviceClient
+      // Concept-level mastery: select existing row by (user_id, knowledge_id, concept_key)
+      const { data: existing } = await serviceClient
         .from("user_concept_mastery")
-        .upsert(
-          {
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("knowledge_id", knowledgeId)
+        .eq("concept_key", conceptKey)
+        .maybeSingle();
+
+      if (existing) {
+        const { error: updateError } = await serviceClient
+          .from("user_concept_mastery")
+          .update({
+            mastery_level: masteryLevel,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existing.id);
+        if (updateError) {
+          return { success: false, error: "Failed to update mastery" };
+        }
+      } else {
+        const { error: insertError } = await serviceClient
+          .from("user_concept_mastery")
+          .insert({
             user_id: user.id,
             knowledge_id: knowledgeId,
             concept_key: conceptKey,
             mastery_level: masteryLevel,
             updated_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id,knowledge_id,concept_key" },
-        );
-
-      if (upsertError) {
-        return { success: false, error: "Failed to update mastery" };
+          });
+        if (insertError) {
+          return { success: false, error: "Failed to update mastery" };
+        }
       }
     } else {
-      // Tech-level mastery upsert (legacy)
+      // Tech-level mastery upsert (legacy — original unique constraint works)
       const { error: upsertError } = await serviceClient
         .from("user_concept_mastery")
         .upsert(
@@ -394,6 +411,11 @@ export async function updateMastery(
       if (upsertError) {
         return { success: false, error: "Failed to update mastery" };
       }
+    }
+
+    // Trigger badge check for concept mastery (non-blocking)
+    if (masteryLevel >= MASTERY.MASTERED_THRESHOLD) {
+      checkAndAwardBadges(user.id, { event: "concept_mastery" }).catch(() => {});
     }
 
     return { success: true };
@@ -488,32 +510,39 @@ export async function updateMasteryFromModuleCompletion(
     const conceptKeys = (moduleData.concept_keys as string[] | null) ?? [];
 
     if (conceptKeys.length > 0) {
-      // R5' concept-level mastery: upsert per concept_key
+      // R5' concept-level mastery: select→insert/update per concept_key
       for (const kRow of knowledgeRows) {
         for (const conceptKey of conceptKeys) {
           const { data: existing } = await serviceClient
             .from("user_concept_mastery")
-            .select("mastery_level")
+            .select("id, mastery_level")
             .eq("user_id", userId)
             .eq("knowledge_id", kRow.id)
             .eq("concept_key", conceptKey)
-            .single();
+            .maybeSingle();
 
           const currentLevel = existing?.mastery_level ?? 0;
           const newLevel = Math.min(MASTERY.MAX_LEVEL, currentLevel + increment);
 
-          await serviceClient
-            .from("user_concept_mastery")
-            .upsert(
-              {
+          if (existing) {
+            await serviceClient
+              .from("user_concept_mastery")
+              .update({
+                mastery_level: newLevel,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", existing.id);
+          } else {
+            await serviceClient
+              .from("user_concept_mastery")
+              .insert({
                 user_id: userId,
                 knowledge_id: kRow.id,
                 concept_key: conceptKey,
                 mastery_level: newLevel,
                 updated_at: new Date().toISOString(),
-              },
-              { onConflict: "user_id,knowledge_id,concept_key" },
-            );
+              });
+          }
         }
       }
     } else {
@@ -542,7 +571,82 @@ export async function updateMasteryFromModuleCompletion(
           );
       }
     }
+
+    // Trigger badge check for concept mastery (non-blocking)
+    if (conceptKeys.length > 0) {
+      checkAndAwardBadges(userId, { event: "concept_mastery" }).catch(() => {});
+    }
   } catch {
     // Non-blocking — mastery update failure should not affect module completion
+  }
+}
+
+/**
+ * Find modules that teach a specific concept.
+ * Uses GIN index on learning_modules.concept_keys.
+ */
+export async function getModulesForConcept(
+  conceptKey: string,
+  projectId: string,
+): Promise<{
+  modules: { id: string; pathId: string; title: string; status: string }[];
+}> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { modules: [] };
+    }
+
+    // Get learning paths for this project
+    const { data: paths } = await supabase
+      .from("learning_paths")
+      .select("id")
+      .eq("project_id", projectId)
+      .eq("user_id", user.id)
+      .eq("status", "active");
+
+    if (!paths || paths.length === 0) return { modules: [] };
+
+    const pathIds = paths.map((p) => p.id);
+
+    // Find modules covering this concept (uses GIN index on concept_keys)
+    const { data: modules } = await supabase
+      .from("learning_modules")
+      .select("id, learning_path_id, title")
+      .in("learning_path_id", pathIds)
+      .contains("concept_keys", [conceptKey])
+      .order("module_order", { ascending: true });
+
+    if (!modules || modules.length === 0) return { modules: [] };
+
+    // Get progress for these modules
+    const moduleIds = modules.map((m) => m.id);
+    const { data: progress } = await supabase
+      .from("learning_progress")
+      .select("module_id, status")
+      .eq("user_id", user.id)
+      .in("module_id", moduleIds);
+
+    const progressMap = new Map<string, string>();
+    for (const p of progress ?? []) {
+      progressMap.set(p.module_id, p.status);
+    }
+
+    return {
+      modules: modules.map((m) => ({
+        id: m.id,
+        pathId: m.learning_path_id,
+        title: m.title,
+        status: progressMap.get(m.id) ?? "not_started",
+      })),
+    };
+  } catch {
+    return { modules: [] };
   }
 }

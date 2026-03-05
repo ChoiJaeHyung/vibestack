@@ -142,6 +142,13 @@ export async function POST(
       .single();
     const locale = (userData?.locale === "en" ? "en" : "ko") as "ko" | "en";
 
+    // Compute estimated_hours from module minutes (more accurate than LLM guess)
+    const totalMinutes = curriculum.modules.reduce(
+      (sum, m) => sum + (m.estimated_minutes ?? 30),
+      0,
+    );
+    const computedHours = Math.ceil(totalMinutes / 60);
+
     // Create learning_path
     const pathInsert: LearningPathInsert = {
       project_id: projectId,
@@ -149,7 +156,7 @@ export async function POST(
       title: curriculum.title,
       description: curriculum.description,
       difficulty: curriculum.difficulty as Difficulty,
-      estimated_hours: curriculum.estimated_hours ?? null,
+      estimated_hours: computedHours,
       total_modules: curriculum.modules.length,
       status: "active",
       llm_provider: "mcp_client",

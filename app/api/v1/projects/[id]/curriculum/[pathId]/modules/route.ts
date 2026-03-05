@@ -159,9 +159,21 @@ export async function POST(
 
     // Auto-activate when all modules are submitted (only if still in draft)
     if (submitted >= learningPath.total_modules) {
+      // Compute estimated_hours from actual module minutes
+      const { data: allModules } = await supabase
+        .from("learning_modules")
+        .select("estimated_minutes")
+        .eq("learning_path_id", pathId);
+
+      const totalMinutes = (allModules ?? []).reduce(
+        (sum, m) => sum + (m.estimated_minutes ?? 30),
+        0,
+      );
+      const computedHours = Math.ceil(totalMinutes / 60);
+
       const { data: activated, error: activateError } = await supabase
         .from("learning_paths")
-        .update({ status: "active" })
+        .update({ status: "active", estimated_hours: computedHours })
         .eq("id", pathId)
         .eq("status", "draft")
         .select("id")

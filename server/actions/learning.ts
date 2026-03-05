@@ -144,6 +144,9 @@ interface ModuleItem {
     time_spent: number | null;
     completed_at: string | null;
   };
+  prerequisites: string[];
+  isUnlocked: boolean;
+  prerequisiteNames: string[];
 }
 
 interface LearningPathDetail {
@@ -550,6 +553,13 @@ export async function generateLearningPath(
     // Use service client for inserting records (bypass RLS)
     const serviceClient = createServiceClient();
 
+    // Compute estimated_hours from module minutes (more accurate than LLM guess)
+    const totalMinutes = structure.modules.reduce(
+      (sum: number, m: { estimated_minutes?: number }) => sum + (m.estimated_minutes ?? 30),
+      0,
+    );
+    const computedHours = Math.ceil(totalMinutes / 60);
+
     // Create learning_paths record
     const pathInsert: LearningPathInsert = {
       project_id: projectId,
@@ -557,7 +567,7 @@ export async function generateLearningPath(
       title: structure.title,
       description: structure.description ?? null,
       difficulty: roadmapDifficulty,
-      estimated_hours: structure.estimated_hours ?? null,
+      estimated_hours: computedHours,
       total_modules: structure.modules.length,
       llm_provider: provider.providerName,
       status: "active",
@@ -1358,11 +1368,11 @@ export async function getLearningPathDetail(
       return { success: false, error: "Learning path not found" };
     }
 
-    // Fetch modules
+    // Fetch modules (include prerequisites for soft-lock)
     const { data: modules, error: modulesError } = await supabase
       .from("learning_modules")
       .select(
-        "id, title, description, module_type, module_order, estimated_minutes, tech_stack_id",
+        "id, title, description, module_type, module_order, estimated_minutes, tech_stack_id, prerequisites",
       )
       .eq("learning_path_id", pathId)
       .order("module_order", { ascending: true });
@@ -1405,16 +1415,43 @@ export async function getLearningPathDetail(
       }
     }
 
-    const modulesWithProgress: ModuleItem[] = (modules ?? []).map((m) => ({
-      id: m.id,
-      title: m.title,
-      description: m.description,
-      module_type: m.module_type,
-      module_order: m.module_order,
-      estimated_minutes: m.estimated_minutes,
-      tech_stack_id: m.tech_stack_id,
-      progress: progressMap.get(m.id),
-    }));
+    // Build module title map for prerequisite names
+    const moduleTitleMap = new Map<string, string>();
+    for (const m of modules ?? []) {
+      moduleTitleMap.set(m.id, m.title);
+    }
+
+    // Compute completedModuleIds for unlock check
+    const completedModuleIds = new Set<string>();
+    for (const [moduleId, prog] of progressMap) {
+      if (prog.status === "completed") {
+        completedModuleIds.add(moduleId);
+      }
+    }
+
+    const modulesWithProgress: ModuleItem[] = (modules ?? []).map((m) => {
+      const prereqs = (m.prerequisites as string[] | null) ?? [];
+      const isUnlocked =
+        prereqs.length === 0 ||
+        prereqs.every((pId) => completedModuleIds.has(pId));
+      const prerequisiteNames = prereqs
+        .map((pId) => moduleTitleMap.get(pId))
+        .filter((name): name is string => !!name);
+
+      return {
+        id: m.id,
+        title: m.title,
+        description: m.description,
+        module_type: m.module_type,
+        module_order: m.module_order,
+        estimated_minutes: m.estimated_minutes,
+        tech_stack_id: m.tech_stack_id,
+        progress: progressMap.get(m.id),
+        prerequisites: prereqs,
+        isUnlocked,
+        prerequisiteNames,
+      };
+    });
 
     return {
       success: true,

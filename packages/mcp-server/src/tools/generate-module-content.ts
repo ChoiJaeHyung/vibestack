@@ -243,14 +243,19 @@ Output ONLY a JSON array of sections (no code fences/explanations):
     "quiz_explanation": "string (required for quiz_question) — Correct/incorrect reasoning",
 
     "challenge_starter_code": "string (required for challenge) — Contains ___BLANK___",
-    "challenge_answer_code": "string (required for challenge) — Completed code"
+    "challenge_answer_code": "string (required for challenge) — Completed code",
+
+    "concept_keys": ["string (optional — KB concept_key identifiers this module teaches)"]
   }
 ]
 
 **Required Rules:**
 - At least ${minCodeExamples} code_example(s) + ${minQuizQuestions} quiz_question(s) + 1 challenge
 - Minimum ${minSections} sections
-- explanation body must be at least ${minBodyChars} characters${difficulty === "beginner" ? `
+- explanation body must be at least ${minBodyChars} characters
+- If KB concept hints are provided above, add "concept_keys" array to your JSON output
+  listing ONLY the concept_key identifiers this module actually teaches (not just mentions).
+  If unsure, you may omit this field.${difficulty === "beginner" ? `
 
 **[Beginner-only Additional Rules — Must Follow]:**
 - Every concept must have "What if this didn't exist?" before/after comparison
@@ -323,14 +328,18 @@ ${filesSection}${eduSection}${kbSection}
     "quiz_explanation": "string (quiz_question일 때 필수) — 정답/오답 이유",
 
     "challenge_starter_code": "string (challenge일 때 필수) — ___BLANK___ 포함",
-    "challenge_answer_code": "string (challenge일 때 필수) — 완성 코드"
+    "challenge_answer_code": "string (challenge일 때 필수) — 완성 코드",
+
+    "concept_keys": ["string (선택 — 이 모듈이 가르치는 KB concept_key 식별자 배열)"]
   }
 ]
 
 **필수 규칙:**
 - 모듈당 code_example 최소 ${minCodeExamples}개 + quiz_question 최소 ${minQuizQuestions}개 + challenge 최소 1개
 - 최소 ${minSections}개 섹션
-- explanation body는 ${minBodyChars}자 이상${difficulty === "beginner" ? `
+- explanation body는 ${minBodyChars}자 이상
+- 위에 KB concept 힌트가 있다면, JSON 출력에 "concept_keys" 배열을 추가하세요.
+  이 모듈이 실제로 가르치는 개념의 concept_key만 포함 (단순 언급 제외). 생략 가능.${difficulty === "beginner" ? `
 
 **[초급 전용 추가 규칙 — 반드시 준수]:**
 - 모든 개념에 "이게 없으면?" before/after 비교 필수

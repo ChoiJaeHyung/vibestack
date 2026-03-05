@@ -156,7 +156,7 @@ NEXT_PUBLIC_APP_URL=
 | **Server Actions** | `server/actions/` | 핵심 비즈니스 로직 |
 | **LLM 어댑터** | `lib/llm/` | 멀티 LLM Provider 팩토리 |
 | **파일 분석** | `lib/analysis/` | 파일 파싱, 다이제스트 생성, tech-stack upsert 유틸 |
-| **학습 시스템** | `lib/learning/`, `lib/prompts/` | 커리큘럼 생성 (2-Phase), 상세 콘텐츠 + 인용 링크, 퀴즈 점수 추적(최고점 유지), 콘텐츠 검증 + retry |
+| **학습 시스템** | `lib/learning/`, `lib/prompts/` | 커리큘럼 생성 (2-Phase), 상세 콘텐츠 + 인용 링크, 퀴즈 점수 추적(최고점 유지), 콘텐츠 검증 + retry, 모듈 선수관계 자동 계산(`prerequisite-compute.ts`), 개념별 숙련도 추적 |
 | **AI 튜터 패널** | `components/features/tutor-panel*.tsx`, `tutor-chat.tsx`, `tutor-search.tsx`, `dashboard-main.tsx` | 우측 슬라이드 패널 (채팅/검색 탭), 텍스트 선택→AI 질문, Google 검색, 메시지 피드백(👍👎) |
 | **튜터 피드백** | `server/actions/tutor-feedback.ts` | 메시지별 피드백 UPSERT/삭제/조회 |
 | **LLM 메트릭** | `lib/utils/llm-metrics.ts` | 구조화 JSON 로깅 (Vercel log drain) |
@@ -170,7 +170,7 @@ NEXT_PUBLIC_APP_URL=
 | **MCP 서버** | `packages/mcp-server/src/` | 12개 MCP 도구 (v0.3.5, Local-First + Per-Module) |
 | **DB 타입** | `types/database.ts` | Supabase 전체 스키마 타입 |
 | **i18n** | `i18n/request.ts`, `messages/{ko,en}/*.json`, `lib/utils/translate-error.ts` | next-intl 설정, 13개 네임스페이스(ko/en), 서버 에러 코드 번역 |
-| **마이그레이션** | `supabase/migrations/` | 001~017 SQL (010: locale, 017: tutor_feedback+token_budget) |
+| **마이그레이션** | `supabase/migrations/` | 001~023 SQL (010: locale, 017: tutor_feedback+token_budget, 020: concept_level_mastery, 021: module_concept_keys, 022: concept_mastery_badges, 023: badge 조건 수정) |
 
 ### DB 테이블 (32개)
 
@@ -344,8 +344,9 @@ Anthropic, OpenAI, Google, Groq, Mistral, DeepSeek, Cohere, Together, Fireworks,
 - [x] 학습 콘텐츠 품질 대폭 강화: 라이트모드 렌더링 수정, 퀴즈 점수 DB 저장(최고점 유지+시간 누적), MCP/웹 콘텐츠 검증 강화(explanation 200자↑, code+quiz 각각 필수, retry 최대 3회), MCP JSON 스키마 포맷 개선, AI 튜터에 모듈 콘텐츠 서머리 전달(6000자), 전체 프롬프트 해요체 톤 강화
 - [x] 초급(beginner) 콘텐츠 "5~6세 수준" 강화: 3단계 개념 쪼개기(비유→정의→코드), before/after 비교, 코드 우리말 번역, 비유 퀴즈 50%+, beginner 검증 강화(5섹션↑/400자↑), maxTokens 1.5배(24000*n), MCP 지시문 동적화
 - [x] 튜터 패널 Google 검색 탭 추가 (PR #57)
-- [x] 게이미피케이션 시스템: 모듈 완료 축하(confetti 애니메이션), 학습 스트릭(일간 기반 + 주간 캘린더 위젯), 주간 학습 목표(2/3/5/7일), 배지/업적 8종(first_step, consistent_learner, quiz_master 등), 대시보드 넛지 배너("오늘 학습")
+- [x] 게이미피케이션 시스템: 모듈 완료 축하(confetti 애니메이션), 학습 스트릭(일간 기반 + 주간 캘린더 위젯), 주간 학습 목표(2/3/5/7일), 배지/업적 10종(first_step, consistent_learner, quiz_master, concept_master_5, concept_master_20 등), 대시보드 넛지 배너("오늘 학습")
 - [x] 학습 콘텐츠 다국어(ko/en) 지원: DB locale 컬럼(users, learning_paths, technology_knowledge), 프롬프트 로컬라이제이션(learning-roadmap, tutor-chat, knowledge-generation), KB 시스템 locale 필터, MCP 전체 도구 다국어(10개 중 7개 ko/en 분기 + `/api/v1/user/locale` 캐시 조회), 설정 UI 언어 선택
 - [x] UI 전체 다국어(i18n) — next-intl 도입: cookie 기반 locale(URL 변경 없음), 13개 네임스페이스(Common/Metadata/Landing/Auth/Dashboard/Projects/Learning/Settings/Billing/Tutor/Guide/NotFound/Errors), ~1300개 번역 키(ko/en), 서버 에러 코드화(`lib/utils/translate-error.ts`), middleware Accept-Language 자동감지, auth callback DB↔쿠키 동기화, 전체 컴포넌트 `useTranslations` 마이그레이션
 - [x] 모듈별 개별 제출 시스템 (Per-Module Submission, MCP v0.3.5): `create_curriculum`(draft learning_path 생성) + `submit_module`(모듈별 개별 제출, 자동 활성화), 공유 검증 유틸리티 추출(`lib/utils/curriculum-validation.ts`), 콘텐츠 품질 강화(beginner→7섹션↑/800자↑/code 2개↑/quiz 2개↑, 그 외→5섹션↑/400자↑), 기존 `submit_curriculum` 호환 유지
 - [x] 결제 시스템 마이그레이션: 토스페이먼츠 → Stripe (Checkout + Customer Portal + Webhooks), 통화 KRW → USD (Pro $19/mo, Team $45/mo), DB 마이그레이션(toss_* → stripe_* 컬럼)
+- [x] 학습 온톨로지 고도화: 매직넘버 상수 추출(`mastery-constants.ts`), 개념 단위 숙련도 R5'(`concept_key` 컬럼), 모듈-개념 커버리지 R6(`concept_keys TEXT[]`+GIN), 모듈 선수관계 자동 계산 R4'(`prerequisite-compute.ts`), 선수모듈 소프트잠금 UI, 지식그래프 개념→모듈 네비게이션, 개념 마스터 배지 2종

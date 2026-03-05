@@ -306,9 +306,10 @@ vibeuniv/
 | 16 | `educational_analyses` | 교육 분석 데이터 | 004 |
 | 17 | `payments` | 결제 내역 (Stripe) | 006, 019 |
 | 18 | `technology_knowledge` | 기술 KB (시드+LLM) | 007 |
-| 19 | `badges` | 배지 정의 (8종: first_step, consistent_learner 등) | 011 |
+| 19 | `badges` | 배지 정의 (10종, code_challenger 비활성화됨: is_active=false) | 011, 022, 023 |
 | 20 | `user_badges` | 사용자 배지 획득 기록 | 011 |
 | 21 | `user_streaks` | 학습 스트릭 (연속 학습일, 주간 목표, 주간 활동) | 012 |
+| 22 | `user_concept_mastery` | 개념별 숙련도 (concept_key 기반) | 013, 020 |
 
 ### 2.2 핵심 테이블 상세
 
@@ -385,7 +386,7 @@ user_id         UUID FK → users ON DELETE CASCADE
 title           TEXT NOT NULL
 description     TEXT
 difficulty      TEXT CHECK ('beginner','intermediate','advanced')
-estimated_hours DECIMAL(5,1)
+estimated_hours DECIMAL(5,1)  -- 모듈 estimated_minutes 합산 → ceil(sum/60)으로 계산
 total_modules   INTEGER DEFAULT 0
 llm_provider    TEXT
 status          TEXT DEFAULT 'draft' CHECK ('draft','active','completed','archived')
@@ -403,7 +404,8 @@ module_order      INTEGER NOT NULL
 module_type       TEXT CHECK ('concept','practical','quiz','project_walkthrough')
 estimated_minutes INTEGER
 tech_stack_id     UUID FK → tech_stacks
-prerequisites     UUID[]
+prerequisites     UUID[]                        -- R4': 자동 계산된 선수 모듈 ID (Phase 3)
+concept_keys      TEXT[] DEFAULT '{}'            -- R6: 이 모듈이 가르치는 KB 개념 키 (Phase 2, GIN 인덱스)
 ```
 
 #### learning_progress
@@ -461,6 +463,18 @@ llm_provider                TEXT
 llm_model                   TEXT
 generation_error            TEXT
 generated_at                TIMESTAMPTZ
+```
+
+#### user_concept_mastery
+```sql
+id              UUID PK
+user_id         UUID FK → users ON DELETE CASCADE
+knowledge_id    UUID (FK → technology_knowledge, 비정형)
+concept_key     TEXT                                -- NULL = 기술 단위(레거시), 값 = 개념 단위
+mastery_level   INTEGER DEFAULT 0                   -- 0-100
+updated_at      TIMESTAMPTZ
+UNIQUE INDEX(user_id, knowledge_id, COALESCE(concept_key, '__TECH_LEVEL__'))
+INDEX(user_id, concept_key) WHERE concept_key IS NOT NULL
 ```
 
 ### 2.3 FK 관계도 (핵심)
@@ -866,3 +880,4 @@ interface LLMProvider {
 | 011 | badges.sql | badges, user_badges 테이블 + RLS + 시드 8종 (first_step, consistent_learner, quiz_master, code_challenger, fullstack_explorer, versatile, ai_friend, speedster) |
 | 012 | user_streaks.sql | user_streaks 테이블 (current_streak, longest_streak, weekly_target, last_active_date, week_active_days, week_start_date) + RLS |
 | 010 | locale_support.sql | users, learning_paths, technology_knowledge에 locale 컬럼 추가 + technology_knowledge unique constraint (name_normalized, locale) 변경 |
+| 023 | fix_badge_conditions.sql | code_challenger 비활성화 (is_active=false), speedster condition_value 10→15 완화 |

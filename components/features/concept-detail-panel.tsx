@@ -1,28 +1,48 @@
 "use client";
 
-import { useState } from "react";
-import { X, BookOpen, CheckCircle2, Lightbulb } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, BookOpen, CheckCircle2, Lightbulb, GraduationCap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { updateMastery } from "@/server/actions/knowledge-graph";
+import { updateMastery, getModulesForConcept } from "@/server/actions/knowledge-graph";
 import type { ConceptGraphNode } from "@/server/actions/knowledge-graph";
 import { MASTERY } from "@/server/actions/mastery-constants";
 
+interface RelatedModule {
+  id: string;
+  pathId: string;
+  title: string;
+  status: string;
+}
+
 interface ConceptDetailPanelProps {
   node: ConceptGraphNode;
+  projectId?: string;
   onClose: () => void;
   onMasteryUpdate: (knowledgeId: string, level: number, conceptKey?: string) => void;
 }
 
 export function ConceptDetailPanel({
   node,
+  projectId,
   onClose,
   onMasteryUpdate,
 }: ConceptDetailPanelProps) {
   const t = useTranslations("Learning");
   const [toggling, setToggling] = useState(false);
+  const [relatedModules, setRelatedModules] = useState<RelatedModule[]>([]);
+
+  useEffect(() => {
+    if (projectId && node.conceptKey) {
+      getModulesForConcept(node.conceptKey, projectId).then((result) => {
+        setRelatedModules(result.modules);
+      });
+    } else {
+      setRelatedModules([]);
+    }
+  }, [projectId, node.conceptKey]);
 
   const isMastered = node.masteryLevel >= MASTERY.MASTERED_THRESHOLD;
 
@@ -134,12 +154,41 @@ export function ConceptDetailPanel({
                 : t("knowledgeMap.markKnown")}
             </Button>
 
-            <Link href="/learning" className="block">
-              <Button variant="secondary" size="sm" className="w-full gap-1.5">
-                <BookOpen className="h-3.5 w-3.5" />
-                {t("knowledgeMap.goToLearning")}
-              </Button>
-            </Link>
+            {relatedModules.length > 0 ? (
+              <div className="space-y-1.5">
+                <h4 className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
+                  <GraduationCap className="h-3 w-3" />
+                  {t("knowledgeMap.learnConcept")}
+                </h4>
+                {relatedModules.map((mod) => (
+                  <Link
+                    key={mod.id}
+                    href={`/learning/${mod.pathId}/${mod.id}`}
+                    className="block"
+                  >
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="w-full justify-start gap-1.5 text-left"
+                    >
+                      {mod.status === "completed" ? (
+                        <CheckCircle2 className="h-3 w-3 shrink-0 text-green-400" />
+                      ) : (
+                        <BookOpen className="h-3 w-3 shrink-0" />
+                      )}
+                      <span className="truncate text-xs">{mod.title}</span>
+                    </Button>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <Link href="/learning" className="block">
+                <Button variant="secondary" size="sm" className="w-full gap-1.5">
+                  <BookOpen className="h-3.5 w-3.5" />
+                  {t("knowledgeMap.goToLearning")}
+                </Button>
+              </Link>
+            )}
           </div>
         </CardContent>
       </Card>

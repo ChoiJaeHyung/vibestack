@@ -49,7 +49,21 @@ Include these points in the curriculum, reference quiz topics, and follow prereq
 커리큘럼에 반드시 이 포인트들을 포함하고, 퀴즈 주제를 참고하세요.
 선행 개념 순서에 맞게 모듈을 배치하세요.`;
 
-  return `${header}\n\n${sections.join("\n\n")}`;
+  let result = `${header}\n\n${sections.join("\n\n")}`;
+
+  // Append concept_keys vocabulary for LLM tagging
+  const vocabLines = Object.values(kbHints)
+    .flat()
+    .map((h) => `- \`${h.concept_key}\`: ${h.concept_name}`);
+
+  if (vocabLines.length > 0) {
+    const vocabHeader = locale === "en"
+      ? "### concept_keys Tagging Vocabulary"
+      : "### concept_keys 태깅 vocabulary";
+    result = `${result}\n\n${vocabHeader}\n${vocabLines.join("\n")}`;
+  }
+
+  return result;
 }
 
 export function formatEducationalAnalysis(

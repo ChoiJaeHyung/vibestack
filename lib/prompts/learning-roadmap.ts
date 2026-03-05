@@ -455,8 +455,11 @@ export function buildContentBatchPrompt(
           .join("\n\n")
       : "(no source files available)";
 
+  const kbIntro = locale === "en"
+    ? "Core educational key points. Include these in content and reference quiz topics."
+    : "이 기술의 핵심 교육 포인트입니다. 콘텐츠 생성 시 이 포인트들을 반드시 포함하고, 퀴즈 주제를 참고하세요.";
   const kbSection = kbHints && kbHints.length > 0
-    ? `\n## Educational Key Points for ${techName}\n\n이 기술의 핵심 교육 포인트입니다. 콘텐츠 생성 시 이 포인트들을 반드시 포함하고, 퀴즈 주제를 참고하세요.\n\n${kbHints.map(h => `### ${h.concept_name}\n- **concept_key:** \`${h.concept_key}\`\n- **핵심 포인트:** ${h.key_points.join(" | ")}\n- **퀴즈 주제:** ${h.common_quiz_topics.join(", ")}`).join("\n\n")}\n\n### concept_keys 태깅 vocabulary\n${kbHints.map(h => `- \`${h.concept_key}\`: ${h.concept_name}`).join("\n")}\n`
+    ? `\n## Educational Key Points for ${techName}\n\n${kbIntro}\n\n${kbHints.map(h => `### ${h.concept_name}\n- **concept_key:** \`${h.concept_key}\`\n- ${locale === "en" ? "**Key Points:**" : "**핵심 포인트:**"} ${h.key_points.join(" | ")}\n- ${locale === "en" ? "**Quiz Topics:**" : "**퀴즈 주제:**"} ${h.common_quiz_topics.join(", ")}`).join("\n\n")}\n\n### concept_keys ${locale === "en" ? "Tagging Vocabulary" : "태깅 vocabulary"}\n${kbHints.map(h => `- \`${h.concept_key}\`: ${h.concept_name}`).join("\n")}\n`
     : "";
 
   return `You are an expert programming instructor creating personalized educational content for a "vibe coder" learning **${techName}**.
@@ -589,7 +592,9 @@ ${buildLevelGuidance(level, locale)}${level === "beginner" ? `
      .select(___BLANK_2___)        // 힌트: 어떤 컬럼이 필요할까요?
      .eq('user_id', user.id)
    \`\`\`${kbHints && kbHints.length > 0 ? `
-13. **concept_keys 태깅**: 위 concept_key 목록이 있다면, 각 모듈의 JSON에 "concept_keys" 배열을 추가하세요. 해당 모듈이 실제로 가르치는 개념만 포함하세요 (단순 언급 제외). 확실하지 않으면 생략 가능.` : ""}${educationalAnalysis ? `
+13. ${locale === "en"
+      ? '**concept_keys tagging**: If concept_key list is provided above, add a "concept_keys" array to each module\'s JSON. Include only the concept_keys this module actually teaches (not just mentions). You may omit if unsure.'
+      : '**concept_keys 태깅**: 위 concept_key 목록이 있다면, 각 모듈의 JSON에 "concept_keys" 배열을 추가하세요. 해당 모듈이 실제로 가르치는 개념만 포함하세요 (단순 언급 제외). 확실하지 않으면 생략 가능.'}` : ""}${educationalAnalysis ? `
 ${kbHints && kbHints.length > 0 ? "14" : "13"}. **Use the Educational Metadata above** to enrich your content. Reference gotchas as quiz questions, use teaching_notes for explanation sections, and leverage code quality observations as practical learning points. For beginner level, use the Tech Stack Metaphors to make concepts accessible.` : ""}
 
 ## Important Rules
