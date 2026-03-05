@@ -65,12 +65,10 @@ vibeuniv/
 │       ├── learning-paths/route.ts   # GET: 학습 경로 목록 (세션)
 │       ├── usage/route.ts            # GET: 사용량 (세션)
 │       │
-│       ├── payments/                 # 토스페이먼츠
-│       │   ├── subscribe/route.ts    # POST: 구독 시작
-│       │   ├── confirm/route.ts      # POST: 결제 확인
-│       │   ├── cancel/route.ts       # POST: 구독 해지
-│       │   ├── billing-key/route.ts  # POST: 빌링키 저장
-│       │   └── webhook/route.ts      # POST: 결제 웹훅
+│       ├── payments/                 # Stripe
+│       │   ├── checkout/route.ts     # POST: Stripe Checkout Session 생성
+│       │   ├── portal/route.ts       # POST: Stripe Customer Portal 세션
+│       │   └── webhook/route.ts      # POST: Stripe 웹훅
 │       │
 │       └── v1/                       # 외부 API (API 키 인증)
 │           ├── health/route.ts
@@ -130,8 +128,7 @@ vibeuniv/
 │       ├── tutor-panel.tsx            # AI 튜터 우측 슬라이드 패널 (채팅/검색 탭)
 │       ├── tutor-panel-context.tsx    # 튜터 패널 상태 Context Provider
 │       ├── dashboard-main.tsx         # 대시보드 main 래퍼 (패널 push 효과)
-│       ├── billing-manager.tsx        # 구독 관리
-│       ├── payment-confirm.tsx        # 결제 확인 (토스)
+│       ├── billing-manager.tsx        # 구독 관리 (Stripe Checkout/Portal)
 │       ├── upgrade-modal.tsx          # 업그레이드 모달
 │       ├── dashboard-upgrade-banner.tsx
 │       ├── api-key-manager.tsx        # API 키 생성/관리
@@ -213,7 +210,7 @@ vibeuniv/
 │   │   ├── llm-keys.ts               # LLM 키 암호화 저장/조회
 │   │   ├── knowledge.ts              # KB 생성/조회
 │   │   ├── usage.ts                  # 사용량 추적
-│   │   ├── billing.ts                # 토스페이먼츠 결제
+│   │   ├── billing.ts                # Stripe 결제 (Checkout/Portal)
 │   │   ├── dashboard.ts              # 대시보드 RPC
 │   │   ├── streak.ts                 # 학습 스트릭 (getStreak, updateStreak, updateWeeklyTarget)
 │   │   ├── badges.ts                 # 배지/업적 (getUserBadges, getAllBadges, checkAndAwardBadges)
@@ -247,7 +244,9 @@ vibeuniv/
 │               ├── log-session.ts          # vibeuniv_log_session
 │               ├── submit-analysis.ts      # vibeuniv_submit_analysis
 │               ├── generate-curriculum.ts  # vibeuniv_generate_curriculum
-│               └── submit-curriculum.ts    # vibeuniv_submit_curriculum
+│               ├── submit-curriculum.ts    # vibeuniv_submit_curriculum
+│               ├── create-curriculum.ts    # vibeuniv_create_curriculum (draft 생성)
+│               └── submit-module.ts        # vibeuniv_submit_module (모듈별 개별 제출)
 │
 ├── supabase/
 │   └── migrations/
@@ -256,7 +255,8 @@ vibeuniv/
 │       ├── 003_admin_system.sql            # 어드민 시스템
 │       ├── 004_educational_analysis.sql    # 교육 분석 테이블
 │       ├── 005_dashboard_rpc.sql           # get_dashboard_data() RPC
-│       ├── 006_toss_payments.sql           # 토스페이먼츠 결제
+│       ├── 006_toss_payments.sql           # 결제 테이블 (레거시명)
+│       ├── 019_stripe_migration.sql       # Stripe 마이그레이션 (toss→stripe 컬럼)
 │       ├── 007_technology_knowledge.sql    # 기술 KB + 시드 데이터
 │       ├── 011_badges.sql                 # 배지/업적 시스템 (badges, user_badges)
 │       └── 012_user_streaks.sql           # 학습 스트릭 (user_streaks)
@@ -304,7 +304,7 @@ vibeuniv/
 | 14 | `announcements` | 공지사항 | 003 |
 | 15 | `admin_audit_log` | 어드민 감사 로그 | 003 |
 | 16 | `educational_analyses` | 교육 분석 데이터 | 004 |
-| 17 | `payments` | 결제 내역 (토스) | 006 |
+| 17 | `payments` | 결제 내역 (Stripe) | 006, 019 |
 | 18 | `technology_knowledge` | 기술 KB (시드+LLM) | 007 |
 | 19 | `badges` | 배지 정의 (8종: first_step, consistent_learner 등) | 011 |
 | 20 | `user_badges` | 사용자 배지 획득 기록 | 011 |
@@ -320,8 +320,8 @@ name            TEXT
 avatar_url      TEXT
 plan_type       TEXT DEFAULT 'free' CHECK ('free','pro','team')
 plan_expires_at TIMESTAMPTZ
-toss_customer_key TEXT        -- 토스 고객 키
-toss_billing_key  TEXT        -- 토스 빌링 키
+stripe_customer_id     TEXT   -- Stripe Customer ID
+stripe_subscription_id TEXT   -- Stripe Subscription ID
 role            TEXT DEFAULT 'user' CHECK ('user','admin','super_admin')
 is_banned       BOOLEAN DEFAULT false
 banned_at       TIMESTAMPTZ
@@ -434,15 +434,17 @@ total_tokens      INTEGER DEFAULT 0
 
 #### payments
 ```sql
-id              UUID PK
-user_id         UUID FK → users ON DELETE CASCADE
-order_id        TEXT UNIQUE NOT NULL   -- 토스 주문 ID
-payment_key     TEXT                   -- 토스 결제 키
-plan            TEXT NOT NULL CHECK ('pro','team')
-amount          INTEGER NOT NULL       -- KRW
-status          TEXT DEFAULT 'pending' CHECK ('pending','done','canceled','failed')
-method          TEXT
-is_recurring    BOOLEAN DEFAULT false
+id                UUID PK
+user_id           UUID FK → users ON DELETE CASCADE
+order_id          TEXT UNIQUE NOT NULL
+payment_key       TEXT
+plan              TEXT NOT NULL CHECK ('pro','team')
+amount            INTEGER NOT NULL       -- cents (USD)
+status            TEXT DEFAULT 'pending' CHECK ('pending','done','canceled','failed')
+method            TEXT
+is_recurring      BOOLEAN DEFAULT false
+stripe_session_id TEXT                   -- Stripe Checkout Session ID
+currency          TEXT DEFAULT 'usd'
 ```
 
 #### technology_knowledge
@@ -617,31 +619,28 @@ Section = {
 - 검색 탭: Google 검색 새 탭 열기, 추천 검색어(모듈명 기반), 최근 검색어(localStorage, 최대 5개)
 - 모바일: 전체화면 오버레이 + 배경 터치 닫기
 
-### 3.6 결제 플로우 (토스페이먼츠)
+### 3.6 결제 플로우 (Stripe)
 
 ```
-1. createPaymentRequest(plan)
-   - Pro: ₩25,000/월, Team: ₩59,000/월
-   - toss_customer_key 생성/조회
-   - orderId 생성, payments 레코드 생성
+1. createCheckoutSession(plan)
+   - Pro: $19/mo, Team: $45/mo
+   - Stripe Customer 조회/생성 → stripe_customer_id 저장
+   - Stripe Checkout Session 생성 → URL 반환
 
-2. 토스 결제창 → 결제 완료
+2. Stripe Checkout (호스팅 결제 페이지) → 결제 완료 → /settings/billing?success=true 리다이렉트
 
-3. POST /api/payments/confirm
-   - 토스 API 확인
-   - payments.status → 'done'
-   - users.plan_type 업데이트
-   - plan_expires_at 설정
+3. POST /api/payments/webhook (Stripe 웹훅)
+   - stripe.webhooks.constructEvent() 서명 검증
+   - checkout.session.completed → plan 업그레이드 + stripe IDs 저장 + payments 레코드 생성
+   - customer.subscription.updated → plan 변경 반영
+   - customer.subscription.deleted → plan_type='free' 다운그레이드
+   - invoice.payment_failed → 로그 (Stripe 자동 retry)
 
-4. POST /api/payments/webhook
-   - 결제 이벤트 수신 (자동 갱신 등)
-
-5. POST /api/payments/cancel
-   - 구독 해지
-   - plan_type → 'free'
+4. 구독 관리: createPortalSession() → Stripe Customer Portal URL 반환
+   - 카드 변경, 구독 취소, 인보이스 조회 모두 Stripe Portal에서 처리
 ```
 
-### 3.7 MCP 서버 도구 (10개, v0.3.0)
+### 3.7 MCP 서버 도구 (12개, v0.3.5)
 
 | 도구 | 설명 | 핵심 로직 |
 |------|------|----------|
@@ -654,9 +653,13 @@ Section = {
 | `vibeuniv_log_session` | 세션 로그 | 개발 세션 메타데이터 기록 |
 | `vibeuniv_submit_analysis` | 교육 분석 제출 | 수동 분석 데이터 저장 |
 | `vibeuniv_generate_curriculum` | 커리큘럼 생성 (로컬) | 통합 API 1회로 컨텍스트 fetch (tech stacks + KB + edu analysis + 파일 소스코드 20개) → 로컬 AI에 지침 반환 (최소 15 모듈, 프로젝트 기능 중심) |
-| `vibeuniv_submit_curriculum` | 커리큘럼 제출 | 편집된 커리큘럼 저장 (검증: 최소 10 모듈, 모듈당 최소 3 섹션, code_example/quiz 필수) |
+| `vibeuniv_submit_curriculum` | 커리큘럼 일괄 제출 (레거시) | 전체 커리큘럼 JSON 한번에 저장 (검증: 최소 10 모듈, beginner→7섹션/800자/code 2개/quiz 2개, 그 외→5섹션/400자/code+quiz 각 1개) |
+| `vibeuniv_create_curriculum` | 커리큘럼 초안 생성 | draft learning_path 생성 → learning_path_id 반환 (기존 draft/active 삭제 후 새로 생성) |
+| `vibeuniv_submit_module` | 모듈별 개별 제출 | 단일 모듈 검증+저장, upsert(같은 module_order면 UPDATE), 전체 모듈 도착 시 자동 status="active" |
 
-> **Local-First 패턴 (v0.3.0)**: `analyze`, `ask_tutor`, `generate_curriculum`은 서버 LLM을 호출하지 않고, 서버에서 데이터만 fetch한 뒤 로컬 AI(Claude Code 등)에게 분석/튜터링/생성 지침을 반환한다. 결과는 companion 도구(`submit_tech_stacks`, `submit_curriculum`)로 서버에 저장한다.
+> **Local-First 패턴 (v0.3.5)**: `analyze`, `ask_tutor`, `generate_curriculum`은 서버 LLM을 호출하지 않고, 서버에서 데이터만 fetch한 뒤 로컬 AI(Claude Code 등)에게 분석/튜터링/생성 지침을 반환한다. 결과는 companion 도구로 서버에 저장한다.
+>
+> **Per-Module Submission (v0.3.5)**: `create_curriculum` → `submit_module` × N 순서로 모듈별 개별 제출. 기존 `submit_curriculum`도 호환 유지.
 >
 > **MCP 다국어 지원**: 모든 MCP 도구는 `/api/v1/user/locale`에서 사용자 locale을 조회(캐시)하여 한국어/영어 메시지를 분기한다. `generate_curriculum`은 `curriculum-context` 응답의 `locale` 필드를 사용한다.
 
@@ -769,8 +772,7 @@ ConceptHint 구조:
 
 - **LLM 키**: AES-256-GCM (ENCRYPTION_KEY 환경변수)
 - **API 키**: bcrypt 12 rounds (단방향 해시)
-- **토스 시크릿 키**: 환경변수 (TOSS_SECRET_KEY)
-- **토스 빌링키**: AES-256-GCM 암호화 저장 (encrypt/decrypt 사용)
+- **Stripe 키**: 환경변수 (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET)
 - **콘텐츠 복호화 실패 시**: 암호문 형식 감지 → `[Decryption failed]` 반환 (암호문 미노출)
 
 ### 4.3 레이트 리밋
@@ -786,11 +788,11 @@ ConceptHint 구조:
 
 > **Note**: 인메모리 레이트 리미터 사용 중. Vercel Serverless에서 인스턴스간 공유 안 됨. 추후 Redis/Upstash로 교체 필요.
 
-### 4.4 결제 보안 (토스페이먼츠)
+### 4.4 결제 보안 (Stripe)
 
-- **결제 금액 검증**: confirm 시 DB의 pending 레코드 금액과 클라이언트 제출 금액 비교
-- **웹훅 검증**: 토스 결제 응답의 `secret` 값을 DB에 저장 → 웹훅 도착 시 `timingSafeEqual`로 비교
-- **빌링키**: 클라이언트에 미반환 (`{ registered: true }`만 응답), AES-256-GCM 암호화 저장
+- **Checkout**: Stripe 호스팅 결제 페이지 사용 (카드 정보 서버 미경유)
+- **웹훅 검증**: `stripe.webhooks.constructEvent()` 서명 검증 (STRIPE_WEBHOOK_SECRET)
+- **구독 관리**: Stripe Customer Portal (카드 변경, 구독 취소 등 모두 Stripe에서 처리)
 - **Payments RLS**: SELECT만 허용, INSERT/UPDATE/DELETE는 service_role만 가능 (명시적 deny 정책)
 
 ### 4.5 파일 업로드 제한

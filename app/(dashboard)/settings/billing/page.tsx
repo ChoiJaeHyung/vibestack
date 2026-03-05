@@ -7,15 +7,11 @@ import { getUsageData } from "@/server/actions/usage";
 import type { UsageData } from "@/server/actions/usage";
 import { BillingManager } from "@/components/features/billing-manager";
 import { UsageProgress } from "@/components/features/usage-progress";
-import { PaymentConfirm } from "@/components/features/payment-confirm";
 
 interface BillingPageProps {
   searchParams: Promise<{
     success?: string;
     canceled?: string;
-    orderId?: string;
-    paymentKey?: string;
-    amount?: string;
   }>;
 }
 
@@ -24,10 +20,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const params = await searchParams;
   const planResult = await getCurrentPlan();
   const currentPlan = planResult.data?.plan_type ?? "free";
-  const hasBillingKey = planResult.data?.has_billing_key ?? false;
-
-  // 토스 결제 성공 리다이렉트: paymentKey, orderId, amount 파라미터 존재 시 confirm 처리
-  const needsConfirm = !!(params.paymentKey && params.orderId && params.amount);
+  const hasSubscription = planResult.data?.has_subscription ?? false;
 
   let usageData: UsageData | null = null;
   try {
@@ -59,15 +52,6 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           {t("subtitle")}
         </p>
       </div>
-
-      {/* Payment Confirm (토스 결제 성공 리다이렉트 시) */}
-      {needsConfirm && (
-        <PaymentConfirm
-          paymentKey={params.paymentKey!}
-          orderId={params.orderId!}
-          amount={Number(params.amount!)}
-        />
-      )}
 
       {/* Success / Canceled banners */}
       {params.success === "true" && (
@@ -154,7 +138,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
       )}
 
       {/* Plan Comparison & Billing Manager */}
-      <BillingManager currentPlan={currentPlan} hasBillingKey={hasBillingKey} />
+      <BillingManager currentPlan={currentPlan} hasSubscription={hasSubscription} />
     </div>
   );
 }

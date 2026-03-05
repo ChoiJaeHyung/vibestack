@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { successResponse, errorResponse } from "@/lib/utils/api-response";
 import { authenticateApiKey, isAuthResult } from "@/server/middleware/api-auth";
 import { createServiceClient } from "@/lib/supabase/service";
+import { validateModule, VALID_DIFFICULTIES } from "@/lib/utils/curriculum-validation";
 import type { Database, Json } from "@/types/database";
 
 type Difficulty = Database["public"]["Enums"]["difficulty"];
@@ -11,26 +12,25 @@ type LearningModuleInsert = Database["public"]["Tables"]["learning_modules"]["In
 
 // ─── Curriculum validation types ─────────────────────────────────────
 
-interface CurriculumSection {
-  type: string;
-  title: string;
-  body: string;
-  code?: string;
-  quiz_options?: string[];
-  quiz_answer?: number;
-  quiz_explanation?: string;
-  challenge_starter_code?: string;
-  challenge_answer_code?: string;
-}
-
 interface CurriculumModule {
   title: string;
   description: string;
   module_type: string;
   estimated_minutes?: number;
   tech_name: string;
+  concept_keys?: string[];
   content: {
-    sections: CurriculumSection[];
+    sections: Array<{
+      type: string;
+      title: string;
+      body: string;
+      code?: string;
+      quiz_options?: string[];
+      quiz_answer?: number;
+      quiz_explanation?: string;
+      challenge_starter_code?: string;
+      challenge_answer_code?: string;
+    }>;
   };
 }
 
@@ -41,16 +41,6 @@ interface Curriculum {
   estimated_hours?: number;
   modules: CurriculumModule[];
 }
-
-const VALID_DIFFICULTIES: string[] = ["beginner", "intermediate", "advanced"];
-const VALID_MODULE_TYPES: string[] = ["concept", "practical", "quiz", "project_walkthrough"];
-const VALID_SECTION_TYPES: string[] = [
-  "explanation",
-  "code_example",
-  "quiz_question",
-  "challenge",
-  "reflection",
-];
 
 function validateCurriculum(data: unknown): { valid: true; curriculum: Curriculum } | { valid: false; error: string } {
   if (!data || typeof data !== "object") {
@@ -78,89 +68,11 @@ function validateCurriculum(data: unknown): { valid: true; curriculum: Curriculu
     return { valid: false, error: "curriculum.modules cannot exceed 50 modules" };
   }
 
+  // Validate each module using shared utility
   for (let i = 0; i < c.modules.length; i++) {
-    const mod = c.modules[i] as Record<string, unknown>;
-    const prefix = `modules[${i}]`;
-
-    if (typeof mod.title !== "string" || mod.title.length === 0) {
-      return { valid: false, error: `${prefix}.title is required` };
-    }
-    if (typeof mod.description !== "string" || mod.description.length === 0) {
-      return { valid: false, error: `${prefix}.description is required` };
-    }
-    if (!VALID_MODULE_TYPES.includes(mod.module_type as string)) {
-      return { valid: false, error: `${prefix}.module_type must be one of: ${VALID_MODULE_TYPES.join(", ")}` };
-    }
-    if (typeof mod.tech_name !== "string" || mod.tech_name.length === 0) {
-      return { valid: false, error: `${prefix}.tech_name is required` };
-    }
-
-    const content = mod.content as Record<string, unknown> | undefined;
-    if (!content || !Array.isArray(content.sections) || content.sections.length === 0) {
-      return { valid: false, error: `${prefix}.content.sections must be a non-empty array` };
-    }
-    const minSections = (c.difficulty as string) === "beginner" ? 5 : 3;
-    if (content.sections.length < minSections) {
-      return { valid: false, error: `${prefix}.content.sections must have at least ${minSections} sections (received ${content.sections.length})` };
-    }
-
-    let hasCode = false;
-    let hasQuiz = false;
-
-    for (let j = 0; j < content.sections.length; j++) {
-      const sec = content.sections[j] as Record<string, unknown>;
-      const secPrefix = `${prefix}.sections[${j}]`;
-
-      if (!VALID_SECTION_TYPES.includes(sec.type as string)) {
-        return { valid: false, error: `${secPrefix}.type must be one of: ${VALID_SECTION_TYPES.join(", ")}` };
-      }
-      if (typeof sec.title !== "string" || sec.title.length === 0) {
-        return { valid: false, error: `${secPrefix}.title is required` };
-      }
-
-      // Body minimum length: explanation requires 400 chars for beginner / 200 for others, non-explanation requires 20 chars
-      const minBodyLength = sec.type === "explanation"
-        ? ((c.difficulty as string) === "beginner" ? 400 : 200)
-        : 20;
-      if (typeof sec.body !== "string" || sec.body.trim().length < minBodyLength) {
-        return { valid: false, error: `${secPrefix}.body must be at least ${minBodyLength} characters (${sec.type})` };
-      }
-
-      if (sec.type === "code_example") {
-        hasCode = true;
-        if (typeof sec.code !== "string" || sec.code.trim().length === 0) {
-          return { valid: false, error: `${secPrefix} code_example must have a non-empty code field` };
-        }
-      }
-
-      if (sec.type === "quiz_question") {
-        hasQuiz = true;
-        if (!Array.isArray(sec.quiz_options) || sec.quiz_options.length !== 4) {
-          return { valid: false, error: `${secPrefix}.quiz_options must have exactly 4 options` };
-        }
-        if (typeof sec.quiz_answer !== "number" || sec.quiz_answer < 0 || sec.quiz_answer > 3) {
-          return { valid: false, error: `${secPrefix}.quiz_answer must be 0-3` };
-        }
-        if (typeof sec.quiz_explanation !== "string" || sec.quiz_explanation.trim().length === 0) {
-          return { valid: false, error: `${secPrefix} quiz_question must have quiz_explanation` };
-        }
-      }
-
-      if (sec.type === "challenge") {
-        if (typeof sec.challenge_starter_code !== "string" || sec.challenge_starter_code.trim().length === 0) {
-          return { valid: false, error: `${secPrefix} challenge must have challenge_starter_code` };
-        }
-        if (typeof sec.challenge_answer_code !== "string" || sec.challenge_answer_code.trim().length === 0) {
-          return { valid: false, error: `${secPrefix} challenge must have challenge_answer_code` };
-        }
-      }
-    }
-
-    if (!hasCode) {
-      return { valid: false, error: `${prefix} must have at least one code_example section` };
-    }
-    if (!hasQuiz) {
-      return { valid: false, error: `${prefix} must have at least one quiz_question section` };
+    const result = validateModule(c.modules[i], i, c.difficulty as string);
+    if (!result.valid) {
+      return { valid: false, error: result.error };
     }
   }
 
@@ -257,25 +169,31 @@ export async function POST(
     // Create learning_modules with full content
     const now = new Date().toISOString();
     const moduleInserts: LearningModuleInsert[] = curriculum.modules.map(
-      (mod, idx) => ({
-        learning_path_id: learningPath.id,
-        title: mod.title,
-        description: mod.description,
-        module_type: mod.module_type as ModuleType,
-        module_order: idx + 1,
-        estimated_minutes: mod.estimated_minutes ?? null,
-        tech_stack_id: techNameToId.get(mod.tech_name) ?? null,
-        content: {
-          sections: mod.content.sections,
-          _meta: {
-            tech_name: mod.tech_name,
-            relevant_files: [],
-            learning_objectives: [],
-          },
-          _status: "ready",
-          _generated_at: now,
-        } as unknown as Json,
-      }),
+      (mod, idx) => {
+        const conceptKeys = Array.isArray(mod.concept_keys)
+          ? mod.concept_keys.filter((k): k is string => typeof k === "string" && k.length > 0)
+          : [];
+        return {
+          learning_path_id: learningPath.id,
+          title: mod.title,
+          description: mod.description,
+          module_type: mod.module_type as ModuleType,
+          module_order: idx + 1,
+          estimated_minutes: mod.estimated_minutes ?? null,
+          tech_stack_id: techNameToId.get(mod.tech_name) ?? null,
+          concept_keys: conceptKeys.length > 0 ? conceptKeys : null,
+          content: {
+            sections: mod.content.sections,
+            _meta: {
+              tech_name: mod.tech_name,
+              relevant_files: [],
+              learning_objectives: [],
+            },
+            _status: "ready",
+            _generated_at: now,
+          } as unknown as Json,
+        };
+      },
     );
 
     const { error: modulesError } = await supabase

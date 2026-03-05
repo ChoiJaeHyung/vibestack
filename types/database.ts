@@ -100,8 +100,8 @@ export interface Database {
           avatar_url: string | null;
           plan_type: PlanType;
           plan_expires_at: string | null;
-          toss_customer_key: string | null;
-          toss_billing_key: string | null;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
           onboarding_completed: boolean;
           role: UserRole;
           is_banned: boolean;
@@ -119,8 +119,8 @@ export interface Database {
           avatar_url?: string | null;
           plan_type?: PlanType;
           plan_expires_at?: string | null;
-          toss_customer_key?: string | null;
-          toss_billing_key?: string | null;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
           onboarding_completed?: boolean;
           role?: UserRole;
           is_banned?: boolean;
@@ -138,8 +138,8 @@ export interface Database {
           avatar_url?: string | null;
           plan_type?: PlanType;
           plan_expires_at?: string | null;
-          toss_customer_key?: string | null;
-          toss_billing_key?: string | null;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
           onboarding_completed?: boolean;
           role?: UserRole;
           is_banned?: boolean;
@@ -464,6 +464,7 @@ export interface Database {
           estimated_minutes: number | null;
           tech_stack_id: string | null;
           prerequisites: string[] | null;
+          concept_keys: string[] | null;
           created_at: string;
         };
         Insert: {
@@ -477,6 +478,7 @@ export interface Database {
           estimated_minutes?: number | null;
           tech_stack_id?: string | null;
           prerequisites?: string[] | null;
+          concept_keys?: string[] | null;
           created_at?: string;
         };
         Update: {
@@ -490,6 +492,7 @@ export interface Database {
           estimated_minutes?: number | null;
           tech_stack_id?: string | null;
           prerequisites?: string[] | null;
+          concept_keys?: string[] | null;
           created_at?: string;
         };
         Relationships: [];
@@ -727,7 +730,8 @@ export interface Database {
           status: PaymentStatus;
           method: string | null;
           is_recurring: boolean;
-          toss_secret: string | null;
+          stripe_session_id: string | null;
+          currency: string;
           created_at: string;
           updated_at: string;
         };
@@ -741,7 +745,8 @@ export interface Database {
           status?: PaymentStatus;
           method?: string | null;
           is_recurring?: boolean;
-          toss_secret?: string | null;
+          stripe_session_id?: string | null;
+          currency?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -755,7 +760,8 @@ export interface Database {
           status?: PaymentStatus;
           method?: string | null;
           is_recurring?: boolean;
-          toss_secret?: string | null;
+          stripe_session_id?: string | null;
+          currency?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -1075,6 +1081,7 @@ export interface Database {
           id: string;
           user_id: string;
           knowledge_id: string;
+          concept_key: string | null;
           mastery_level: number;
           created_at: string;
           updated_at: string;
@@ -1083,6 +1090,7 @@ export interface Database {
           id?: string;
           user_id: string;
           knowledge_id: string;
+          concept_key?: string | null;
           mastery_level?: number;
           created_at?: string;
           updated_at?: string;
@@ -1091,6 +1099,7 @@ export interface Database {
           id?: string;
           user_id?: string;
           knowledge_id?: string;
+          concept_key?: string | null;
           mastery_level?: number;
           created_at?: string;
           updated_at?: string;

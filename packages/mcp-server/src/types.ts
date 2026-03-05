@@ -83,6 +83,19 @@ export interface CurriculumSubmitResult {
   totalModules: number;
 }
 
+export interface CurriculumStartResult {
+  learningPathId: string;
+  status: string;
+}
+
+export interface ModuleSubmitResult {
+  moduleId: string;
+  moduleOrder: number;
+  submitted: number;
+  total: number;
+  status: string;
+}
+
 export interface ConceptHintItem {
   concept_key: string;
   concept_name: string;

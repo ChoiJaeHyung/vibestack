@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { updateMastery } from "@/server/actions/knowledge-graph";
 import type { ConceptGraphNode } from "@/server/actions/knowledge-graph";
+import { MASTERY } from "@/server/actions/mastery-constants";
 
 interface ConceptDetailPanelProps {
   node: ConceptGraphNode;
   onClose: () => void;
-  onMasteryUpdate: (knowledgeId: string, level: number) => void;
+  onMasteryUpdate: (knowledgeId: string, level: number, conceptKey?: string) => void;
 }
 
 export function ConceptDetailPanel({
@@ -23,15 +24,15 @@ export function ConceptDetailPanel({
   const t = useTranslations("Learning");
   const [toggling, setToggling] = useState(false);
 
-  const isMastered = node.masteryLevel >= 80;
+  const isMastered = node.masteryLevel >= MASTERY.MASTERED_THRESHOLD;
 
   const handleToggleMastery = async () => {
     setToggling(true);
     try {
-      const newLevel = isMastered ? 0 : 100;
-      const result = await updateMastery(node.knowledgeId, newLevel);
+      const newLevel = isMastered ? 0 : MASTERY.MAX_LEVEL;
+      const result = await updateMastery(node.knowledgeId, newLevel, node.conceptKey);
       if (result.success) {
-        onMasteryUpdate(node.knowledgeId, newLevel);
+        onMasteryUpdate(node.knowledgeId, newLevel, node.conceptKey);
       }
     } finally {
       setToggling(false);
@@ -65,7 +66,7 @@ export function ConceptDetailPanel({
               </span>
               <span
                 className={
-                  node.masteryLevel >= 80
+                  node.masteryLevel >= MASTERY.MASTERED_THRESHOLD
                     ? "text-green-400"
                     : node.masteryLevel > 0
                       ? "text-blue-400"
@@ -78,7 +79,7 @@ export function ConceptDetailPanel({
             <div className="mt-1 h-1.5 w-full rounded-full bg-bg-surface-hover overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${
-                  node.masteryLevel >= 80 ? "bg-green-500" : "bg-blue-500"
+                  node.masteryLevel >= MASTERY.MASTERED_THRESHOLD ? "bg-green-500" : "bg-blue-500"
                 }`}
                 style={{ width: `${node.masteryLevel}%` }}
               />

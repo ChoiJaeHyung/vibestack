@@ -54,26 +54,18 @@
   },
   "subscriptionManagement": {
     "title": "구독 관리",
-    "autoPayment": "자동결제 등록됨",
-    "cancelSubscription": "구독 취소",
-    "noAutoPayment": "자동결제가 등록되어 있지 않습니다. 만료일 이후 Free 플랜으로 전환됩니다.",
-    "cancelWarning": {
-      "title": "Free 플랜으로 변경하면 다음 제한이 적용됩니다:",
-      "projects": "프로젝트 3개",
-      "learningPaths": "월 1회 학습 로드맵",
-      "aiChats": "월 20회 AI 대화",
-      "notice": "현재 구독 기간이 끝날 때까지는 기존 플랜이 유지됩니다."
-    }
+    "activeSubscription": "구독 활성화됨",
+    "manage": "구독 관리",
+    "noSubscription": "활성 구독이 없습니다. 만료일 이후 Free 플랜으로 전환됩니다.",
+    "cancelSubscription": "구독 취소"
   },
   "paymentHistory": {
     "title": "결제 내역",
-    "noHistory": "결제 내역이 없습니다.",
-    "autoPayment": "자동결제"
+    "noHistory": "결제 내역이 없습니다."
   },
   "error": {
     "paymentRequest": "결제 요청을 생성할 수 없습니다.",
     "paymentConfig": "결제 설정이 올바르지 않습니다.",
-    "paymentWindow": "결제 창을 열 수 없습니다.",
     "cancelFailed": "구독 취소에 실패했습니다.",
     "unexpected": "예기치 않은 오류가 발생했습니다."
   },
@@ -92,19 +84,7 @@
       "byok": "BYOK (자체 LLM 키)"
     },
     "processing": "처리 중...",
-    "cta": "Pro 시작하기 — ₩25,000/월",
+    "cta": "Pro 시작하기 — $19/월",
     "later": "나중에"
-  },
-  "confirm": {
-    "processing": "결제를 승인하고 있습니다...",
-    "success": {
-      "title": "결제가 완료되었습니다!",
-      "description": "잠시 후 페이지가 새로고침됩니다."
-    },
-    "error": {
-      "title": "결제 승인에 실패했습니다",
-      "default": "결제 승인에 실패했습니다",
-      "processing": "결제 승인 중 오류가 발생했습니다"
-    }
   }
 }

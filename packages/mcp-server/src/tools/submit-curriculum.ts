@@ -83,24 +83,22 @@ export function registerSubmitCurriculum(server: McpServer, client: VibeUnivClie
               `--- Validation Guide ---`,
               `Server minimum requirements:`,
               `• 10+ modules (aim for 10-15)`,
-              `• Beginner: 5+ sections/module, 400+ chars/explanation`,
-              `• Other: 3+ sections/module, 200+ chars/explanation`,
-              `• Each module needs at least 1 code_example + 1 quiz_question`,
+              `• Beginner: 7+ sections/module, 800+ chars/explanation, 2+ code_examples, 2+ quiz_questions`,
+              `• Other: 5+ sections/module, 400+ chars/explanation, 1+ code_example, 1+ quiz_question`,
               `• quiz_question needs exactly 4 options + quiz_explanation`,
               ``,
-              `Fix the failing module/section and resubmit — no need to regenerate everything.`,
+              `TIP: Consider using vibeuniv_create_curriculum + vibeuniv_submit_module for per-module submission instead.`,
             ]
           : [
               ``,
               `--- 검증 가이드 ---`,
               `서버 최소 요구사항:`,
               `• 10개 이상 모듈 (10-15개 권장)`,
-              `• 초급: 모듈당 5개↑ 섹션, explanation 400자↑`,
-              `• 그 외: 모듈당 3개↑ 섹션, explanation 200자↑`,
-              `• 모듈당 code_example 1개↑ + quiz_question 1개↑ 필수`,
+              `• 초급: 모듈당 7개↑ 섹션, explanation 800자↑, code_example 2개↑, quiz_question 2개↑`,
+              `• 그 외: 모듈당 5개↑ 섹션, explanation 400자↑, code_example 1개↑, quiz_question 1개↑`,
               `• quiz_question은 정확히 4개 선택지 + quiz_explanation 필수`,
               ``,
-              `실패한 모듈/섹션만 수정해서 다시 제출하세요 — 전체 재생성 불필요.`,
+              `TIP: vibeuniv_create_curriculum + vibeuniv_submit_module로 모듈별 개별 제출을 사용해보세요.`,
             ];
 
         return {

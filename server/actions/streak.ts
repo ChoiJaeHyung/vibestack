@@ -1,6 +1,7 @@
 "use server";
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { STREAK } from "./mastery-constants";
 import type { Database } from "@/types/database";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -139,7 +140,7 @@ export async function updateStreak(userId: string): Promise<StreakResult> {
       newWeekStartDate = monday;
     }
 
-    const weeklyTarget = existing?.weekly_target ?? 3;
+    const weeklyTarget = existing?.weekly_target ?? STREAK.DEFAULT_TARGET;
 
     // Upsert
     const { data: upserted, error } = await supabase
@@ -172,14 +173,12 @@ export async function updateStreak(userId: string): Promise<StreakResult> {
 
 // ─── updateWeeklyTarget ─────────────────────────────────────────────
 
-const VALID_TARGETS = [2, 3, 5, 7] as const;
-
 export async function updateWeeklyTarget(
   userId: string,
   target: number,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!VALID_TARGETS.includes(target as typeof VALID_TARGETS[number])) {
+    if (!STREAK.VALID_TARGETS.includes(target as typeof STREAK.VALID_TARGETS[number])) {
       return { success: false, error: "Invalid target value" };
     }
 

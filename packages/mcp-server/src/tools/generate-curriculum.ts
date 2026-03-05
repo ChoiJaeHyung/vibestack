@@ -1,8 +1,16 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { VibeUnivClient } from "../lib/api-client.js";
-import type { CurriculumContext, ConceptHintItem, EducationalAnalysisData, TechStackItem } from "../types.js";
+import type { CurriculumContext } from "../types.js";
 import { scanTeachingCriticalFiles } from "../lib/file-scanner.js";
+import {
+  formatTechStack,
+  formatKBHints,
+  formatEducationalAnalysis,
+  buildLevelGuidance,
+  setCachedCurriculumData,
+  type Locale,
+} from "../lib/curriculum-helpers.js";
 
 export const generateCurriculumSchema = {
   project_id: z.string().describe("The VibeUniv project ID"),
@@ -12,252 +20,12 @@ export const generateCurriculumSchema = {
     .describe("Target difficulty level for the curriculum"),
 };
 
-// ─── Formatting helpers ─────────────────────────────────────────────
-
-function formatTechStack(t: TechStackItem): string {
-  return `- **${t.name}**${t.version ? ` v${t.version}` : ""} (${t.category})`;
-}
-
-function formatKBHints(kbHints: Record<string, ConceptHintItem[]>, locale: "ko" | "en"): string {
-  const sections: string[] = [];
-
-  for (const [techName, hints] of Object.entries(kbHints)) {
-    if (hints.length === 0) continue;
-
-    const conceptLines = locale === "en"
-      ? hints.map((h) =>
-          `#### ${h.concept_name} (\`${h.concept_key}\`)
-- **Key Points:**
-${h.key_points.map((p) => `  - ${p}`).join("\n")}
-- **Good Quiz Topics:** ${h.common_quiz_topics.join(", ")}
-- **Prerequisites:** ${h.prerequisite_concepts.length > 0 ? h.prerequisite_concepts.join(", ") : "(none)"}`
-        ).join("\n\n")
-      : hints.map((h) =>
-          `#### ${h.concept_name} (\`${h.concept_key}\`)
-- **핵심 포인트:**
-${h.key_points.map((p) => `  - ${p}`).join("\n")}
-- **좋은 퀴즈 주제:** ${h.common_quiz_topics.join(", ")}
-- **선행 개념:** ${h.prerequisite_concepts.length > 0 ? h.prerequisite_concepts.join(", ") : "(없음)"}`
-        ).join("\n\n");
-
-    const heading = locale === "en"
-      ? `### ${techName} Core Concept Guide`
-      : `### ${techName} 핵심 개념 가이드`;
-    sections.push(`${heading}\n\n${conceptLines}`);
-  }
-
-  if (sections.length === 0) return "";
-
-  const header = locale === "en"
-    ? `## Educational Key Points (Knowledge Base)
-
-Below are **core educational key points** for each technology.
-Include these points in the curriculum, reference quiz topics, and follow prerequisite ordering.`
-    : `## 교육 핵심 포인트 (Knowledge Base)
-
-아래는 각 기술의 **핵심 교육 포인트**입니다.
-커리큘럼에 반드시 이 포인트들을 포함하고, 퀴즈 주제를 참고하세요.
-선행 개념 순서에 맞게 모듈을 배치하세요.`;
-
-  return `${header}\n\n${sections.join("\n\n")}`;
-}
-
-function formatEducationalAnalysis(
-  analysis: EducationalAnalysisData,
-  difficulty: string,
-  locale: "ko" | "en",
-): string {
-  const sections: string[] = [];
-  const en = locale === "en";
-
-  // Project Overview
-  const ov = analysis.project_overview;
-  sections.push(en
-    ? `### Project Overview (AI Analysis)
-- **App Description:** ${ov.one_liner}
-- **App Type:** ${ov.app_type}
-- **Target Users:** ${ov.target_users}
-- **Core Features:** ${ov.core_features.join(", ")}`
-    : `### 프로젝트 개요 (AI 분석 결과)
-- **앱 설명:** ${ov.one_liner}
-- **앱 유형:** ${ov.app_type}
-- **대상 사용자:** ${ov.target_users}
-- **핵심 기능:** ${ov.core_features.join(", ")}`);
-
-  // User Flows
-  if (analysis.user_flows.length > 0) {
-    const flowLines = analysis.user_flows.map((f) => {
-      const steps = f.steps
-        .map((s) => `    - ${s.description} (\`${s.file}\`:${s.line_range})`)
-        .join("\n");
-      return en
-        ? `- **${f.name}** (difficulty: ${f.difficulty})\n  Trigger: ${f.trigger}\n${steps}`
-        : `- **${f.name}** (난이도: ${f.difficulty})\n  트리거: ${f.trigger}\n${steps}`;
-    });
-    sections.push(en
-      ? `### User Flows\n\nEach flow should be covered in the curriculum:\n\n${flowLines.join("\n\n")}`
-      : `### 사용자 흐름 (User Flows)\n\n각 흐름을 커리큘럼에서 다뤄야 합니다:\n\n${flowLines.join("\n\n")}`);
-  }
-
-  // File Difficulty Map
-  if (analysis.file_analysis.length > 0) {
-    const fileLines = analysis.file_analysis
-      .sort((a, b) => a.complexity - b.complexity)
-      .map((f) => en
-        ? `- \`${f.path}\` — ${f.role} (complexity: ${f.complexity}/5, ${f.difficulty})`
-        : `- \`${f.path}\` — ${f.role} (복잡도: ${f.complexity}/5, ${f.difficulty})`);
-    sections.push(en
-      ? `### File Difficulty Map\n\nSorted from easiest to hardest. Use this to determine module order:\n\n${fileLines.join("\n")}`
-      : `### 파일 난이도 맵\n\n쉬운 파일부터 어려운 파일 순서로 정렬했습니다. 모듈 순서를 결정할 때 참고하세요:\n\n${fileLines.join("\n")}`);
-  }
-
-  // Learning Priorities
-  const priorities = analysis.learning_priorities;
-  const lp = difficulty === "beginner"
-    ? priorities.beginner
-    : difficulty === "intermediate"
-      ? priorities.intermediate
-      : priorities.advanced;
-
-  const priorityLines = en
-    ? [
-        `- **Start with:** ${lp.start_with.join(", ")}`,
-        `- **Focus on:** ${lp.focus_on.join(", ")}`,
-      ]
-    : [
-        `- **시작:** ${lp.start_with.join(", ")}`,
-        `- **집중:** ${lp.focus_on.join(", ")}`,
-      ];
-  if ("skip_for_now" in lp) {
-    priorityLines.push(en
-      ? `- **Skip for now:** ${(lp as typeof priorities.beginner).skip_for_now.join(", ")}`
-      : `- **나중에:** ${(lp as typeof priorities.beginner).skip_for_now.join(", ")}`);
-  }
-  if ("deep_dive" in lp) {
-    priorityLines.push(en
-      ? `- **Deep dive:** ${(lp as typeof priorities.intermediate).deep_dive.join(", ")}`
-      : `- **심화:** ${(lp as typeof priorities.intermediate).deep_dive.join(", ")}`);
-  }
-  if ("challenge_topics" in lp) {
-    priorityLines.push(en
-      ? `- **Challenge:** ${(lp as typeof priorities.advanced).challenge_topics.join(", ")}`
-      : `- **도전:** ${(lp as typeof priorities.advanced).challenge_topics.join(", ")}`);
-  }
-  sections.push(en
-    ? `### ${difficulty} Level Learning Priorities\n\n${priorityLines.join("\n")}`
-    : `### ${difficulty} 난이도 학습 우선순위\n\n${priorityLines.join("\n")}`);
-
-  // Repeated Patterns
-  if (analysis.repeated_patterns.length > 0) {
-    const patternLines = analysis.repeated_patterns.map((p) => en
-      ? `- **${p.name}**: ${p.description} (found ${p.occurrences.length} times) — teaching value: ${p.teaching_value}`
-      : `- **${p.name}**: ${p.description} (${p.occurrences.length}회 발견) — 교육 가치: ${p.teaching_value}`);
-    sections.push(en
-      ? `### Repeated Patterns\n\nThese patterns are used repeatedly in the project. Including them in the curriculum enhances learning:\n\n${patternLines.join("\n")}`
-      : `### 반복 패턴\n\n프로젝트에서 반복적으로 사용되는 패턴입니다. 이 패턴들을 커리큘럼에 포함하면 학습 효과가 높아집니다:\n\n${patternLines.join("\n")}`);
-  }
-
-  // Code Quality
-  const cq = analysis.code_quality;
-  if (cq.good_practices.length > 0 || cq.improvement_areas.length > 0) {
-    const lines: string[] = [];
-    if (cq.good_practices.length > 0) {
-      lines.push(en ? "**Good Practices (Teaching Points):**" : "**좋은 사례 (교육 포인트):**");
-      for (const gp of cq.good_practices) {
-        lines.push(en
-          ? `- ${gp.description} → Related concept: ${gp.concept}`
-          : `- ${gp.description} → 관련 개념: ${gp.concept}`);
-      }
-    }
-    if (cq.improvement_areas.length > 0) {
-      lines.push(en ? "\n**Improvement Opportunities (Learning Opportunities):**" : "\n**개선 기회 (학습 기회):**");
-      for (const ia of cq.improvement_areas) {
-        lines.push(en
-          ? `- [${ia.severity}] ${ia.description} → Teaching: ${ia.teaching_opportunity}`
-          : `- [${ia.severity}] ${ia.description} → 교육: ${ia.teaching_opportunity}`);
-      }
-    }
-    sections.push(en
-      ? `### Code Quality Observations\n\n${lines.join("\n")}`
-      : `### 코드 품질 관찰\n\n${lines.join("\n")}`);
-  }
-
-  // Tech Stack Metaphors (beginner only)
-  if (difficulty === "beginner" && ov.tech_stack_metaphors.length > 0) {
-    const metaphorLines = ov.tech_stack_metaphors.map(
-      (m) => `- **${m.tech_name}** → ${m.metaphor}`,
-    );
-    sections.push(en
-      ? `### Tech Stack Metaphors (Beginner)\n\nUse these metaphors actively in the curriculum:\n\n${metaphorLines.join("\n")}`
-      : `### 기술 스택 비유 (초보자용)\n\n이 비유들을 커리큘럼에서 적극 활용하세요:\n\n${metaphorLines.join("\n")}`);
-  }
-
-  const header = en
-    ? `## Project Educational Analysis
-
-Below is AI-analyzed educational metadata for the project.
-Use this information to create a more specific and personalized curriculum.`
-    : `## 프로젝트 교육 분석 (Educational Analysis)
-
-아래는 AI가 프로젝트를 분석한 교육용 메타데이터입니다.
-이 정보를 활용해 더 구체적이고 맞춤화된 커리큘럼을 만드세요.`;
-
-  return `${header}\n\n${sections.join("\n\n")}`;
-}
-
-function buildLevelGuidance(difficulty: string, locale: "ko" | "en"): string {
-  const en = locale === "en";
-  if (difficulty === "beginner") {
-    return en
-      ? `**[Core Principle] Explain as if to a 5-6 year old. Assume they know nothing.**
-   - 3-step concept breakdown: ①Analogy (food/LEGO/school/play) → ②One-sentence definition → ③Code connection
-   - "What if this didn't exist?" before/after comparison (e.g., "No middleware? → Anyone can access secret pages 😱")
-   - Translate key code lines into plain English (e.g., \`const x = 5\` → "Put the number 5 in a box called x 📦")
-   - Give friendly nicknames to technical terms: useState→"memory box", props→"delivery package", middleware→"security checkpoint"
-   - concept 40%+, quiz 20%+, practical 15%↓(very easy only)
-   - explanation 400+ chars, 5-7 sections per module
-   - Use emojis actively: 🎯summary, 💡tip, ⚠️warning, 👏praise
-   - Tone: like reading a picture book, short sentences, lots of encouragement
-   - estimated_minutes: 20-35 min`
-      : `**[대원칙] 5~6세 아이에게 설명하듯. 아무것도 모른다고 가정.**
-   - 개념 3단계 쪼개기: ①비유(음식/레고/학교/놀이) → ②한 문장 정의 → ③코드 연결
-   - "이게 없으면?" before/after 비교 (예: "미들웨어 없으면? → 아무나 비밀 페이지 접근 😱")
-   - 주요 코드 라인에 "우리말 번역" (예: \`const x = 5\` → "x 상자에 숫자 5를 넣어요 📦")
-   - 기술 용어에 한국어 별명: useState→"기억 상자", props→"택배 상자", middleware→"보안 검문소"
-   - concept 40%↑, quiz 20%↑, practical 15%↓(아주 쉬운 것만)
-   - explanation 400자↑, 모듈당 5-7섹션
-   - 이모지 적극 활용: 🎯한줄정리, 💡팁, ⚠️주의, 👏칭찬
-   - 톤: 그림책 읽어주듯, 짧은 문장, 격려·칭찬 대폭
-   - estimated_minutes: 20-35분`;
-  }
-  if (difficulty === "intermediate") {
-    return en
-      ? `- Assume basic programming knowledge
-   - Focus on "how" and "why" — not just usage but how things work and design decisions
-   - Increase practical and project_walkthrough module ratio
-   - Cover common patterns, best practices, common mistakes`
-      : `- 기본 프로그래밍 지식은 안다고 가정
-   - "어떻게"와 "왜"에 집중 — 단순 사용법이 아니라 동작 원리와 설계 이유
-   - practical과 project_walkthrough 모듈 비중 높이기
-   - 일반적인 패턴, 베스트 프랙티스, 흔한 실수 다루기`;
-  }
-  return en
-    ? `- Assume solid programming knowledge
-   - Focus on advanced patterns, performance optimization, architecture design
-   - Maximize practical and project_walkthrough ratio
-   - Cover edge cases, internals, optimization strategies`
-    : `- 탄탄한 프로그래밍 지식 전제
-   - 고급 패턴, 성능 최적화, 아키텍처 설계에 집중
-   - practical과 project_walkthrough 비중 극대화
-   - 엣지 케이스, 내부 동작 원리, 최적화 전략 다루기`;
-}
-
 // ─── Tool registration ──────────────────────────────────────────────
 
 export function registerGenerateCurriculum(server: McpServer, client: VibeUnivClient): void {
   server.tool(
     "vibeuniv_generate_curriculum",
-    "Generate a learning curriculum for the project. IMPORTANT: Before calling this tool, you MUST ask the user which difficulty level they prefer — beginner (초급), intermediate (중급), or advanced (고급). Do NOT default to beginner without asking. Returns tech stack info and a JSON schema — you create the curriculum JSON, then submit it with vibeuniv_submit_curriculum.",
+    "Generate a learning curriculum for the project. IMPORTANT: Before calling this tool, you MUST ask the user which difficulty level they prefer — beginner (초급), intermediate (중급), or advanced (고급). Do NOT default to beginner without asking. After calling this tool, automatically execute ALL subsequent steps (create_curriculum → generate_module_content → submit_module for each module) without pausing or asking the user. The entire process should feel like a single seamless operation.",
     generateCurriculumSchema,
     { readOnlyHint: true, openWorldHint: true },
     async ({ project_id, difficulty }) => {
@@ -275,13 +43,16 @@ export function registerGenerateCurriculum(server: McpServer, client: VibeUnivCl
           console.error(`[vibeuniv] Local file scan failed (non-fatal): ${err instanceof Error ? err.message : err}`);
         }
 
+        // Cache context + files for reuse by generate_module_content (avoids re-fetching)
+        setCachedCurriculumData(project_id, curriculumContext, localFiles);
+
         // Prefer local files; fall back to server files if local scan yields nothing
         const curriculumFiles = localFiles.length > 0
           ? localFiles
           : (curriculumContext.files ?? []);
 
         const techStacks = curriculumContext.techStacks;
-        const locale = curriculumContext.locale ?? "ko";
+        const locale: Locale = (curriculumContext.locale as Locale) ?? "ko";
         const en = locale === "en";
 
         if (techStacks.length === 0) {
@@ -343,33 +114,34 @@ export function registerGenerateCurriculum(server: McpServer, client: VibeUnivCl
             : `\n**KB 활용:** 핵심 포인트 필수 포함, 퀴즈 주제 활용, 선행 개념 순서 준수.`
           : "";
 
-        // Build project source code section (local files preferred, server fallback)
+        // Build project source code section (for reference — content will use these in Pass 2)
         const filesSection = curriculumFiles.length > 0
           ? en
-            ? `\n## Project Source Code
+            ? `\n## Project Source Code (Reference)
 
 Below are the student's actual project files.
-You MUST directly quote this code in code_example and walkthrough sections.
-Do NOT make up code.
+Use these file paths when designing modules — each module should reference specific files.
+The actual code will be used in Pass 2 when generating section content.
 
-${curriculumFiles.map((f) => `#### ${f.file_path}\n\`\`\`\n${f.content}\n\`\`\``).join("\n\n")}\n`
-            : `\n## 프로젝트 소스 코드
+**Available files:**
+${curriculumFiles.map((f) => `- \`${f.file_path}\``).join("\n")}\n`
+            : `\n## 프로젝트 소스 코드 (참조)
 
 아래는 학생의 실제 프로젝트 파일입니다.
-커리큘럼의 code_example, walkthrough 섹션에서 반드시 이 코드를 직접 인용하세요.
-코드를 창작하지 마세요.
+모듈 설계 시 아래 파일 경로를 참조하세요 — 각 모듈은 특정 파일을 중심으로 설계해야 합니다.
+실제 코드는 Pass 2 (모듈별 콘텐츠 생성)에서 활용됩니다.
 
-${curriculumFiles.map((f) => `#### ${f.file_path}\n\`\`\`\n${f.content}\n\`\`\``).join("\n\n")}\n`
+**사용 가능한 파일:**
+${curriculumFiles.map((f) => `- \`${f.file_path}\``).join("\n")}\n`
           : "";
 
-        const learnMoreLabel = en ? "📚 Learn More" : "📚 더 알아보기";
-        const minBodyChars = difficulty === "beginner" ? "400" : "200";
-        const sectionsPerModule = difficulty === "beginner" ? "5-7" : "3-5";
-        const minSections = difficulty === "beginner" ? "5" : "3";
-        const paragraphs = difficulty === "beginner" ? "6-8" : "4-6";
-
         const instructions = en
-          ? `Please generate a learning curriculum for this project.
+          ? `Please generate a **structure-only** curriculum for this project.
+
+## IMPORTANT: This is Pass 1 of 2
+
+In this step, you ONLY generate the curriculum **structure** (titles, descriptions, types, tech names).
+Do NOT generate section content — that happens in Pass 2 via vibeuniv_generate_module_content.
 
 ## Target: Vibe Coder (${difficulty})
 
@@ -408,41 +180,11 @@ Bad examples:
 **Module Types:** concept (concept+analogy), practical (code practice), quiz (code-based quiz), project_walkthrough (line-by-line file reading)
 **Difficulty:**
 ${levelGuidance}
-
-**Section Design (${sectionsPerModule} per module, minimum ${minSections}):**
-- explanation: Markdown ${paragraphs} paragraphs. Must cite project file paths.
-  End with "${learnMoreLabel}" links 2-3 (React→react.dev, Next.js→nextjs.org/docs,
-  TypeScript→typescriptlang.org, Supabase→supabase.com/docs, Tailwind→tailwindcss.com/docs)
-- code_example: Copy actual project code + line-by-line comments.
-  Below the code block, explain with numbered list "What this code does:"
-- quiz_question: 4-choice based on project code. quiz_explanation with correct/incorrect reasoning
-- challenge: ___BLANK___ fill-in-the-blank. Both starter_code and answer_code required
-- reflection: "Open the X folder in your project. Look for Y." format
-
-**Required Placement Rules:**
-- Start each module with explanation
-- Maximum 2 consecutive explanations, 3rd must be quiz/reflection
-- At least 1 code_example per module required
-- At least 1 quiz_question per module required
-
-**Tone (Critical — key to learning content quality):**
-- Use casual, friendly "you" language
-- Address the student as "you" or "we"
-- Short sentences, one idea per sentence
-- Keep technical terms in English + follow with a plain explanation in parentheses
-- Start with questions: "Have you ever wondered about this code?", "Why does it work this way?"
-- Encourage: "If you've followed along this far, you already understand half of it!", "It can be confusing at first — don't worry"
-- Use analogies: everyday analogies for new concepts (API→restaurant order window, component→LEGO blocks)
-- Transition phrases: "Alright, now let's...", "Wait a moment!", "Let's check the actual code, shall we?"
-- Forbidden: dry academic tone, filler phrases like "Great question!", emotionless listing
-- Do NOT make up code — only quote actual project code
-
-**walkthrough:** Explain a file from import→logic→export order + connections to other files.
 ${eduInstruction}${kbInstruction}
 
-## JSON Schema
+## JSON Schema (Structure Only — No Content!)
 
-Follow the structure below exactly. All string values in English. Output ONLY JSON (no code fences/explanations).
+Follow the structure below exactly. Output ONLY JSON (no code fences/explanations).
 
 {
   "title": "string (required) — Curriculum title",
@@ -452,45 +194,46 @@ Follow the structure below exactly. All string values in English. Output ONLY JS
   "modules": [
     {
       "title": "string (required) — Module title",
-      "description": "string (required) — Module description",
+      "description": "string (required) — Module description (2-3 sentences about what this module covers)",
       "module_type": "concept | practical | quiz | project_walkthrough",
       "estimated_minutes": number (15-45),
       "tech_name": "string (required) — Must exactly match a name from the tech stack list above",
-      "content": {
-        "sections": [
-          {
-            "type": "explanation | code_example | quiz_question | challenge | reflection",
-            "title": "string (required) — Section title",
-            "body": "string (required) — Markdown body. explanation minimum ${minBodyChars} chars",
-
-            "code": "string (required for code_example) — Actual project code + line-by-line comments",
-
-            "quiz_options": ["string", "string", "string", "string"] (required for quiz_question, exactly 4),
-            "quiz_answer": number (required for quiz_question, 0-3),
-            "quiz_explanation": "string (required for quiz_question) — Correct/incorrect reasoning",
-
-            "challenge_starter_code": "string (required for challenge) — Contains ___BLANK___",
-            "challenge_answer_code": "string (required for challenge) — Completed code"
-          }
-        ]
-      }
+      "relevant_files": ["string"] (required — file paths this module should reference),
+      "learning_objectives": ["string"] (required — 2-4 specific things the student will learn)
     }
   ]
 }
 
 **Required Rules:**
-- At least 1 code_example + 1 quiz_question per module
-- Minimum 10 modules, minimum ${minSections} sections per module
-- explanation body must be at least ${minBodyChars} characters${difficulty === "beginner" ? `
+- Minimum 10 modules
+- Each module must have relevant_files and learning_objectives
+- tech_name must exactly match the tech stack names above
 
-**[Beginner-only Additional Rules — Must Follow]:**
-- Every concept must have "What if this didn't exist?" before/after comparison
-- Every line of code in code_example must have a plain-English translation
-- Challenges must have only 1-2 blanks with very specific hints
-- All technical terms must have friendly nicknames` : ""}
+## Automated Workflow (CRITICAL — execute ALL steps automatically)
 
-After generating: vibeuniv_submit_curriculum({ project_id: "${project_id}", curriculum: <JSON> })`
-          : `이 프로젝트의 학습 커리큘럼을 생성해주세요.
+**The user expects this to feel like a single operation.** Do NOT pause, ask for confirmation, or show intermediate JSON between steps. Just execute everything seamlessly and show brief progress updates.
+
+1. Generate the structure-only JSON above (~2KB) — NO content/sections
+2. Call **vibeuniv_create_curriculum**({ project_id: "${project_id}", title, description, difficulty, total_modules }) → get learning_path_id
+3. For EACH module (in order):
+   a. Call **vibeuniv_generate_module_content**({ project_id: "${project_id}", module_index, module, difficulty: "${difficulty}", total_modules, learning_path_id })
+   b. Generate the sections JSON
+   c. Call **vibeuniv_submit_module**({ project_id: "${project_id}", learning_path_id, module_order, title, description, module_type, tech_name, concept_keys (if KB concepts are tagged), content: { sections } })
+   d. Show brief progress: "Module 3/12 submitted ✓" (one line only)
+4. When the last module is submitted, show the completion message with vibeuniv.com link
+
+**IMPORTANT UX rules:**
+- Do NOT show the structure JSON or section JSON to the user
+- Do NOT ask "Should I continue?" between modules — just keep going
+- Do NOT explain the 2-pass system to the user — they don't need to know
+- If a module submission fails, retry it once, then continue with the next module
+- The entire process should feel like one seamless operation from the user's perspective`
+          : `이 프로젝트의 학습 커리큘럼 **구조만** 생성해주세요.
+
+## 중요: 2-Pass 중 Pass 1입니다
+
+이 단계에서는 커리큘럼의 **구조**만 생성합니다 (제목, 설명, 유형, 기술명).
+섹션 콘텐츠는 생성하지 마세요 — Pass 2 (vibeuniv_generate_module_content)에서 모듈별로 생성합니다.
 
 ## 대상: 바이브 코더 (${difficulty})
 
@@ -529,41 +272,11 @@ ${filesSection}${eduSection}${kbSection}
 **모듈 유형:** concept(개념+비유), practical(코드 실습), quiz(코드 기반 퀴즈), project_walkthrough(파일 라인별 읽기)
 **난이도:**
 ${levelGuidance}
-
-**섹션 구성 (모듈당 ${sectionsPerModule}개, 최소 ${minSections}개):**
-- explanation: 마크다운 ${paragraphs} 문단. 반드시 프로젝트 파일 경로 인용.
-  끝에 "${learnMoreLabel}" 링크 2-3개 (React→react.dev, Next.js→nextjs.org/docs,
-  TypeScript→typescriptlang.org, Supabase→supabase.com/docs, Tailwind→tailwindcss.com/docs)
-- code_example: 프로젝트 실제 코드 복사 + 라인별 한국어 주석.
-  코드 블록 아래에 "이 코드가 하는 일:" 번호 목록으로 설명
-- quiz_question: 프로젝트 코드 기반 4지선다. quiz_explanation에 정답/오답 이유
-- challenge: ___BLANK___ 빈칸 채우기. starter_code + answer_code 모두 필수
-- reflection: "여러분의 프로젝트에서 X 폴더를 열어보세요. Y를 찾아보세요." 형태
-
-**필수 배치 규칙:**
-- 모듈 시작은 explanation으로
-- explanation 연속 2개까지만, 3번째는 반드시 quiz/reflection
-- 모듈당 code_example 최소 1개 필수
-- 모듈당 quiz_question 최소 1개 필수
-
-**톤 (매우 중요 — 학습 콘텐츠 품질의 핵심):**
-- 해요체 사용 (~이에요, ~거든요, ~잖아요, ~해볼까요?)
-- 학생을 "여러분" 또는 "우리"로 지칭
-- 짧은 문장 위주, 한 문장에 하나의 아이디어
-- 기술 용어는 영어 유지 + 바로 뒤에 괄호로 쉬운 설명
-- 질문으로 시작: "혹시 이 코드 보면서 궁금하셨죠?", "왜 이렇게 할까요?"
-- 격려 필수: "여기까지 따라오셨으면 벌써 절반은 이해하신 거예요!", "처음엔 헷갈릴 수 있는데 걱정 마세요"
-- 비유 필수: 새 개념마다 일상생활 비유 (API→식당 주문 창구, 컴포넌트→레고 블록)
-- 전환 어구: "자, 그러면 이제...", "여기서 잠깐!", "실제 코드에서 확인해볼까요?"
-- 금지: 교과서체(~이다, ~하라), 감정 없는 나열, 영어 직역투
-- 코드 창작 금지 — 프로젝트 실제 코드만 인용
-
-**walkthrough:** 파일 하나를 import→로직→export 순서로 설명 + 다른 파일과의 연결.
 ${eduInstruction}${kbInstruction}
 
-## JSON 스키마
+## JSON 스키마 (구조만 — 콘텐츠 없음!)
 
-아래 구조를 정확히 따르세요. 모든 string 값은 한국어. JSON만 출력 (코드 펜스/설명 없이).
+아래 구조를 정확히 따르세요. JSON만 출력 (코드 펜스/설명 없이).
 
 {
   "title": "string (필수) — 커리큘럼 제목",
@@ -573,44 +286,40 @@ ${eduInstruction}${kbInstruction}
   "modules": [
     {
       "title": "string (필수) — 모듈 제목",
-      "description": "string (필수) — 모듈 설명",
+      "description": "string (필수) — 모듈 설명 (이 모듈이 다루는 내용 2-3문장)",
       "module_type": "concept | practical | quiz | project_walkthrough",
       "estimated_minutes": number (15-45),
       "tech_name": "string (필수) — 위 기술 스택 목록의 이름과 정확히 일치",
-      "content": {
-        "sections": [
-          {
-            "type": "explanation | code_example | quiz_question | challenge | reflection",
-            "title": "string (필수) — 섹션 제목",
-            "body": "string (필수) — 마크다운 본문. explanation은 최소 ${minBodyChars}자",
-
-            "code": "string (code_example일 때 필수) — 프로젝트 실제 코드 + 라인별 주석",
-
-            "quiz_options": ["string", "string", "string", "string"] (quiz_question일 때 필수, 정확히 4개),
-            "quiz_answer": number (quiz_question일 때 필수, 0-3),
-            "quiz_explanation": "string (quiz_question일 때 필수) — 정답/오답 이유",
-
-            "challenge_starter_code": "string (challenge일 때 필수) — ___BLANK___ 포함",
-            "challenge_answer_code": "string (challenge일 때 필수) — 완성 코드"
-          }
-        ]
-      }
+      "relevant_files": ["string"] (필수 — 이 모듈에서 참조할 파일 경로),
+      "learning_objectives": ["string"] (필수 — 학생이 배울 구체적 항목 2-4개)
     }
   ]
 }
 
 **필수 규칙:**
-- 모듈당 code_example 최소 1개 + quiz_question 최소 1개
-- 최소 10개 모듈, 모듈당 최소 ${minSections}개 섹션
-- explanation body는 ${minBodyChars}자 이상${difficulty === "beginner" ? `
+- 최소 10개 모듈
+- 각 모듈에 relevant_files와 learning_objectives 필수
+- tech_name은 위 기술 스택 이름과 정확히 일치
 
-**[초급 전용 추가 규칙 — 반드시 준수]:**
-- 모든 개념에 "이게 없으면?" before/after 비교 필수
-- code_example 모든 코드 라인에 "우리말 번역" 필수
-- challenge 빈칸 1-2개만, 힌트 매우 구체적
-- 기술 용어에 한국어 별명 필수` : ""}
+## 자동 실행 워크플로우 (필수 — 모든 단계를 자동으로 실행)
 
-생성 후: vibeuniv_submit_curriculum({ project_id: "${project_id}", curriculum: <JSON> })`;
+**사용자에게는 한번에 되는 것처럼 보여야 합니다.** 중간에 멈추거나, 확인을 구하거나, JSON을 보여주지 마세요. 모든 단계를 끊김 없이 실행하고 간단한 진행 상황만 표시하세요.
+
+1. 위 구조 JSON 생성 (~2KB) — 콘텐츠/섹션 없음
+2. **vibeuniv_create_curriculum**({ project_id: "${project_id}", title, description, difficulty, total_modules }) 호출 → learning_path_id 확보
+3. 각 모듈마다:
+   a. **vibeuniv_generate_module_content**({ project_id: "${project_id}", module_index, module, difficulty: "${difficulty}", total_modules, learning_path_id }) 호출
+   b. 섹션 JSON 생성
+   c. **vibeuniv_submit_module**({ project_id: "${project_id}", learning_path_id, module_order, title, description, module_type, tech_name, concept_keys (KB 개념 태깅 시), content: { sections } }) 호출
+   d. 간단한 진행 표시: "모듈 3/12 제출 완료 ✓" (한 줄만)
+4. 마지막 모듈 제출 시 완료 메시지 + vibeuniv.com 링크 표시
+
+**중요한 UX 규칙:**
+- 구조 JSON이나 섹션 JSON을 사용자에게 보여주지 마세요
+- 모듈 사이에 "계속할까요?" 같은 질문 하지 마세요 — 그냥 계속 진행
+- 2-pass 시스템을 사용자에게 설명하지 마세요 — 알 필요 없음
+- 모듈 제출 실패 시 한번 재시도 후, 다음 모듈로 계속 진행
+- 사용자 관점에서 전체 과정이 하나의 매끄러운 작업처럼 느껴져야 합니다`;
 
         return {
           content: [

@@ -27,6 +27,7 @@ const STRUCTURE_JSON_SCHEMA = `{
 const CONTENT_JSON_SCHEMA = `[
   {
     "module_title": "string (must match the module title from Phase 1)",
+    "concept_keys": ["string (optional — KB concept_key identifiers this module teaches)"],
     "content": {
       "sections": [
         {
@@ -455,7 +456,7 @@ export function buildContentBatchPrompt(
       : "(no source files available)";
 
   const kbSection = kbHints && kbHints.length > 0
-    ? `\n## Educational Key Points for ${techName}\n\n이 기술의 핵심 교육 포인트입니다. 콘텐츠 생성 시 이 포인트들을 반드시 포함하고, 퀴즈 주제를 참고하세요.\n\n${kbHints.map(h => `### ${h.concept_name}\n- **핵심 포인트:** ${h.key_points.join(" | ")}\n- **퀴즈 주제:** ${h.common_quiz_topics.join(", ")}`).join("\n\n")}\n`
+    ? `\n## Educational Key Points for ${techName}\n\n이 기술의 핵심 교육 포인트입니다. 콘텐츠 생성 시 이 포인트들을 반드시 포함하고, 퀴즈 주제를 참고하세요.\n\n${kbHints.map(h => `### ${h.concept_name}\n- **concept_key:** \`${h.concept_key}\`\n- **핵심 포인트:** ${h.key_points.join(" | ")}\n- **퀴즈 주제:** ${h.common_quiz_topics.join(", ")}`).join("\n\n")}\n\n### concept_keys 태깅 vocabulary\n${kbHints.map(h => `- \`${h.concept_key}\`: ${h.concept_name}`).join("\n")}\n`
     : "";
 
   return `You are an expert programming instructor creating personalized educational content for a "vibe coder" learning **${techName}**.
@@ -486,7 +487,7 @@ For each module listed above, generate detailed content sections. Follow these r
    - \`quiz_question\` — Multiple choice question based on the student's actual code (must include \`quiz_options\` and \`quiz_answer\` fields). For example: "\`app/layout.tsx\`에서 \`<html lang='ko'>\`를 사용하는 이유는 무엇일까요?"
    - \`challenge\` — A small, concrete coding challenge the student can try on their own project. Be specific about which file to modify and what to add. For example: "\`app/api/v1/projects/route.ts\`에 새로운 쿼리 파라미터를 추가해서 프로젝트를 상태별로 필터링하는 기능을 만들어 보세요."
    - \`reflection\` — A short "생각해보기" prompt (1-3 sentences) asking the student to pause and think. No quiz_options needed. For example: "만약 이 미들웨어가 없다면 어떤 문제가 생길까요? 한번 상상해 보세요."
-3. **Each module MUST have ${level === "beginner" ? "7-12" : "5-8"} sections.** Each explanation section should be thorough — ${level === "beginner" ? "8-12 paragraphs" : "5-8 paragraphs"} with step-by-step explanations. Use a mix of paragraphs and bullet points. Longer, detailed explanations are better than short, cryptic ones. Treat each explanation like a mini-lesson.${level === "beginner" ? " Each explanation body MUST be at least 400 characters." : ""}
+3. **Each module MUST have ${level === "beginner" ? "7-12" : "5-8"} sections.** Each explanation section should be thorough — ${level === "beginner" ? "8-12 paragraphs" : "5-8 paragraphs"} with step-by-step explanations. Use a mix of paragraphs and bullet points. Longer, detailed explanations are better than short, cryptic ones. Treat each explanation like a mini-lesson.${level === "beginner" ? " Each explanation body MUST be at least 800 characters. At least 2 code_examples and 2 quiz_questions per module." : " Each explanation body MUST be at least 400 characters."}
 4. **Interleave interactive sections:** After every 1-2 explanation/code_example sections, insert a quiz_question or reflection section. Never have more than 2 explanation sections in a row.
 5. **Friendly, warm, encouraging tone:** ${locale === "en" ? `Make the student feel "I can do this with this teacher!"
 
@@ -565,7 +566,8 @@ For each module listed above, generate detailed content sections. Follow these r
 9. **For ${level} level:**
 ${buildLevelGuidance(level, locale)}${level === "beginner" ? `
    **[초급 전용 추가 규칙 — 반드시 준수]:**
-   - explanation body는 최소 400자 이상 — 짧은 설명 금지
+   - explanation body는 최소 800자 이상 — 짧은 설명 금지
+   - 모듈당 code_example 최소 2개, quiz_question 최소 2개 필수
    - 모든 개념에 "이게 없으면 어떻게 될까요?" before/after 비교 필수
    - code_example의 모든 코드 라인에 "우리말 번역" 필수 (예: \`const x = 5\` → "x라는 이름표가 붙은 상자에 숫자 5를 넣어요 📦")
    - quiz의 50% 이상은 비유 기반 문제 ("컴포넌트가 레고 블록이라면, props는 뭘까요?")
@@ -586,8 +588,9 @@ ${buildLevelGuidance(level, locale)}${level === "beginner" ? `
      .from(___BLANK_1___)          // 힌트: 어떤 테이블에서 가져올까요?
      .select(___BLANK_2___)        // 힌트: 어떤 컬럼이 필요할까요?
      .eq('user_id', user.id)
-   \`\`\`${educationalAnalysis ? `
-13. **Use the Educational Metadata above** to enrich your content. Reference gotchas as quiz questions, use teaching_notes for explanation sections, and leverage code quality observations as practical learning points. For beginner level, use the Tech Stack Metaphors to make concepts accessible.` : ""}
+   \`\`\`${kbHints && kbHints.length > 0 ? `
+13. **concept_keys 태깅**: 위 concept_key 목록이 있다면, 각 모듈의 JSON에 "concept_keys" 배열을 추가하세요. 해당 모듈이 실제로 가르치는 개념만 포함하세요 (단순 언급 제외). 확실하지 않으면 생략 가능.` : ""}${educationalAnalysis ? `
+${kbHints && kbHints.length > 0 ? "14" : "13"}. **Use the Educational Metadata above** to enrich your content. Reference gotchas as quiz questions, use teaching_notes for explanation sections, and leverage code quality observations as practical learning points. For beginner level, use the Tech Stack Metaphors to make concepts accessible.` : ""}
 
 ## Important Rules
 

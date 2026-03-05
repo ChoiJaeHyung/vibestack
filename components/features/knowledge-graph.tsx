@@ -22,6 +22,7 @@ import type {
   ConceptGraphData,
   ConceptGraphNode,
 } from "@/server/actions/knowledge-graph";
+import { MASTERY } from "@/server/actions/mastery-constants";
 
 // ── Node type registry ──────────────────────────────────────────
 
@@ -156,23 +157,23 @@ export function KnowledgeGraph({ initialData }: KnowledgeGraphProps) {
   );
 
   const handleMasteryUpdate = useCallback(
-    (knowledgeId: string, newLevel: number) => {
-      // Update all concepts belonging to this technology
+    (knowledgeId: string, newLevel: number, conceptKey?: string) => {
+      // Update the specific concept node, or all concepts of the technology if no conceptKey
       setGraphData((prev) => ({
         ...prev,
-        nodes: prev.nodes.map((n) =>
-          n.knowledgeId === knowledgeId
-            ? { ...n, masteryLevel: newLevel }
-            : n,
-        ),
+        nodes: prev.nodes.map((n) => {
+          if (n.knowledgeId !== knowledgeId) return n;
+          if (conceptKey && n.conceptKey !== conceptKey) return n;
+          return { ...n, masteryLevel: newLevel };
+        }),
       }));
 
       // Update selected node if it matches
-      setSelectedNode((prev) =>
-        prev && prev.knowledgeId === knowledgeId
-          ? { ...prev, masteryLevel: newLevel }
-          : prev,
-      );
+      setSelectedNode((prev) => {
+        if (!prev || prev.knowledgeId !== knowledgeId) return prev;
+        if (conceptKey && prev.conceptKey !== conceptKey) return prev;
+        return { ...prev, masteryLevel: newLevel };
+      });
     },
     [],
   );
@@ -207,7 +208,7 @@ export function KnowledgeGraph({ initialData }: KnowledgeGraphProps) {
           nodeColor={(node: Node) => {
             const data = node.data as { masteryLevel?: number };
             const level = data?.masteryLevel ?? 0;
-            if (level >= 80) return "#22c55e";
+            if (level >= MASTERY.MASTERED_THRESHOLD) return "#22c55e";
             if (level > 0) return "#3b82f6";
             return "#71717a";
           }}

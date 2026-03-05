@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
+import { MASTERY } from "@/server/actions/mastery-constants";
 
 export type ConceptNodeData = {
   label: string;
@@ -14,7 +15,7 @@ export type ConceptNodeType = Node<ConceptNodeData, "concept">;
 
 // Mastery states: mastered (80+) = green, available (1-79) = blue+pulse, locked (0) = gray
 function getMasteryStyle(level: number) {
-  if (level >= 80) {
+  if (level >= MASTERY.MASTERED_THRESHOLD) {
     return {
       bg: "bg-green-500/10",
       border: "border-green-500/40",
@@ -43,7 +44,7 @@ function getMasteryStyle(level: number) {
 
 function ConceptNodeComponent({ data }: NodeProps<ConceptNodeType>) {
   const style = getMasteryStyle(data.masteryLevel);
-  const isAvailable = data.masteryLevel > 0 && data.masteryLevel < 80;
+  const isAvailable = data.masteryLevel > 0 && data.masteryLevel < MASTERY.MASTERED_THRESHOLD;
 
   return (
     <div
@@ -75,7 +76,7 @@ function ConceptNodeComponent({ data }: NodeProps<ConceptNodeType>) {
       {data.masteryLevel > 0 && (
         <div className="mt-1.5 h-1 w-full rounded-full bg-bg-surface-hover overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all ${data.masteryLevel >= 80 ? "bg-green-500" : "bg-blue-500"}`}
+            className={`h-full rounded-full transition-all ${data.masteryLevel >= MASTERY.MASTERED_THRESHOLD ? "bg-green-500" : "bg-blue-500"}`}
             style={{ width: `${data.masteryLevel}%` }}
           />
         </div>

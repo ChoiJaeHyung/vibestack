@@ -4,11 +4,13 @@ import type {
   ConceptHintItem,
   CreateProjectInput,
   CurriculumContext,
+  CurriculumStartResult,
   CurriculumSubmitResult,
   EducationalAnalysisData,
   KnowledgeHintsResult,
   LearningPath,
   Locale,
+  ModuleSubmitResult,
   Project,
   ProjectDetail,
   ProjectFile,
@@ -22,6 +24,7 @@ import type {
 
 const POLL_INTERVAL_MS = 3000;
 const MAX_POLL_ATTEMPTS = 60;
+const REQUEST_TIMEOUT_MS = 30_000; // 30 seconds
 
 // Raw API response types (snake_case from server)
 interface RawAnalyzeTriggerResponse {
@@ -117,14 +120,31 @@ export class VibeUnivClient {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.apiKey}`,
       "Content-Type": "application/json",
-      "User-Agent": "vibeuniv-mcp-server/0.3.0",
+      "User-Agent": "vibeuniv-mcp-server/0.3.9",
     };
 
-    const response = await fetch(url, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
+      });
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        throw new Error(
+          `Request to ${path} timed out after ${REQUEST_TIMEOUT_MS / 1000}s. ` +
+            "The server may be overloaded — please try again."
+        );
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     const json = (await response.json()) as ApiResponse<T>;
 
@@ -410,5 +430,62 @@ export class VibeUnivClient {
       "GET",
       `/projects/${projectId}/curriculum-context`,
     );
+  }
+
+  async createCurriculum(projectId: string, data: {
+    title: string;
+    description: string;
+    difficulty: string;
+    total_modules: number;
+    estimated_hours?: number;
+  }): Promise<CurriculumStartResult> {
+    interface RawResponse {
+      learning_path_id: string;
+      status: string;
+    }
+
+    const raw = await this.request<RawResponse>(
+      "POST",
+      `/projects/${projectId}/curriculum/start`,
+      data,
+    );
+
+    return {
+      learningPathId: raw.learning_path_id,
+      status: raw.status,
+    };
+  }
+
+  async submitModule(projectId: string, pathId: string, module: {
+    module_order: number;
+    title: string;
+    description: string;
+    module_type: string;
+    tech_name: string;
+    estimated_minutes?: number;
+    concept_keys?: string[];
+    content: { sections: unknown[] };
+  }): Promise<ModuleSubmitResult> {
+    interface RawResponse {
+      module_id: string;
+      module_order: number;
+      submitted: number;
+      total: number;
+      status: string;
+    }
+
+    const raw = await this.request<RawResponse>(
+      "POST",
+      `/projects/${projectId}/curriculum/${pathId}/modules`,
+      module,
+    );
+
+    return {
+      moduleId: raw.module_id,
+      moduleOrder: raw.module_order,
+      submitted: raw.submitted,
+      total: raw.total,
+      status: raw.status,
+    };
   }
 }

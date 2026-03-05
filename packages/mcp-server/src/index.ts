@@ -14,9 +14,12 @@ import { registerSubmitAnalysis } from "./tools/submit-analysis.js";
 import { registerSubmitTechStacks } from "./tools/submit-tech-stacks.js";
 import { registerGenerateCurriculum } from "./tools/generate-curriculum.js";
 import { registerSubmitCurriculum } from "./tools/submit-curriculum.js";
+import { registerCreateCurriculum } from "./tools/create-curriculum.js";
+import { registerSubmitModule } from "./tools/submit-module.js";
+import { registerGenerateModuleContent } from "./tools/generate-module-content.js";
 
 async function main(): Promise<void> {
-  console.error("[vibeuniv] Starting VibeUniv MCP Server v0.3.0...");
+  console.error("[vibeuniv] Starting VibeUniv MCP Server v0.3.9...");
 
   const config = loadConfig();
   const client = new VibeUnivClient(config.apiKey, config.apiUrl);
@@ -27,7 +30,7 @@ async function main(): Promise<void> {
 
   const server = new McpServer({
     name: "vibeuniv-mcp-server",
-    version: "0.3.0",
+    version: "0.3.9",
   });
 
   registerSyncProject(server, client);
@@ -40,8 +43,11 @@ async function main(): Promise<void> {
   registerSubmitTechStacks(server, client);
   registerGenerateCurriculum(server, client);
   registerSubmitCurriculum(server, client);
+  registerCreateCurriculum(server, client);
+  registerSubmitModule(server, client);
+  registerGenerateModuleContent(server, client);
 
-  console.error("[vibeuniv] 10 tools registered");
+  console.error("[vibeuniv] 13 tools registered");
 
   const transport = new StdioServerTransport();
   await server.connect(transport);

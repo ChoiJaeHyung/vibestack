@@ -25,7 +25,7 @@ VibeUniv(vibeuniv.com)는 바이브 코더(Vibe Coder)들이 AI로 만든 프로
 - **AI:** Multi-LLM (Anthropic, OpenAI, Google, Groq, Mistral, DeepSeek 등)
 - **MCP:** @modelcontextprotocol/sdk (TypeScript)
 - **Deploy:** Vercel
-- **Payments:** 토스페이먼츠 (TossPayments)
+- **Payments:** Stripe (Checkout + Customer Portal + Webhooks)
 
 ## 코딩 컨벤션
 
@@ -107,8 +107,11 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 ENCRYPTION_KEY=                 # API 키 암호화용 (32바이트)
-NEXT_PUBLIC_TOSS_CLIENT_KEY=     # 토스페이먼츠 클라이언트 키
-TOSS_SECRET_KEY=                # 토스페이먼츠 시크릿 키
+STRIPE_SECRET_KEY=              # Stripe Secret Key
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY= # Stripe Publishable Key
+STRIPE_WEBHOOK_SECRET=          # Stripe Webhook Signing Secret
+STRIPE_PRO_PRICE_ID=            # Stripe Price ID for Pro ($19/mo)
+STRIPE_TEAM_PRICE_ID=           # Stripe Price ID for Team ($45/mo)
 NEXT_PUBLIC_APP_URL=
 ```
 
@@ -126,8 +129,8 @@ NEXT_PUBLIC_APP_URL=
 
 ### 과금 모델
 - Free: 3 프로젝트, 기본 분석, 월 1회 학습 로드맵, 월 20회 AI 대화
-- Pro (₩25,000/월): 무제한 프로젝트, 심화 분석, 무제한 로드맵/AI 대화, BYOK
-- Team (₩59,000/월): Pro + 팀 공유 + 우선 지원
+- Pro ($19/mo): 무제한 프로젝트, 심화 분석, 무제한 로드맵/AI 대화, BYOK
+- Team ($45/mo): Pro + 팀 공유 + 우선 지원
 
 ## Git 워크플로우
 - main 브랜치 직접 push 금지 (hook으로 차단됨)
@@ -149,7 +152,7 @@ NEXT_PUBLIC_APP_URL=
 | **페이지** | `app/(dashboard)/` | 대시보드, 프로젝트, 학습, 설정 |
 | **외부 API** | `app/api/v1/` | MCP/CLI용 API 키 인증 |
 | **내부 API** | `app/api/dashboard/`, `app/api/usage/` 등 | 세션 인증 |
-| **결제 API** | `app/api/payments/` | 토스페이먼츠 연동 |
+| **결제 API** | `app/api/payments/` | Stripe 연동 (checkout, portal, webhook) |
 | **Server Actions** | `server/actions/` | 핵심 비즈니스 로직 |
 | **LLM 어댑터** | `lib/llm/` | 멀티 LLM Provider 팩토리 |
 | **파일 분석** | `lib/analysis/` | 파일 파싱, 다이제스트 생성, tech-stack upsert 유틸 |
@@ -163,7 +166,8 @@ NEXT_PUBLIC_APP_URL=
 | **보안** | `lib/utils/encryption.ts`, `content-encryption.ts` | AES-256-GCM 암호화, 콘텐츠 복호화 |
 | **보안 헤더** | `next.config.ts` | CSP, HSTS, X-Frame-Options 등 |
 | **SEO** | `app/opengraph-image.tsx`, `twitter-image.tsx`, `not-found.tsx` | OG 이미지, 404 페이지 |
-| **MCP 서버** | `packages/mcp-server/src/` | 10개 MCP 도구 (v0.3.0, Local-First) |
+| **커리큘럼 검증** | `lib/utils/curriculum-validation.ts` | 공유 모듈 검증 유틸리티 (섹션 수/글자 수/code/quiz 검증) |
+| **MCP 서버** | `packages/mcp-server/src/` | 12개 MCP 도구 (v0.3.5, Local-First + Per-Module) |
 | **DB 타입** | `types/database.ts` | Supabase 전체 스키마 타입 |
 | **i18n** | `i18n/request.ts`, `messages/{ko,en}/*.json`, `lib/utils/translate-error.ts` | next-intl 설정, 13개 네임스페이스(ko/en), 서버 에러 코드 번역 |
 | **마이그레이션** | `supabase/migrations/` | 001~017 SQL (010: locale, 017: tutor_feedback+token_budget) |
@@ -187,12 +191,13 @@ NEXT_PUBLIC_APP_URL=
 
 1. **프로젝트 분석 (웹)**: 파일 업로드 → file-parser → digest-generator(`after()` 백그라운드) → LLM 분석 → tech_stacks 저장
 2. **프로젝트 분석 (MCP, Local-First)**: analyze → 서버에서 파일 fetch → 로컬 AI 분석 → submit_tech_stacks → 서버 저장 (서버 LLM 0)
-3. **커리큘럼 생성 (2-Phase, 웹)**: users.locale 조회 → Phase 1: 구조 생성(LLM, locale 분기) → Phase 2: 기술별 콘텐츠 생성(LLM+KB, locale 분기) → 콘텐츠 검증(`_validateGeneratedSections(sections, difficulty)`: beginner→최소 5섹션, 400자↑ / 그 외→최소 3섹션, 200자↑, code+quiz 필수) → 실패 시 최대 3회 retry 후 `validation_failed`. beginner maxTokens 24000*n (1.5배)
-4. **커리큘럼 생성 (MCP, Local-First)**: curriculum-context API(tech stacks+KB+edu analysis+파일 소스코드 20개/8000자+locale) → 로컬 AI 생성(최소 15모듈, 프로젝트 기능 중심, locale에 따라 ko/en 지시문) → submit_curriculum(검증: 최소 10모듈, beginner→5섹션/모듈+400자↑ / 그 외→3섹션/모듈+200자↑, code+quiz 각각 필수, quiz_explanation 필수, challenge starter/answer_code 필수)
+3. **커리큘럼 생성 (2-Phase, 웹)**: users.locale 조회 → Phase 1: 구조 생성(LLM, locale 분기) → Phase 2: 기술별 콘텐츠 생성(LLM+KB, locale 분기) → 콘텐츠 검증(`_validateGeneratedSections(sections, difficulty)`: beginner→최소 7섹션, 800자↑, code 2개↑, quiz 2개↑ / 그 외→최소 5섹션, 400자↑, code+quiz 각 1개↑) → 실패 시 최대 3회 retry 후 `validation_failed`. beginner maxTokens 24000*n (1.5배)
+4. **커리큘럼 생성 (MCP, Per-Module)**: generate_curriculum → 구조 지시문 반환 → 로컬 AI 구조 JSON 생성 → create_curriculum(draft learning_path 생성) → 각 모듈: generate_module_content → submit_module(모듈별 개별 검증+저장, beginner→7섹션↑/800자↑/code 2개↑/quiz 2개↑ / 그 외→5섹션↑/400자↑/code+quiz 각 1개↑) → 마지막 모듈 도착 시 자동 status="active"
+4-1. **커리큘럼 생성 (MCP, Legacy)**: submit_curriculum 한번에 전체 제출도 여전히 지원 (검증 기준 동일)
 5. **AI 튜터 (웹)**: 우선순위 기반 파일 선택(file_type/file_path 정렬, 30K 총 예산) + 기술 스택 + 현재 모듈 콘텐츠 서머리(6000자) → 시스템 프롬프트(LRU 캐시, locale에 따라 해요체/영어) → LLM 대화(메트릭 로깅) → 토큰 누적 추적 + 월간 예산 체크(Free 500K/월, admin 조정 가능) → 메시지별 피드백(👍👎)
 6. **AI 튜터 (MCP, Local-First)**: tutor-context → `/api/v1/user/locale` 캐시 조회 → locale 기반 ko/en 지시문 → 로컬 AI가 직접 답변 (서버 LLM 0)
-7. **결제**: createPaymentRequest → 토스 결제 → confirm (금액 검증 + secret 저장) → plan_type 업데이트
-8. **웹훅**: 토스 웹훅 → secret 비교 검증 → 결제 상태 동기화
+7. **결제**: createCheckoutSession → Stripe Checkout (호스팅 결제 페이지) → 웹훅으로 plan 업그레이드. 구독 관리는 Stripe Customer Portal.
+8. **웹훅**: Stripe 웹훅 → `stripe.webhooks.constructEvent()` 서명 검증 → checkout.session.completed / subscription.updated / subscription.deleted 처리
 
 ### LLM Provider (11개)
 
@@ -200,11 +205,12 @@ Anthropic, OpenAI, Google, Groq, Mistral, DeepSeek, Cohere, Together, Fireworks,
 - 팩토리 패턴: `lib/llm/factory.ts` → `createLLMProvider(provider, apiKey)`
 - BYOK: 사용자 키 AES-256-GCM 암호화 저장/복호화
 
-### MCP 도구 (10개, v0.3.0)
+### MCP 도구 (12개, v0.3.5)
 
-`vibeuniv_sync_project`, `vibeuniv_upload_files`, `vibeuniv_analyze`, `vibeuniv_submit_tech_stacks`, `vibeuniv_get_learning`, `vibeuniv_ask_tutor`, `vibeuniv_log_session`, `vibeuniv_submit_analysis`, `vibeuniv_generate_curriculum`, `vibeuniv_submit_curriculum`
+`vibeuniv_sync_project`, `vibeuniv_upload_files`, `vibeuniv_analyze`, `vibeuniv_submit_tech_stacks`, `vibeuniv_get_learning`, `vibeuniv_ask_tutor`, `vibeuniv_log_session`, `vibeuniv_submit_analysis`, `vibeuniv_generate_curriculum`, `vibeuniv_submit_curriculum`, `vibeuniv_create_curriculum`, `vibeuniv_submit_module`
 
 > **Local-First 패턴**: `analyze`, `ask_tutor`, `generate_curriculum`은 서버 LLM을 호출하지 않고 로컬 AI에게 지침을 반환한다. 결과는 companion 도구로 서버에 저장.
+> **Per-Module Submission**: `create_curriculum` → `submit_module` × N 순서로 모듈별 개별 제출. draft learning_path 생성 후 모듈 하나씩 저장, 마지막 모듈 도착 시 자동 활성화.
 
 ---
 
@@ -341,3 +347,5 @@ Anthropic, OpenAI, Google, Groq, Mistral, DeepSeek, Cohere, Together, Fireworks,
 - [x] 게이미피케이션 시스템: 모듈 완료 축하(confetti 애니메이션), 학습 스트릭(일간 기반 + 주간 캘린더 위젯), 주간 학습 목표(2/3/5/7일), 배지/업적 8종(first_step, consistent_learner, quiz_master 등), 대시보드 넛지 배너("오늘 학습")
 - [x] 학습 콘텐츠 다국어(ko/en) 지원: DB locale 컬럼(users, learning_paths, technology_knowledge), 프롬프트 로컬라이제이션(learning-roadmap, tutor-chat, knowledge-generation), KB 시스템 locale 필터, MCP 전체 도구 다국어(10개 중 7개 ko/en 분기 + `/api/v1/user/locale` 캐시 조회), 설정 UI 언어 선택
 - [x] UI 전체 다국어(i18n) — next-intl 도입: cookie 기반 locale(URL 변경 없음), 13개 네임스페이스(Common/Metadata/Landing/Auth/Dashboard/Projects/Learning/Settings/Billing/Tutor/Guide/NotFound/Errors), ~1300개 번역 키(ko/en), 서버 에러 코드화(`lib/utils/translate-error.ts`), middleware Accept-Language 자동감지, auth callback DB↔쿠키 동기화, 전체 컴포넌트 `useTranslations` 마이그레이션
+- [x] 모듈별 개별 제출 시스템 (Per-Module Submission, MCP v0.3.5): `create_curriculum`(draft learning_path 생성) + `submit_module`(모듈별 개별 제출, 자동 활성화), 공유 검증 유틸리티 추출(`lib/utils/curriculum-validation.ts`), 콘텐츠 품질 강화(beginner→7섹션↑/800자↑/code 2개↑/quiz 2개↑, 그 외→5섹션↑/400자↑), 기존 `submit_curriculum` 호환 유지
+- [x] 결제 시스템 마이그레이션: 토스페이먼츠 → Stripe (Checkout + Customer Portal + Webhooks), 통화 KRW → USD (Pro $19/mo, Team $45/mo), DB 마이그레이션(toss_* → stripe_* 컬럼)
