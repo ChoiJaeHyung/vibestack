@@ -3,6 +3,7 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { MASTERY } from "./mastery-constants";
 import type { ConceptHint } from "@/lib/knowledge/types";
 
 /**
@@ -128,17 +129,27 @@ export async function getConceptGraph(
       };
     }
 
-    // Get user mastery data
+    // Get user mastery data (2-layer: concept_key → tech-level fallback)
     const knowledgeIds = knowledgeRows.map((r) => r.id);
     const { data: masteryRows } = await supabase
       .from("user_concept_mastery")
-      .select("knowledge_id, mastery_level")
+      .select("knowledge_id, concept_key, mastery_level")
       .eq("user_id", user.id)
       .in("knowledge_id", knowledgeIds);
 
-    const masteryMap = new Map<string, number>();
+    // knowledge_id → (concept_key | null) → level
+    const masteryMap = new Map<string, Map<string | null, number>>();
     for (const m of masteryRows ?? []) {
-      masteryMap.set(m.knowledge_id, m.mastery_level);
+      if (!masteryMap.has(m.knowledge_id)) {
+        masteryMap.set(m.knowledge_id, new Map());
+      }
+      masteryMap.get(m.knowledge_id)!.set(m.concept_key ?? null, m.mastery_level);
+    }
+
+    function getConceptMastery(knowledgeId: string, conceptKey: string): number {
+      const techMap = masteryMap.get(knowledgeId);
+      if (!techMap) return 0;
+      return techMap.get(conceptKey) ?? techMap.get(null) ?? 0; // concept → tech-level → 0
     }
 
     // Build a map of technology_name_normalized → knowledge row
@@ -158,7 +169,6 @@ export async function getConceptGraph(
     for (const row of knowledgeRows) {
       technologies.push(row.technology_name);
       const concepts = row.concepts as ConceptHint[];
-      const techMastery = masteryMap.get(row.id) ?? 0;
 
       for (const concept of concepts) {
         existingConceptKeys.add(concept.concept_key);
@@ -172,7 +182,7 @@ export async function getConceptGraph(
           knowledgeId: row.id,
           keyPoints: concept.key_points,
           tags: concept.tags,
-          masteryLevel: techMastery,
+          masteryLevel: getConceptMastery(row.id, concept.concept_key),
         });
       }
     }
@@ -307,15 +317,18 @@ export async function getUserMastery(): Promise<{
 }
 
 /**
- * Update mastery for a specific technology.
+ * Update mastery for a specific technology or concept.
  * Used for "I already know this" manual toggle.
+ * When conceptKey is provided, updates concept-level mastery.
+ * When omitted, updates tech-level mastery (legacy).
  */
 export async function updateMastery(
   knowledgeId: string,
   masteryLevel: number,
+  conceptKey?: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    if (masteryLevel < 0 || masteryLevel > 100) {
+    if (masteryLevel < MASTERY.MIN_LEVEL || masteryLevel > MASTERY.MAX_LEVEL) {
       return { success: false, error: "Mastery level must be 0-100" };
     }
 
@@ -344,20 +357,43 @@ export async function updateMastery(
 
     // Upsert mastery (use typed service client for user_concept_mastery)
     const serviceClient = createServiceClient();
-    const { error: upsertError } = await serviceClient
-      .from("user_concept_mastery")
-      .upsert(
-        {
-          user_id: user.id,
-          knowledge_id: knowledgeId,
-          mastery_level: masteryLevel,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,knowledge_id" },
-      );
 
-    if (upsertError) {
-      return { success: false, error: "Failed to update mastery" };
+    if (conceptKey) {
+      // Concept-level mastery upsert
+      // Use raw SQL-style upsert via unique index idx_ucm_user_knowledge_concept
+      const { error: upsertError } = await serviceClient
+        .from("user_concept_mastery")
+        .upsert(
+          {
+            user_id: user.id,
+            knowledge_id: knowledgeId,
+            concept_key: conceptKey,
+            mastery_level: masteryLevel,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,knowledge_id,concept_key" },
+        );
+
+      if (upsertError) {
+        return { success: false, error: "Failed to update mastery" };
+      }
+    } else {
+      // Tech-level mastery upsert (legacy)
+      const { error: upsertError } = await serviceClient
+        .from("user_concept_mastery")
+        .upsert(
+          {
+            user_id: user.id,
+            knowledge_id: knowledgeId,
+            mastery_level: masteryLevel,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,knowledge_id" },
+        );
+
+      if (upsertError) {
+        return { success: false, error: "Failed to update mastery" };
+      }
     }
 
     return { success: true };
@@ -380,10 +416,10 @@ export async function updateMasteryFromModuleCompletion(
     const serviceClient = createServiceClient();
     const kbClient = createKBServiceClient();
 
-    // Trace module → learning_path → project
+    // Trace module → learning_path → project (include concept_keys for R5' concept-level mastery)
     const { data: moduleData } = await serviceClient
       .from("learning_modules")
-      .select("learning_path_id, tech_stack_id")
+      .select("learning_path_id, tech_stack_id, concept_keys")
       .eq("id", moduleId)
       .single();
 
@@ -442,35 +478,69 @@ export async function updateMasteryFromModuleCompletion(
     if (!knowledgeRows || knowledgeRows.length === 0) return;
 
     // Calculate mastery increment based on score
-    // score 100 → +25, score 80 → +20, score 60 → +15, no score → +10
     const increment = score !== undefined
-      ? (score >= 100 ? 25 : score >= 80 ? 20 : score >= 60 ? 15 : 10)
-      : 10;
+      ? (score >= MASTERY.SCORE_PERFECT ? MASTERY.INCREMENT_SCORE_PERFECT
+        : score >= MASTERY.SCORE_HIGH ? MASTERY.INCREMENT_SCORE_HIGH
+        : score >= MASTERY.SCORE_PASS ? MASTERY.INCREMENT_SCORE_PASS
+        : MASTERY.INCREMENT_BASE)
+      : MASTERY.INCREMENT_BASE;
 
-    // Upsert mastery for each matching technology
-    for (const kRow of knowledgeRows) {
-      // Get current mastery
-      const { data: existing } = await serviceClient
-        .from("user_concept_mastery")
-        .select("mastery_level")
-        .eq("user_id", userId)
-        .eq("knowledge_id", kRow.id)
-        .single();
+    const conceptKeys = (moduleData.concept_keys as string[] | null) ?? [];
 
-      const currentLevel = existing?.mastery_level ?? 0;
-      const newLevel = Math.min(100, currentLevel + increment);
+    if (conceptKeys.length > 0) {
+      // R5' concept-level mastery: upsert per concept_key
+      for (const kRow of knowledgeRows) {
+        for (const conceptKey of conceptKeys) {
+          const { data: existing } = await serviceClient
+            .from("user_concept_mastery")
+            .select("mastery_level")
+            .eq("user_id", userId)
+            .eq("knowledge_id", kRow.id)
+            .eq("concept_key", conceptKey)
+            .single();
 
-      await serviceClient
-        .from("user_concept_mastery")
-        .upsert(
-          {
-            user_id: userId,
-            knowledge_id: kRow.id,
-            mastery_level: newLevel,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id,knowledge_id" },
-        );
+          const currentLevel = existing?.mastery_level ?? 0;
+          const newLevel = Math.min(MASTERY.MAX_LEVEL, currentLevel + increment);
+
+          await serviceClient
+            .from("user_concept_mastery")
+            .upsert(
+              {
+                user_id: userId,
+                knowledge_id: kRow.id,
+                concept_key: conceptKey,
+                mastery_level: newLevel,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: "user_id,knowledge_id,concept_key" },
+            );
+        }
+      }
+    } else {
+      // Legacy: tech-level mastery (no concept_keys on module)
+      for (const kRow of knowledgeRows) {
+        const { data: existing } = await serviceClient
+          .from("user_concept_mastery")
+          .select("mastery_level")
+          .eq("user_id", userId)
+          .eq("knowledge_id", kRow.id)
+          .single();
+
+        const currentLevel = existing?.mastery_level ?? 0;
+        const newLevel = Math.min(MASTERY.MAX_LEVEL, currentLevel + increment);
+
+        await serviceClient
+          .from("user_concept_mastery")
+          .upsert(
+            {
+              user_id: userId,
+              knowledge_id: kRow.id,
+              mastery_level: newLevel,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id,knowledge_id" },
+          );
+      }
     }
   } catch {
     // Non-blocking — mastery update failure should not affect module completion

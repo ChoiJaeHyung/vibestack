@@ -54,26 +54,18 @@
   },
   "subscriptionManagement": {
     "title": "Subscription Management",
-    "autoPayment": "Auto-payment registered",
-    "cancelSubscription": "Cancel subscription",
-    "noAutoPayment": "No auto-payment registered. Your plan will switch to Free after expiration.",
-    "cancelWarning": {
-      "title": "Switching to Free will apply these limits:",
-      "projects": "3 projects",
-      "learningPaths": "1 learning path/month",
-      "aiChats": "20 AI chats/month",
-      "notice": "Your current plan will remain active until the end of the billing period."
-    }
+    "activeSubscription": "Subscription active",
+    "manage": "Manage Subscription",
+    "noSubscription": "No active subscription. Your plan will switch to Free after expiration.",
+    "cancelSubscription": "Cancel subscription"
   },
   "paymentHistory": {
     "title": "Payment History",
-    "noHistory": "No payment history.",
-    "autoPayment": "Auto-payment"
+    "noHistory": "No payment history."
   },
   "error": {
     "paymentRequest": "Unable to create payment request.",
     "paymentConfig": "Payment configuration is invalid.",
-    "paymentWindow": "Unable to open payment window.",
     "cancelFailed": "Failed to cancel subscription.",
     "unexpected": "An unexpected error occurred."
   },
@@ -92,19 +84,7 @@
       "byok": "BYOK (your own LLM key)"
     },
     "processing": "Processing...",
-    "cta": "Start Pro — ₩25,000/mo",
+    "cta": "Start Pro — $19/mo",
     "later": "Maybe later"
-  },
-  "confirm": {
-    "processing": "Confirming your payment...",
-    "success": {
-      "title": "Payment complete!",
-      "description": "The page will refresh shortly."
-    },
-    "error": {
-      "title": "Payment confirmation failed",
-      "default": "Payment confirmation failed",
-      "processing": "An error occurred during payment confirmation"
-    }
   }
 }

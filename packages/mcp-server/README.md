@@ -1,47 +1,46 @@
-# @vibestack/mcp-server
+# @vibeuniv/mcp-server
 
-VibeStack MCP Server - Sync your vibe-coded projects for tech stack analysis and learning.
+VibeUniv MCP Server — Sync your vibe-coded projects for tech stack analysis and personalized learning.
 
-## What is VibeStack?
+## What is VibeUniv?
 
-VibeStack helps vibe coders understand and learn the tech stacks of projects they've built with AI coding tools. Connect your coding environment to VibeStack and get personalized learning paths based on your actual projects.
+VibeUniv helps vibe coders understand and learn the tech stacks of projects they've built with AI coding tools. Connect your coding environment to VibeUniv and get personalized learning paths based on your actual projects.
 
-## Installation
+- **Website:** [vibeuniv.com](https://vibeuniv.com)
+- **API Key:** [vibeuniv.com/settings/api](https://vibeuniv.com/settings/api)
 
-### Using npx (Recommended)
+## Quick Start
 
-```bash
-npx @vibestack/mcp-server
-```
+### 1. Get your API key
 
-### Global Install
+Sign up at [vibeuniv.com](https://vibeuniv.com) and generate an API key at **Settings > API Keys**.
 
-```bash
-npm install -g @vibestack/mcp-server
-vibestack-mcp
-```
+### 2. Add to your AI tool
+
+Choose your tool below and add the configuration.
+
+### 3. Restart your AI tool
+
+Fully restart (not just reload) your AI tool after adding the config.
+
+### 4. Start using
+
+Say to your AI: **"vibeuniv에 이 프로젝트를 연동해줘"** or **"Sync this project to VibeUniv"**
 
 ## Configuration
 
-### Environment Variables
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `VIBESTACK_API_KEY` | Yes | - | Your VibeStack API key. Get it at [vibestack.io/settings/api](https://vibestack.io/settings/api) |
-| `VIBESTACK_API_URL` | No | `https://vibestack.io/api/v1` | API base URL (for self-hosted instances) |
-
 ### Claude Code
 
-Add to your Claude Code MCP settings (`~/.claude/settings.json`):
+Add to `~/.claude.json`:
 
 ```json
 {
   "mcpServers": {
-    "vibestack": {
+    "vibeuniv": {
       "command": "npx",
-      "args": ["-y", "@vibestack/mcp-server"],
+      "args": ["-y", "@vibeuniv/mcp-server@latest"],
       "env": {
-        "VIBESTACK_API_KEY": "your-api-key-here"
+        "VIBEUNIV_API_KEY": "your-api-key-here"
       }
     }
   }
@@ -50,16 +49,16 @@ Add to your Claude Code MCP settings (`~/.claude/settings.json`):
 
 ### Cursor
 
-Add to your Cursor MCP settings (`.cursor/mcp.json`):
+Add to `~/.cursor/mcp.json`:
 
 ```json
 {
   "mcpServers": {
-    "vibestack": {
+    "vibeuniv": {
       "command": "npx",
-      "args": ["-y", "@vibestack/mcp-server"],
+      "args": ["-y", "@vibeuniv/mcp-server@latest"],
       "env": {
-        "VIBESTACK_API_KEY": "your-api-key-here"
+        "VIBEUNIV_API_KEY": "your-api-key-here"
       }
     }
   }
@@ -68,16 +67,16 @@ Add to your Cursor MCP settings (`.cursor/mcp.json`):
 
 ### Windsurf
 
-Add to your Windsurf MCP settings (`~/.windsurf/mcp.json`):
+Add to `~/.codeium/windsurf/mcp_config.json`:
 
 ```json
 {
   "mcpServers": {
-    "vibestack": {
+    "vibeuniv": {
       "command": "npx",
-      "args": ["-y", "@vibestack/mcp-server"],
+      "args": ["-y", "@vibeuniv/mcp-server@latest"],
       "env": {
-        "VIBESTACK_API_KEY": "your-api-key-here"
+        "VIBEUNIV_API_KEY": "your-api-key-here"
       }
     }
   }
@@ -86,105 +85,139 @@ Add to your Windsurf MCP settings (`~/.windsurf/mcp.json`):
 
 ### Cline (VS Code)
 
-Add to Cline MCP settings:
+Open **Cline > MCP Servers > Edit Config** and add:
 
 ```json
 {
   "mcpServers": {
-    "vibestack": {
+    "vibeuniv": {
       "command": "npx",
-      "args": ["-y", "@vibestack/mcp-server"],
+      "args": ["-y", "@vibeuniv/mcp-server@latest"],
       "env": {
-        "VIBESTACK_API_KEY": "your-api-key-here"
+        "VIBEUNIV_API_KEY": "your-api-key-here"
       }
     }
   }
 }
 ```
 
-## Available Tools
+### Kimi Code CLI
 
-### vibestack_sync_project
+Add to `~/.kimi/mcp.json`:
 
-Sync your current project's tech stack files to VibeStack.
-
-```
-Input:
-  - project_name (optional): Name for the project
-  - description (optional): Short project description
-```
-
-### vibestack_upload_files
-
-Upload specific files for detailed analysis.
-
-```
-Input:
-  - project_id: Your VibeStack project ID
-  - file_paths: Array of file paths to upload
+```json
+{
+  "mcpServers": {
+    "vibeuniv": {
+      "command": "npx",
+      "args": ["-y", "@vibeuniv/mcp-server@latest"],
+      "env": {
+        "VIBEUNIV_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
 ```
 
-### vibestack_analyze
+### Gemini CLI
 
-Trigger AI analysis of your project's tech stack.
+Add to `~/.gemini/settings.json`:
 
-```
-Input:
-  - project_id: Your VibeStack project ID
-```
-
-### vibestack_get_learning
-
-Get personalized learning recommendations based on detected tech stack.
-
-```
-Input:
-  - project_id: Your VibeStack project ID
-```
-
-### vibestack_log_session
-
-Log a coding session summary for progress tracking.
-
-```
-Input:
-  - project_id: Your VibeStack project ID
-  - summary: Summary of the coding session
-  - files_changed (optional): List of changed files
+```json
+{
+  "mcpServers": {
+    "vibeuniv": {
+      "command": "npx",
+      "args": ["-y", "@vibeuniv/mcp-server@latest"],
+      "env": {
+        "VIBEUNIV_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
 ```
 
-### vibestack_ask_tutor
+### OpenAI Codex
 
-Ask the AI tutor questions about your project's tech stack.
+Add to `~/.codex/config.toml`:
 
+```toml
+[mcp_servers.vibeuniv]
+command = "npx"
+args = ["-y", "@vibeuniv/mcp-server@latest"]
+
+[mcp_servers.vibeuniv.env]
+VIBEUNIV_API_KEY = "your-api-key-here"
 ```
-Input:
-  - project_id: Your VibeStack project ID
-  - question: Your question about the tech stack
-```
 
-## Usage Example
+### Fallback: Global Install
 
-1. **Sync your project:** Ask your AI assistant to "sync this project to VibeStack"
-2. **Analyze the stack:** "Analyze this project's tech stack on VibeStack"
-3. **Get learning path:** "What should I learn about this project's tech stack?"
-4. **Ask questions:** "Ask VibeStack tutor: How does Next.js App Router work?"
-
-## Development
+If `npx` doesn't work (corporate firewalls, etc.):
 
 ```bash
-# Install dependencies
-npm install
-
-# Run in development mode
-VIBESTACK_API_KEY=your-key npm run dev
-
-# Build
-npm run build
-
-# Test with MCP Inspector
-npx @modelcontextprotocol/inspector node dist/index.js
+npm install -g @vibeuniv/mcp-server
 ```
+
+Then replace `"command": "npx", "args": ["-y", "@vibeuniv/mcp-server@latest"]` with `"command": "vibeuniv-mcp"`.
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `VIBEUNIV_API_KEY` | Yes | — | Your VibeUniv API key |
+| `VIBEUNIV_API_URL` | No | `https://vibeuniv.com/api/v1` | API base URL |
+
+> Backward compatibility: `VIBESTACK_API_KEY` and `VIBESTACK_API_URL` still work.
+
+## Available Tools (13)
+
+### Project Setup
+
+| Tool | Description |
+|------|-------------|
+| `vibeuniv_sync_project` | Sync current project to VibeUniv (auto-detect files) |
+| `vibeuniv_upload_files` | Upload specific files for analysis |
+
+### Tech Stack Analysis
+
+| Tool | Description |
+|------|-------------|
+| `vibeuniv_analyze` | Trigger tech stack analysis (returns instructions for local AI) |
+| `vibeuniv_submit_tech_stacks` | Submit locally-analyzed tech stack results |
+| `vibeuniv_submit_analysis` | Submit educational analysis of the project |
+
+### Learning Curriculum
+
+| Tool | Description |
+|------|-------------|
+| `vibeuniv_generate_curriculum` | Generate curriculum structure (Pass 1 — structure only) |
+| `vibeuniv_generate_module_content` | Generate module content (Pass 2 — per-module sections) |
+| `vibeuniv_create_curriculum` | Create a draft curriculum on the server |
+| `vibeuniv_submit_module` | Submit a single module (auto-activates on last module) |
+| `vibeuniv_submit_curriculum` | Submit complete curriculum at once (legacy) |
+| `vibeuniv_get_learning` | Get existing learning path for a project |
+
+### AI Tutor & Sessions
+
+| Tool | Description |
+|------|-------------|
+| `vibeuniv_ask_tutor` | Ask the AI tutor about your project's tech stack |
+| `vibeuniv_log_session` | Log a coding session summary |
+
+## How It Works
+
+```
+User: "커리큘럼 생성해줘"
+         ↓
+AI → vibeuniv_generate_curriculum    → curriculum structure (~2KB)
+AI → vibeuniv_create_curriculum      → draft learning path
+AI → vibeuniv_generate_module_content × N → section instructions per module
+AI → vibeuniv_submit_module × N      → submit each module (~5KB each)
+         ↓
+Curriculum auto-activates → Learn at vibeuniv.com
+```
+
+All heavy lifting (content generation) happens locally in your AI tool. The server stores results only — zero server-side LLM cost.
 
 ## Auto-detected Files
 
@@ -194,6 +227,24 @@ The file scanner automatically detects:
 - **AI Project Files:** CLAUDE.md, .cursorrules, .windsurfrules, etc.
 - **Config:** tsconfig.json, next.config.*, vite.config.*, Dockerfile, etc.
 - **Documentation:** README.md (first 50 lines)
+
+## FAQ
+
+### Does updating the package reset my API key?
+
+**No.** Your API key is stored in your tool's config file (e.g., `~/.claude.json`), not in the npm package. Using `npx @vibeuniv/mcp-server@latest` always runs the latest version without touching your config.
+
+### Do I need to update manually?
+
+If you use `npx -y @vibeuniv/mcp-server@latest`, updates are **automatic**. If you used `npm install -g`, run the install command again to update.
+
+## Development
+
+```bash
+npm install
+npm run build
+VIBEUNIV_API_KEY=your-key npm run dev
+```
 
 ## License
 

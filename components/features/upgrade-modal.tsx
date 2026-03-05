@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { X, Zap, Check } from "lucide-react";
-import { createPaymentRequest } from "@/server/actions/billing";
-import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
+import { createCheckoutSession } from "@/server/actions/billing";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -34,39 +33,16 @@ export function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
     setError(null);
 
     try {
-      const result = await createPaymentRequest("pro");
-      if (!result.success || !result.data) {
+      const result = await createCheckoutSession("pro");
+      if (!result.success || !result.data?.url) {
         setError(result.error ?? t("error.paymentRequest"));
         return;
       }
 
-      const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
-      if (!clientKey) {
-        setError(t("error.paymentConfig"));
-        return;
-      }
-
-      const tossPayments = await loadTossPayments(clientKey);
-      const payment = tossPayments.payment({
-        customerKey: result.data.customerKey,
-      });
-
-      await payment.requestPayment({
-        method: "CARD",
-        amount: {
-          currency: "KRW",
-          value: result.data.amount,
-        },
-        orderId: result.data.orderId,
-        orderName: result.data.orderName,
-        successUrl: `${window.location.origin}/settings/billing?orderId=${result.data.orderId}`,
-        failUrl: `${window.location.origin}/settings/billing?canceled=true`,
-      });
-    } catch (err) {
-      const code = (err as { code?: string })?.code;
-      if (code !== "USER_CANCEL" && code !== "INVALID_REQUEST") {
-        setError(t("error.paymentWindow"));
-      }
+      // Stripe Checkout 페이지로 리다이렉트
+      window.location.href = result.data.url;
+    } catch {
+      setError(t("error.unexpected"));
     } finally {
       setLoading(false);
     }

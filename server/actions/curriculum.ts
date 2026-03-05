@@ -21,6 +21,8 @@ import { rateLimit } from "@/lib/utils/rate-limit";
 import { after } from "next/server";
 import { getUserLocale } from "@/server/actions/learning-utils";
 import { resetModuleProgress } from "@/server/actions/learning-progress";
+import { validateModule } from "@/lib/utils/curriculum-validation";
+import { computeModulePrerequisites } from "@/lib/learning/prerequisite-compute";
 import type { Database, Json, Locale } from "@/types/database";
 import type { EducationalAnalysis } from "@/types/educational-analysis";
 
@@ -116,6 +118,7 @@ interface StructureResponse {
 // Phase 2 — content batch per tech_name
 interface ContentBatchItem {
   module_title: string;
+  concept_keys?: string[];
   content: {
     sections: Array<{
       type: string;
@@ -506,6 +509,13 @@ export async function generateLearningPath(
         } catch (err) {
           console.error("[learning] Background generation failed:", err instanceof Error ? err.message : err);
         }
+
+        try {
+          // Step 3: Compute module prerequisites from concept DAG (R4')
+          await updatePrerequisitesForPath(learningPath.id);
+        } catch (err) {
+          console.error("[learning] Prerequisite computation failed:", err instanceof Error ? err.message : err);
+        }
       });
     }
 
@@ -526,39 +536,22 @@ export async function generateLearningPath(
 }
 
 /**
- * Validates LLM-generated sections meet minimum quality bar:
- * - At least 3 sections (5 for beginner)
- * - Has at least one code_example with non-empty code
- * - Has at least one quiz_question with 4 options and numeric answer
- * - All explanation sections have body >= 200 chars (400 for beginner)
+ * Validates LLM-generated sections using the shared validateModule utility.
+ * This ensures web-generated content is validated with the same rules as MCP-submitted content.
  */
 function _validateGeneratedSections(
   sections: Array<{ type?: string; body?: string; code?: string; quiz_options?: unknown[]; quiz_answer?: unknown }>,
   difficulty?: string,
 ): boolean {
-  const minSections = difficulty === "beginner" ? 5 : 3;
-  const minExplanationLength = difficulty === "beginner" ? 400 : 200;
-
-  if (sections.length < minSections) return false;
-
-  const hasCode = sections.some(
-    (s) => s.type === "code_example" && typeof s.code === "string" && s.code.length > 0,
-  );
-  const hasQuiz = sections.some(
-    (s) =>
-      s.type === "quiz_question" &&
-      Array.isArray(s.quiz_options) &&
-      s.quiz_options.length === 4 &&
-      typeof s.quiz_answer === "number",
-  );
-  if (!hasCode || !hasQuiz) return false;
-
-  const hasThinExplanation = sections.some(
-    (s) => s.type === "explanation" && (!s.body || s.body.trim().length < minExplanationLength),
-  );
-  if (hasThinExplanation) return false;
-
-  return true;
+  const mockModule = {
+    title: "temp",
+    description: "temp",
+    module_type: "concept",
+    tech_name: "temp",
+    content: { sections },
+  };
+  const result = validateModule(mockModule, 0, difficulty ?? "beginner");
+  return result.valid;
 }
 
 export async function generateModuleContent(
@@ -1009,6 +1002,13 @@ async function _generateContentForModule(
       const matched = contentMap.get(normalizeTitle(m.title));
       const sections = matched?.content?.sections ?? [];
 
+      // Extract concept_keys from LLM response (R6: Module→Concept coverage)
+      const conceptKeys = Array.isArray(matched?.concept_keys)
+        ? (matched.concept_keys as string[]).filter(
+            (k): k is string => typeof k === "string" && k.length > 0,
+          )
+        : [];
+
       if (sections.length > 0 && _validateGeneratedSections(sections, difficulty)) {
         // Set requested module sections only for validated content
         if (m.id === moduleId) {
@@ -1029,6 +1029,7 @@ async function _generateContentForModule(
               _status: "ready",
               _generated_at: now,
             } as unknown as Json,
+            ...(conceptKeys.length > 0 ? { concept_keys: conceptKeys } : {}),
           })
           .eq("id", m.id);
       } else if (sections.length > 0) {
@@ -1168,6 +1169,110 @@ async function _generateAllModuleContentInBackground(
         }
       }),
     );
+  }
+}
+
+/**
+ * R4' — Compute and persist Module→Module prerequisites for a learning path.
+ * Uses R1 (Concept→Concept DAG from KB) + R6 (Module→Concept coverage) to derive
+ * module-level prerequisite relationships algorithmically.
+ *
+ * Called in background after curriculum content generation completes.
+ */
+export async function updatePrerequisitesForPath(pathId: string): Promise<void> {
+  try {
+    const serviceClient = createServiceClient();
+
+    // 1. Get all modules for this path with concept_keys
+    const { data: modules } = await serviceClient
+      .from("learning_modules")
+      .select("id, concept_keys, module_order, tech_stack_id")
+      .eq("learning_path_id", pathId)
+      .order("module_order", { ascending: true });
+
+    if (!modules || modules.length === 0) return;
+
+    // Filter modules with concept_keys
+    const modulesWithConcepts = modules
+      .filter((m) => Array.isArray(m.concept_keys) && (m.concept_keys as string[]).length > 0)
+      .map((m) => ({
+        moduleId: m.id,
+        conceptKeys: m.concept_keys as string[],
+        moduleOrder: m.module_order,
+      }));
+
+    if (modulesWithConcepts.length === 0) return;
+
+    // 2. Collect all concept_keys across modules
+    const allConceptKeys = new Set<string>();
+    for (const m of modulesWithConcepts) {
+      for (const ck of m.conceptKeys) allConceptKeys.add(ck);
+    }
+
+    // 3. Get learning path's project to find tech stacks
+    const { data: pathData } = await serviceClient
+      .from("learning_paths")
+      .select("project_id")
+      .eq("id", pathId)
+      .single();
+
+    if (!pathData) return;
+
+    // 4. Get tech stacks for the project
+    const { data: techStacks } = await serviceClient
+      .from("tech_stacks")
+      .select("technology_name")
+      .eq("project_id", pathData.project_id);
+
+    if (!techStacks) return;
+
+    const normalizedNames = techStacks.map((ts) => ts.technology_name.toLowerCase().trim());
+
+    // 5. Fetch KB entries to get concept prerequisite relationships (R1)
+    // Use untyped client because technology_knowledge is not in Database type
+    const { createClient: createUntypedClient } = await import("@supabase/supabase-js");
+    const kbClient = createUntypedClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    );
+
+    const { data: knowledgeRows } = await kbClient
+      .from("technology_knowledge")
+      .select("concepts")
+      .in("technology_name_normalized", normalizedNames)
+      .eq("generation_status", "ready");
+
+    if (!knowledgeRows || knowledgeRows.length === 0) return;
+
+    // 6. Build concept prerequisite map: concept_key → prerequisite concept_keys[]
+    const conceptPrereqs = new Map<string, string[]>();
+    for (const row of knowledgeRows) {
+      const concepts = row.concepts as Array<{
+        concept_key: string;
+        prerequisite_concepts: string[];
+      }>;
+      for (const concept of concepts) {
+        if (concept.prerequisite_concepts && concept.prerequisite_concepts.length > 0) {
+          conceptPrereqs.set(concept.concept_key, concept.prerequisite_concepts);
+        }
+      }
+    }
+
+    // 7. Compute module prerequisites
+    const modulePrereqs = computeModulePrerequisites(modulesWithConcepts, conceptPrereqs);
+
+    // 8. Update learning_modules.prerequisites
+    for (const mod of modules) {
+      const prereqs = modulePrereqs.get(mod.id);
+      if (prereqs && prereqs.length > 0) {
+        await serviceClient
+          .from("learning_modules")
+          .update({ prerequisites: prereqs })
+          .eq("id", mod.id);
+      }
+    }
+  } catch (err) {
+    console.error("[learning] updatePrerequisitesForPath failed:", err instanceof Error ? err.message : err);
   }
 }
 

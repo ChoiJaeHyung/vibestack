@@ -136,6 +136,28 @@ const BASE_IGNORE_PATTERNS = [
   "__tests__/**",
   "**/*.d.ts",
   "packages/mcp-server/dist/**",
+  // Python virtual environments & caches
+  "venv/**",
+  ".venv/**",
+  "env/**",
+  ".env/**",
+  "**/site-packages/**",
+  "**/__pycache__/**",
+  ".mypy_cache/**",
+  ".ruff_cache/**",
+  ".pytest_cache/**",
+  ".tox/**",
+  // Go
+  "vendor/**",
+  // Rust
+  "target/**",
+  // Java/Kotlin
+  ".gradle/**",
+  ".m2/**",
+  // General
+  ".cache/**",
+  ".tmp/**",
+  "tmp/**",
 ];
 
 // Sensitive file patterns — applied only to source code glob, not to

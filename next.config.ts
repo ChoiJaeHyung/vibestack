@@ -5,12 +5,12 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const cspDirectives = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.tosspayments.com https://pagead2.googlesyndication.com https://www.googletagservices.com https://adservice.google.com https://www.google.com https://tpc.googlesyndication.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://pagead2.googlesyndication.com https://www.googletagservices.com https://adservice.google.com https://www.google.com https://tpc.googlesyndication.com",
   "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
   "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com",
   "img-src 'self' data: blob: https://pagead2.googlesyndication.com https://www.google.com https://www.google.co.kr https://googleads.g.doubleclick.net",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net",
-  "frame-src https://js.tosspayments.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net",
+  "frame-src https://js.stripe.com https://checkout.stripe.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
