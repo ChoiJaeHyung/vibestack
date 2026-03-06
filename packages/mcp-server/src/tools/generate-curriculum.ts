@@ -209,25 +209,30 @@ Follow the structure below exactly. Output ONLY JSON (no code fences/explanation
 - Each module must have relevant_files and learning_objectives
 - tech_name must exactly match the tech stack names above
 
-## Automated Workflow (CRITICAL — execute ALL steps automatically)
+## Automated Workflow (CRITICAL — execute ALL steps automatically without pausing)
+
+**⚠️ NEVER use vibeuniv_submit_curriculum — that tool does not exist.** Always use the Per-Module flow below.
 
 **The user expects this to feel like a single operation.** Do NOT pause, ask for confirmation, or show intermediate JSON between steps. Just execute everything seamlessly and show brief progress updates.
 
+**Step-by-step (execute ALL automatically):**
+
 1. Generate the structure-only JSON above (~2KB) — NO content/sections
-2. Call **vibeuniv_create_curriculum**({ project_id: "${project_id}", title, description, difficulty, total_modules }) → get learning_path_id
-3. For EACH module (in order):
-   a. Call **vibeuniv_generate_module_content**({ project_id: "${project_id}", module_index, module, difficulty: "${difficulty}", total_modules, learning_path_id })
-   b. Generate the sections JSON
-   c. Call **vibeuniv_submit_module**({ project_id: "${project_id}", learning_path_id, module_order, title, description, module_type, tech_name, concept_keys (if KB concepts are tagged), content: { sections } })
+2. Call **vibeuniv_create_curriculum**({ project_id: "${project_id}", title, description, difficulty, total_modules }) → receive learning_path_id
+3. For EACH module (module_order = 1 to total_modules), repeat steps a-d:
+   a. Call **vibeuniv_generate_module_content**({ project_id: "${project_id}", module_index: (module_order - 1), module: {title, description, module_type, tech_name, relevant_files, learning_objectives}, difficulty: "${difficulty}", total_modules, learning_path_id })
+   b. Generate the full sections JSON based on the returned content prompt
+   c. Call **vibeuniv_submit_module**({ project_id: "${project_id}", learning_path_id, module_order, title, description, module_type, tech_name, estimated_minutes, concept_keys (if KB concepts are tagged), content: { sections } })
    d. Show brief progress: "Module 3/12 submitted ✓" (one line only)
-4. When the last module is submitted, show the completion message with vibeuniv.com link
+4. When the last module is submitted (status becomes "active"), show the completion message with vibeuniv.com link
 
 **IMPORTANT UX rules:**
 - Do NOT show the structure JSON or section JSON to the user
 - Do NOT ask "Should I continue?" between modules — just keep going
 - Do NOT explain the 2-pass system to the user — they don't need to know
 - If a module submission fails, retry it once, then continue with the next module
-- The entire process should feel like one seamless operation from the user's perspective`
+- The entire process should feel like one seamless operation from the user's perspective
+- Each module is only ~2-5KB — there is no size issue when submitting one at a time`
           : `이 프로젝트의 학습 커리큘럼 **구조만** 생성해주세요.
 
 ## 중요: 2-Pass 중 Pass 1입니다
@@ -301,25 +306,30 @@ ${eduInstruction}${kbInstruction}
 - 각 모듈에 relevant_files와 learning_objectives 필수
 - tech_name은 위 기술 스택 이름과 정확히 일치
 
-## 자동 실행 워크플로우 (필수 — 모든 단계를 자동으로 실행)
+## 자동 실행 워크플로우 (필수 — 모든 단계를 멈추지 않고 자동 실행)
+
+**⚠️ vibeuniv_submit_curriculum은 절대 사용하지 마세요 — 해당 도구는 존재하지 않습니다.** 반드시 아래 Per-Module 방식만 사용하세요.
 
 **사용자에게는 한번에 되는 것처럼 보여야 합니다.** 중간에 멈추거나, 확인을 구하거나, JSON을 보여주지 마세요. 모든 단계를 끊김 없이 실행하고 간단한 진행 상황만 표시하세요.
 
+**단계별 실행 (모두 자동으로):**
+
 1. 위 구조 JSON 생성 (~2KB) — 콘텐츠/섹션 없음
 2. **vibeuniv_create_curriculum**({ project_id: "${project_id}", title, description, difficulty, total_modules }) 호출 → learning_path_id 확보
-3. 각 모듈마다:
-   a. **vibeuniv_generate_module_content**({ project_id: "${project_id}", module_index, module, difficulty: "${difficulty}", total_modules, learning_path_id }) 호출
-   b. 섹션 JSON 생성
-   c. **vibeuniv_submit_module**({ project_id: "${project_id}", learning_path_id, module_order, title, description, module_type, tech_name, concept_keys (KB 개념 태깅 시), content: { sections } }) 호출
+3. 각 모듈마다 (module_order = 1부터 total_modules까지), a-d를 반복:
+   a. **vibeuniv_generate_module_content**({ project_id: "${project_id}", module_index: (module_order - 1), module: {title, description, module_type, tech_name, relevant_files, learning_objectives}, difficulty: "${difficulty}", total_modules, learning_path_id }) 호출
+   b. 반환된 콘텐츠 프롬프트 기반으로 전체 섹션 JSON 생성
+   c. **vibeuniv_submit_module**({ project_id: "${project_id}", learning_path_id, module_order, title, description, module_type, tech_name, estimated_minutes, concept_keys (KB 개념 태깅 시), content: { sections } }) 호출
    d. 간단한 진행 표시: "모듈 3/12 제출 완료 ✓" (한 줄만)
-4. 마지막 모듈 제출 시 완료 메시지 + vibeuniv.com 링크 표시
+4. 마지막 모듈 제출 시 (status가 "active"로 변경) 완료 메시지 + vibeuniv.com 링크 표시
 
 **중요한 UX 규칙:**
 - 구조 JSON이나 섹션 JSON을 사용자에게 보여주지 마세요
 - 모듈 사이에 "계속할까요?" 같은 질문 하지 마세요 — 그냥 계속 진행
 - 2-pass 시스템을 사용자에게 설명하지 마세요 — 알 필요 없음
 - 모듈 제출 실패 시 한번 재시도 후, 다음 모듈로 계속 진행
-- 사용자 관점에서 전체 과정이 하나의 매끄러운 작업처럼 느껴져야 합니다`;
+- 사용자 관점에서 전체 과정이 하나의 매끄러운 작업처럼 느껴져야 합니다
+- 각 모듈은 ~2-5KB 정도이므로 한번에 하나씩 보내면 크기 문제가 없습니다`;
 
         return {
           content: [

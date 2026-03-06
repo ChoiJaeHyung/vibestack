@@ -5,7 +5,6 @@ import type {
   CreateProjectInput,
   CurriculumContext,
   CurriculumStartResult,
-  CurriculumSubmitResult,
   EducationalAnalysisData,
   KnowledgeHintsResult,
   LearningPath,
@@ -373,29 +372,6 @@ export class VibeUnivClient {
       console.error(`[vibeuniv] Educational analysis fetch failed (non-fatal): ${err instanceof Error ? err.message : err}`);
       return null;
     }
-  }
-
-  async submitCurriculum(
-    projectId: string,
-    curriculum: Record<string, unknown>,
-  ): Promise<CurriculumSubmitResult> {
-    interface RawCurriculumResponse {
-      learning_path_id: string;
-      title: string;
-      total_modules: number;
-    }
-
-    const raw = await this.request<RawCurriculumResponse>(
-      "POST",
-      `/projects/${projectId}/curriculum`,
-      { curriculum }
-    );
-
-    return {
-      learningPathId: raw.learning_path_id,
-      title: raw.title,
-      totalModules: raw.total_modules,
-    };
   }
 
   // ─── Local-First Methods (Phase A) ──────────────────────────────

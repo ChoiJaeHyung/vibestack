@@ -244,8 +244,8 @@ vibeuniv/
 │               ├── log-session.ts          # vibeuniv_log_session
 │               ├── submit-analysis.ts      # vibeuniv_submit_analysis
 │               ├── generate-curriculum.ts  # vibeuniv_generate_curriculum
-│               ├── submit-curriculum.ts    # vibeuniv_submit_curriculum
 │               ├── create-curriculum.ts    # vibeuniv_create_curriculum (draft 생성)
+│               ├── generate-module-content.ts # vibeuniv_generate_module_content (모듈별 콘텐츠 프롬프트)
 │               └── submit-module.ts        # vibeuniv_submit_module (모듈별 개별 제출)
 │
 ├── supabase/
@@ -667,13 +667,13 @@ Section = {
 | `vibeuniv_log_session` | 세션 로그 | 개발 세션 메타데이터 기록 |
 | `vibeuniv_submit_analysis` | 교육 분석 제출 | 수동 분석 데이터 저장 |
 | `vibeuniv_generate_curriculum` | 커리큘럼 생성 (로컬) | 통합 API 1회로 컨텍스트 fetch (tech stacks + KB + edu analysis + 파일 소스코드 20개) → 로컬 AI에 지침 반환 (최소 15 모듈, 프로젝트 기능 중심) |
-| `vibeuniv_submit_curriculum` | 커리큘럼 일괄 제출 (레거시) | 전체 커리큘럼 JSON 한번에 저장 (검증: 최소 10 모듈, beginner→7섹션/800자/code 2개/quiz 2개, 그 외→5섹션/400자/code+quiz 각 1개) |
 | `vibeuniv_create_curriculum` | 커리큘럼 초안 생성 | draft learning_path 생성 → learning_path_id 반환 (기존 draft/active 삭제 후 새로 생성) |
+| `vibeuniv_generate_module_content` | 모듈별 콘텐츠 프롬프트 | 캐시된 컨텍스트 + 소스코드 기반으로 단일 모듈 콘텐츠 생성 지침 반환 |
 | `vibeuniv_submit_module` | 모듈별 개별 제출 | 단일 모듈 검증+저장, upsert(같은 module_order면 UPDATE), 전체 모듈 도착 시 자동 status="active" |
 
-> **Local-First 패턴 (v0.3.5)**: `analyze`, `ask_tutor`, `generate_curriculum`은 서버 LLM을 호출하지 않고, 서버에서 데이터만 fetch한 뒤 로컬 AI(Claude Code 등)에게 분석/튜터링/생성 지침을 반환한다. 결과는 companion 도구로 서버에 저장한다.
+> **Local-First 패턴 (v0.3.12)**: `analyze`, `ask_tutor`, `generate_curriculum`은 서버 LLM을 호출하지 않고, 서버에서 데이터만 fetch한 뒤 로컬 AI(Claude Code 등)에게 분석/튜터링/생성 지침을 반환한다. 결과는 companion 도구로 서버에 저장한다.
 >
-> **Per-Module Submission (v0.3.5)**: `create_curriculum` → `submit_module` × N 순서로 모듈별 개별 제출. 기존 `submit_curriculum`도 호환 유지.
+> **Per-Module Submission (v0.3.12)**: `create_curriculum` → (`generate_module_content` → `submit_module`) × N 순서로 모듈별 개별 제출. v0.3.12에서 레거시 `submit_curriculum` 제거 — Per-Module만 지원.
 >
 > **MCP 다국어 지원**: 모든 MCP 도구는 `/api/v1/user/locale`에서 사용자 locale을 조회(캐시)하여 한국어/영어 메시지를 분기한다. `generate_curriculum`은 `curriculum-context` 응답의 `locale` 필드를 사용한다.
 
