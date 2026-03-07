@@ -12,7 +12,8 @@
   },
   "knowledgeMap": {
     "title": "Knowledge Graph",
-    "description": "Visualize concept relationships in your project's tech stack",
+    "description": "See what you've learned and what's left at a glance",
+    "guide": "Click a node to see details. Start with the gray ones!",
     "mastery": "Mastery",
     "keyPoints": "Key Points",
     "markKnown": "I know this",

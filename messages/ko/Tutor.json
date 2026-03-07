@@ -32,7 +32,9 @@
     "title": "AI 튜터",
     "chat": "채팅",
     "search": "검색",
-    "selectModule": "학습 모듈을 선택하세요"
+    "selectModule": "학습 모듈을 선택하세요",
+    "selectModuleHint": "Learning 페이지에서 모듈을 열면 AI 튜터와 대화할 수 있어요",
+    "selectModulePlaceholder": "모듈을 먼저 선택해주세요..."
   },
   "search": {
     "title": "궁금한 걸 검색해보세요",

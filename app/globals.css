@@ -13,6 +13,7 @@
   --bg-input-hover: rgba(0,0,0,0.05);
   --bg-code: rgba(0,0,0,0.05);
   --bg-overlay: rgba(0,0,0,0.4);
+  --bg-primary: #FFFFFF;
   --border-default: rgba(0,0,0,0.08);
   --border-hover: rgba(0,0,0,0.15);
   --border-strong: rgba(0,0,0,0.12);
@@ -58,6 +59,7 @@
   --bg-input-hover: rgba(255,255,255,0.06);
   --bg-code: rgba(255,255,255,0.08);
   --bg-overlay: rgba(0,0,0,0.6);
+  --bg-primary: #12121A;
   --border-default: rgba(255,255,255,0.06);
   --border-hover: rgba(255,255,255,0.12);
   --border-strong: rgba(255,255,255,0.1);
@@ -102,6 +104,7 @@
   --color-bg-input-hover: var(--bg-input-hover);
   --color-bg-code: var(--bg-code);
   --color-bg-overlay: var(--bg-overlay);
+  --color-bg-primary: var(--bg-primary);
   --color-border-default: var(--border-default);
   --color-border-hover: var(--border-hover);
   --color-border-strong: var(--border-strong);

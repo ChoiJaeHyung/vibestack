@@ -12,7 +12,8 @@
   },
   "knowledgeMap": {
     "title": "지식 그래프",
-    "description": "프로젝트 기술 스택의 개념 관계를 시각화합니다",
+    "description": "내가 배운 개념과 아직 모르는 개념을 한눈에 확인하세요",
+    "guide": "노드를 클릭하면 상세 정보를 볼 수 있어요. 회색 노드부터 시작해보세요!",
     "mastery": "숙련도",
     "keyPoints": "핵심 포인트",
     "markKnown": "알고 있어요",
