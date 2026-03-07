@@ -31,10 +31,10 @@ function matchRateLimitPrefix(pathname: string): string | null {
 }
 
 // Public pages that never need auth checks (skip Supabase round-trip)
-const PUBLIC_PATHS = ["/callback", "/guide", "/privacy", "/terms", "/robots.txt", "/sitemap.xml", "/icon.png", "/apple-icon.png", "/manifest.webmanifest", "/about", "/contact"];
+const PUBLIC_PATHS = ["/callback", "/guide", "/privacy", "/terms", "/robots.txt", "/sitemap.xml", "/icon.png", "/apple-icon.png", "/manifest.webmanifest", "/about", "/contact", "/technology"];
 
 // Public path prefixes (multi-level routes)
-const PUBLIC_PATH_PREFIXES = ["/learn", "/blog"];
+const PUBLIC_PATH_PREFIXES = ["/learn", "/blog", "/guide"];
 
 function detectLocaleFromHeader(request: NextRequest): "ko" | "en" {
   const acceptLang = request.headers.get("accept-language");
