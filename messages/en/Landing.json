@@ -4,6 +4,10 @@
     "features": "Features",
     "pricing": "Pricing",
     "faq": "FAQ",
+    "guide": "Guide",
+    "technology": "Technology",
+    "blog": "Blog",
+    "learn": "Learn",
     "dashboard": "Dashboard",
     "logout": "Sign out"
   },

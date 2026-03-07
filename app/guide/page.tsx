@@ -629,6 +629,36 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
           </div>
         </section>
 
+        {/* Feature Guide & Technology links */}
+        <section className="border-t border-border-default">
+          <div className="mx-auto max-w-4xl px-6 py-8 flex flex-col sm:flex-row gap-4">
+            <Link
+              href="/guide/features"
+              className="flex-1 rounded-xl border border-border-default bg-bg-primary hover:border-violet-500/40 transition-all p-5 group"
+            >
+              <BookOpen className="h-5 w-5 text-violet-400 mb-2" />
+              <h3 className="text-sm font-semibold text-text-primary group-hover:text-violet-400 transition-colors">
+                {t("nav.featureGuide")}
+              </h3>
+              <p className="text-xs text-text-muted mt-1">
+                {t("nav.featureGuideDesc")}
+              </p>
+            </Link>
+            <Link
+              href="/technology"
+              className="flex-1 rounded-xl border border-border-default bg-bg-primary hover:border-violet-500/40 transition-all p-5 group"
+            >
+              <Shield className="h-5 w-5 text-cyan-400 mb-2" />
+              <h3 className="text-sm font-semibold text-text-primary group-hover:text-cyan-400 transition-colors">
+                {t("nav.technology")}
+              </h3>
+              <p className="text-xs text-text-muted mt-1">
+                {t("nav.technologyDesc")}
+              </p>
+            </Link>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="border-t border-border-default">
           <div className="mx-auto max-w-4xl px-6 py-16 text-center">

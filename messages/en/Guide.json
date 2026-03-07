@@ -169,6 +169,12 @@
     },
     "info": "All data is transmitted via HTTPS and LLM API keys are encrypted with AES-256-GCM. You can completely delete your project data at any time."
   },
+  "nav": {
+    "featureGuide": "Feature Guide by Menu",
+    "featureGuideDesc": "Explore detailed usage for Dashboard, Projects, Learning, Settings, and Rewards.",
+    "technology": "VibeUniv Technology",
+    "technologyDesc": "Discover our ontology-based Knowledge Graph, adaptive curriculum, and more."
+  },
   "cta": {
     "title": "Ready to Go?",
     "description": "Connect your project and start learning from your own code.",
