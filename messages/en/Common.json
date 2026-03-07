@@ -22,5 +22,11 @@
     "daysAgo": "{count}d ago",
     "weeksAgo": "{count}w ago",
     "monthsAgo": "{count}mo ago"
+  },
+  "cookieConsent": {
+    "message": "This website uses cookies to improve your experience. Essential cookies are used for login and language settings. Analytics cookies help us improve the service.",
+    "accept": "Accept All",
+    "decline": "Essential Only",
+    "learnMore": "Privacy Policy"
   }
 }
