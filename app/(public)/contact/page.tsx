@@ -93,7 +93,21 @@ export default async function ContactPage() {
           ))}
         </div>
 
-        <div className="mt-6 pt-4 border-t border-border-default">
+        <div className="mt-6 pt-4 border-t border-border-default space-y-2">
+          <p className="text-sm text-text-muted">
+            {isKo ? "📖 " : "📖 "}
+            <Link href="/guide/features" className="text-violet-400 hover:text-violet-300 transition-colors font-medium">
+              {isKo ? "메뉴별 기능 가이드" : "Feature Guide by Menu"}
+            </Link>
+            {isKo ? " — 각 메뉴의 상세 사용법을 확인하세요." : " — Learn how to use each menu in detail."}
+          </p>
+          <p className="text-sm text-text-muted">
+            {isKo ? "🔬 " : "🔬 "}
+            <Link href="/technology" className="text-violet-400 hover:text-violet-300 transition-colors font-medium">
+              {isKo ? "VibeUniv 기술 소개" : "VibeUniv Technology"}
+            </Link>
+            {isKo ? " — 온톨로지 기반 학습 기술을 알아보세요." : " — Discover our ontology-based learning technology."}
+          </p>
           <p className="text-sm text-text-muted">
             {isKo ? "더 많은 FAQ는 " : "For more FAQs, visit the "}
             <Link href="/#faq" className="text-violet-400 hover:text-violet-300 transition-colors">

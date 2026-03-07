@@ -54,6 +54,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: "https://vibeuniv.com/guide/features",
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    {
+      url: "https://vibeuniv.com/technology",
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
       url: "https://vibeuniv.com/terms",
       lastModified: new Date(),
       changeFrequency: "yearly",

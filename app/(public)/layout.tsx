@@ -30,6 +30,7 @@ export default async function PublicLayout({
             <Link href="/about" className="hover:text-text-primary transition-colors">About</Link>
             <Link href="/guide" className="hover:text-text-primary transition-colors">Guide</Link>
             <Link href="/blog" className="hover:text-text-primary transition-colors">Blog</Link>
+            <Link href="/technology" className="hover:text-text-primary transition-colors">Technology</Link>
             <Link href="/terms" className="hover:text-text-primary transition-colors">Terms</Link>
             <Link href="/privacy" className="hover:text-text-primary transition-colors">Privacy</Link>
             <Link href="/contact" className="hover:text-text-primary transition-colors">Contact</Link>
