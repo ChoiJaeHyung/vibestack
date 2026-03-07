@@ -169,6 +169,12 @@
     },
     "info": "모든 데이터는 HTTPS로 암호화 전송되며, LLM API 키는 AES-256-GCM으로 암호화 저장됩니다. 프로젝트 데이터는 언제든 완전 삭제할 수 있어요."
   },
+  "nav": {
+    "featureGuide": "메뉴별 기능 가이드",
+    "featureGuideDesc": "대시보드, 프로젝트, 학습, 설정, 리워드 각 메뉴의 상세 사용법을 확인하세요.",
+    "technology": "VibeUniv 기술 소개",
+    "technologyDesc": "온톨로지 기반 지식 그래프, 적응형 커리큘럼 등 VibeUniv만의 기술을 알아보세요."
+  },
   "cta": {
     "title": "준비되셨나요?",
     "description": "프로젝트를 연결하고, 내 코드로 학습을 시작하세요.",

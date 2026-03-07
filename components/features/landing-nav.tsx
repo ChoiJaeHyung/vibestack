@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Menu, X, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -13,6 +14,8 @@ interface LandingNavProps {
 
 export function LandingNav({ userEmail }: LandingNavProps) {
   const t = useTranslations("Landing");
+  const pathname = usePathname();
+  const isLanding = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -42,19 +45,36 @@ export function LandingNav({ userEmail }: LandingNavProps) {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-6">
-          <a href="#how" className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors tracking-[0.2px]">
-            {t("nav.howItWorks")}
-          </a>
-          <a href="#features" className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors tracking-[0.2px]">
-            {t("nav.features")}
-          </a>
-          <a href="#pricing" className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors tracking-[0.2px]">
-            {t("nav.pricing")}
-          </a>
-          <a href="#faq" className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors tracking-[0.2px]">
-            {t("nav.faq")}
-          </a>
+        <nav className="hidden md:flex items-center gap-5">
+          {isLanding && (
+            <>
+              <a href="#how" className="text-[13px] text-text-muted/70 hover:text-text-muted transition-colors tracking-[0.2px]">
+                {t("nav.howItWorks")}
+              </a>
+              <a href="#features" className="text-[13px] text-text-muted/70 hover:text-text-muted transition-colors tracking-[0.2px]">
+                {t("nav.features")}
+              </a>
+              <a href="#pricing" className="text-[13px] text-text-muted/70 hover:text-text-muted transition-colors tracking-[0.2px]">
+                {t("nav.pricing")}
+              </a>
+              <a href="#faq" className="text-[13px] text-text-muted/70 hover:text-text-muted transition-colors tracking-[0.2px]">
+                {t("nav.faq")}
+              </a>
+              <div className="w-px h-4 bg-border-default" />
+            </>
+          )}
+          <Link href="/guide" className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors tracking-[0.2px]">
+            {t("nav.guide")}
+          </Link>
+          <Link href="/technology" className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors tracking-[0.2px]">
+            {t("nav.technology")}
+          </Link>
+          <Link href="/blog" className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors tracking-[0.2px]">
+            {t("nav.blog")}
+          </Link>
+          <Link href="/learn" className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors tracking-[0.2px]">
+            {t("nav.learn")}
+          </Link>
         </nav>
 
         {/* Right buttons */}
@@ -110,18 +130,36 @@ export function LandingNav({ userEmail }: LandingNavProps) {
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden glass-nav border-t border-border-default px-4 py-4 space-y-3">
-          <a href="#how" onClick={() => setMobileOpen(false)} className="block text-sm text-text-muted hover:text-text-primary py-2">
-            {t("nav.howItWorks")}
-          </a>
-          <a href="#features" onClick={() => setMobileOpen(false)} className="block text-sm text-text-muted hover:text-text-primary py-2">
-            {t("nav.features")}
-          </a>
-          <a href="#pricing" onClick={() => setMobileOpen(false)} className="block text-sm text-text-muted hover:text-text-primary py-2">
-            {t("nav.pricing")}
-          </a>
-          <a href="#faq" onClick={() => setMobileOpen(false)} className="block text-sm text-text-muted hover:text-text-primary py-2">
-            {t("nav.faq")}
-          </a>
+          {isLanding && (
+            <>
+              <a href="#how" onClick={() => setMobileOpen(false)} className="block text-[13px] text-text-muted/70 hover:text-text-muted py-2">
+                {t("nav.howItWorks")}
+              </a>
+              <a href="#features" onClick={() => setMobileOpen(false)} className="block text-[13px] text-text-muted/70 hover:text-text-muted py-2">
+                {t("nav.features")}
+              </a>
+              <a href="#pricing" onClick={() => setMobileOpen(false)} className="block text-[13px] text-text-muted/70 hover:text-text-muted py-2">
+                {t("nav.pricing")}
+              </a>
+              <a href="#faq" onClick={() => setMobileOpen(false)} className="block text-[13px] text-text-muted/70 hover:text-text-muted py-2">
+                {t("nav.faq")}
+              </a>
+            </>
+          )}
+          <div className={`${isLanding ? "border-t border-border-default pt-2" : ""} space-y-0`}>
+            <Link href="/guide" onClick={() => setMobileOpen(false)} className="block text-sm text-text-muted hover:text-text-primary py-2">
+              {t("nav.guide")}
+            </Link>
+            <Link href="/technology" onClick={() => setMobileOpen(false)} className="block text-sm text-text-muted hover:text-text-primary py-2">
+              {t("nav.technology")}
+            </Link>
+            <Link href="/blog" onClick={() => setMobileOpen(false)} className="block text-sm text-text-muted hover:text-text-primary py-2">
+              {t("nav.blog")}
+            </Link>
+            <Link href="/learn" onClick={() => setMobileOpen(false)} className="block text-sm text-text-muted hover:text-text-primary py-2">
+              {t("nav.learn")}
+            </Link>
+          </div>
           <div className="pt-2 border-t border-border-default space-y-2">
             <div className="flex items-center gap-2 pb-1">
               <ThemeToggle />

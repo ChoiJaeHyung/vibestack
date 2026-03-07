@@ -4,6 +4,10 @@
     "features": "기능",
     "pricing": "가격",
     "faq": "FAQ",
+    "guide": "가이드",
+    "technology": "기술",
+    "blog": "블로그",
+    "learn": "학습",
     "dashboard": "대시보드",
     "logout": "로그아웃"
   },
