@@ -166,11 +166,15 @@ NEXT_PUBLIC_APP_URL=
 | **보안** | `lib/utils/encryption.ts`, `content-encryption.ts` | AES-256-GCM 암호화, 콘텐츠 복호화 |
 | **보안 헤더** | `next.config.ts` | CSP, HSTS, X-Frame-Options 등 |
 | **SEO** | `app/opengraph-image.tsx`, `twitter-image.tsx`, `not-found.tsx` | OG 이미지, 404 페이지 |
+| **퍼블릭 페이지** | `app/(public)/` | 블로그, 학습 미리보기, About, Contact (공개 라우트 그룹) |
+| **블로그** | `lib/blog/posts.ts` | 5개 바이링구얼 블로그 포스트 (정적 데이터) |
+| **퍼블릭 학습** | `server/actions/public-learning.ts` | 공개 커리큘럼 조회 (is_public, 첫 2모듈 미리보기) |
+| **쿠키 동의** | `components/ui/cookie-consent.tsx` | GDPR 쿠키 동의 배너 |
 | **커리큘럼 검증** | `lib/utils/curriculum-validation.ts` | 공유 모듈 검증 유틸리티 (섹션 수/글자 수/code/quiz 검증) |
 | **MCP 서버** | `packages/mcp-server/src/` | 12개 MCP 도구 (v0.3.12, Local-First + Per-Module) |
 | **DB 타입** | `types/database.ts` | Supabase 전체 스키마 타입 |
 | **i18n** | `i18n/request.ts`, `messages/{ko,en}/*.json`, `lib/utils/translate-error.ts` | next-intl 설정, 13개 네임스페이스(ko/en), 서버 에러 코드 번역 |
-| **마이그레이션** | `supabase/migrations/` | 001~023 SQL (010: locale, 017: tutor_feedback+token_budget, 020: concept_level_mastery, 021: module_concept_keys, 022: concept_mastery_badges, 023: badge 조건 수정) |
+| **마이그레이션** | `supabase/migrations/` | 001~025 SQL (010: locale, 017: tutor_feedback+token_budget, 020: concept_level_mastery, 021: module_concept_keys, 022: concept_mastery_badges, 023: badge 조건 수정, 025: is_public+RLS) |
 
 ### DB 테이블 (32개)
 
@@ -350,3 +354,4 @@ Anthropic, OpenAI, Google, Groq, Mistral, DeepSeek, Cohere, Together, Fireworks,
 - [x] 모듈별 개별 제출 시스템 (Per-Module Submission, MCP v0.3.12): `create_curriculum`(draft learning_path 생성) + `submit_module`(모듈별 개별 제출, 자동 활성화), 공유 검증 유틸리티 추출(`lib/utils/curriculum-validation.ts`), 콘텐츠 품질 강화(beginner→7섹션↑/800자↑/code 2개↑/quiz 2개↑, 그 외→5섹션↑/400자↑). v0.3.12에서 레거시 `submit_curriculum` 제거
 - [x] 결제 시스템 마이그레이션: 토스페이먼츠 → Stripe (Checkout + Customer Portal + Webhooks), 통화 KRW → USD (Pro $19/mo, Team $45/mo), DB 마이그레이션(toss_* → stripe_* 컬럼)
 - [x] 학습 온톨로지 고도화: 매직넘버 상수 추출(`mastery-constants.ts`), 개념 단위 숙련도 R5'(`concept_key` 컬럼), 모듈-개념 커버리지 R6(`concept_keys TEXT[]`+GIN), 모듈 선수관계 자동 계산 R4'(`prerequisite-compute.ts`), 선수모듈 소프트잠금 UI, 지식그래프 개념→모듈 네비게이션, 개념 마스터 배지 2종
+- [x] Google AdSense 공개 콘텐츠: 블로그 5개(~15,000 words), 학습 미리보기(첫 2모듈 공개), About/Contact 페이지, 쿠키 동의 배너, sitemap 6→15+ URL 확장, `(public)` 라우트 그룹
