@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import dynamic from "next/dynamic";
 import {
   CheckCircle2,
   XCircle,
@@ -335,13 +334,6 @@ function highlightCode(code: string): string {
     return code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 }
-
-const LazyEditor = dynamic(() => import("react-simple-code-editor"), {
-  ssr: false,
-  loading: () => (
-    <pre className="min-h-[120px] bg-zinc-900 p-4 font-mono text-sm text-zinc-100" />
-  ),
-});
 
 // ─── Fill-in-the-blank helpers ───────────────────────────────────
 
@@ -871,19 +863,6 @@ export function ModuleContent({
     if (text.length < 5) {
       setTooltip(null);
       return;
-    }
-
-    // Skip selections inside code editors (react-simple-code-editor)
-    const anchorNode = selection.anchorNode;
-    if (anchorNode) {
-      let node: Node | null = anchorNode;
-      while (node) {
-        if (node instanceof HTMLElement && node.classList.contains("npm__react-simple-code-editor__textarea")) {
-          setTooltip(null);
-          return;
-        }
-        node = node.parentNode;
-      }
     }
 
     const range = selection.getRangeAt(0);
