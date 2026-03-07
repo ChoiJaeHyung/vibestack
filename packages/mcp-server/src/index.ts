@@ -13,13 +13,12 @@ import { registerAskTutor } from "./tools/ask-tutor.js";
 import { registerSubmitAnalysis } from "./tools/submit-analysis.js";
 import { registerSubmitTechStacks } from "./tools/submit-tech-stacks.js";
 import { registerGenerateCurriculum } from "./tools/generate-curriculum.js";
-import { registerSubmitCurriculum } from "./tools/submit-curriculum.js";
 import { registerCreateCurriculum } from "./tools/create-curriculum.js";
 import { registerSubmitModule } from "./tools/submit-module.js";
 import { registerGenerateModuleContent } from "./tools/generate-module-content.js";
 
 async function main(): Promise<void> {
-  console.error("[vibeuniv] Starting VibeUniv MCP Server v0.3.9...");
+  console.error("[vibeuniv] Starting VibeUniv MCP Server v0.3.12...");
 
   const config = loadConfig();
   const client = new VibeUnivClient(config.apiKey, config.apiUrl);
@@ -30,7 +29,7 @@ async function main(): Promise<void> {
 
   const server = new McpServer({
     name: "vibeuniv-mcp-server",
-    version: "0.3.9",
+    version: "0.3.12",
   });
 
   registerSyncProject(server, client);
@@ -42,12 +41,11 @@ async function main(): Promise<void> {
   registerSubmitAnalysis(server, client);
   registerSubmitTechStacks(server, client);
   registerGenerateCurriculum(server, client);
-  registerSubmitCurriculum(server, client);
   registerCreateCurriculum(server, client);
   registerSubmitModule(server, client);
   registerGenerateModuleContent(server, client);
 
-  console.error("[vibeuniv] 13 tools registered");
+  console.error("[vibeuniv] 12 tools registered");
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
