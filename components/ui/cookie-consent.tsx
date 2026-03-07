@@ -29,7 +29,7 @@ export function CookieConsent() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-[200] lg:left-[272px]">
+    <div className="fixed bottom-4 left-4 right-4 z-[45] lg:left-[272px] lg:right-[436px]">
       <div className="mx-auto max-w-2xl rounded-xl border border-border-default bg-bg-primary shadow-lg p-4 backdrop-blur-lg">
         <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
           <Shield className="h-4 w-4 text-violet-500 shrink-0 hidden sm:block" />

@@ -52,6 +52,8 @@
   },
   "challenge": {
     "codeEditor": "Code Editor",
+    "fillBlanks": "Fill in the blanks",
+    "blankHint": "Replace the BLANK parts with your code",
     "showAnswer": "Show Answer",
     "hideAnswer": "Hide Answer",
     "answerCode": "Answer Code",
