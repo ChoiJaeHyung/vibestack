@@ -28,7 +28,9 @@
     "legend": {
       "mastered": "마스터",
       "inProgress": "학습 중",
-      "notStarted": "미시작"
+      "notStarted": "미시작",
+      "sameTechEdge": "같은 기술 내 연결",
+      "crossTechEdge": "기술 간 연결"
     }
   },
   "moduleType": {

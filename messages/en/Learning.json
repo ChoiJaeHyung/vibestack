@@ -28,7 +28,9 @@
     "legend": {
       "mastered": "Mastered",
       "inProgress": "In Progress",
-      "notStarted": "Not Started"
+      "notStarted": "Not Started",
+      "sameTechEdge": "Same tech link",
+      "crossTechEdge": "Cross-tech link"
     }
   },
   "moduleType": {

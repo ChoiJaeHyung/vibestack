@@ -212,7 +212,7 @@ export function KnowledgeGraph({ initialData, projectId }: KnowledgeGraphProps) 
         {/* Progress summary + guide */}
         <Panel position="top-left" className="!m-3">
           <div className="rounded-lg bg-bg-elevated/90 px-4 py-3 shadow-sm backdrop-blur-sm border border-border-default">
-            <div className="flex items-center gap-4 text-xs">
+            <div className="flex items-center gap-4 text-xs flex-wrap">
               <span className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-green-500" />
                 <span className="text-text-muted">{t("knowledgeMap.legend.mastered")}</span>
@@ -227,6 +227,16 @@ export function KnowledgeGraph({ initialData, projectId }: KnowledgeGraphProps) 
                 <span className="h-2 w-2 rounded-full bg-zinc-500" />
                 <span className="text-text-muted">{t("knowledgeMap.legend.notStarted")}</span>
                 <span className="font-semibold text-text-primary">{stats.notStarted}</span>
+              </span>
+            </div>
+            <div className="mt-2 flex items-center gap-4 text-xs">
+              <span className="flex items-center gap-1.5">
+                <span className="h-px w-4 bg-border-default" />
+                <span className="text-text-muted">{t("knowledgeMap.legend.sameTechEdge")}</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-px w-4 bg-violet-500 border-t border-dashed border-violet-500" />
+                <span className="text-text-muted">{t("knowledgeMap.legend.crossTechEdge")}</span>
               </span>
             </div>
             <p className="mt-1.5 text-[11px] text-text-faint">
