@@ -114,7 +114,7 @@ export default async function LandingPage() {
             {/* Left - Copy */}
             <div className="flex-[1_1_460px] min-w-[320px]">
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-[13px] text-violet-300 mb-6">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-[13px] text-accent-purple mb-6">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-[pulse-dot_2s_infinite]" />
                 {t("hero.badge")}
               </div>
@@ -215,8 +215,8 @@ export default async function LandingPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
               {/* Problem */}
               <SectionReveal delay={0}>
-                <div className="relative h-full rounded-2xl border border-red-500/20 bg-red-500/[0.06] px-7 py-8 transition-all duration-300 hover:border-red-500/30">
-                  <span className="inline-block px-3 py-1 rounded-full bg-red-500/10 text-[12px] font-bold text-red-400 mb-4 tracking-wide">
+                <div className="relative h-full rounded-2xl border border-red-500/20 bg-red-50 dark:bg-red-500/[0.06] px-7 py-8 transition-all duration-300 hover:border-red-500/30">
+                  <span className="inline-block px-3 py-1 rounded-full bg-red-500/10 text-[12px] font-bold text-red-500 mb-4 tracking-wide">
                     {t("painPoint.problem.label")}
                   </span>
                   <h3 className="text-lg font-semibold text-text-primary mb-3">
@@ -230,8 +230,8 @@ export default async function LandingPage() {
 
               {/* Solution */}
               <SectionReveal delay={150}>
-                <div className="relative h-full rounded-2xl border border-violet-500/20 bg-violet-500/[0.06] px-7 py-8 transition-all duration-300 hover:border-violet-500/30">
-                  <span className="inline-block px-3 py-1 rounded-full bg-violet-500/10 text-[12px] font-bold text-violet-400 mb-4 tracking-wide">
+                <div className="relative h-full rounded-2xl border border-violet-500/20 bg-violet-50 dark:bg-violet-500/[0.06] px-7 py-8 transition-all duration-300 hover:border-violet-500/30">
+                  <span className="inline-block px-3 py-1 rounded-full bg-violet-500/10 text-[12px] font-bold text-violet-500 mb-4 tracking-wide">
                     {t("painPoint.solution.label")}
                   </span>
                   <h3 className="text-lg font-semibold text-text-primary mb-3">
@@ -245,8 +245,8 @@ export default async function LandingPage() {
 
               {/* Outcome */}
               <SectionReveal delay={300}>
-                <div className="relative h-full rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] px-7 py-8 transition-all duration-300 hover:border-emerald-500/30">
-                  <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 text-[12px] font-bold text-emerald-400 mb-4 tracking-wide">
+                <div className="relative h-full rounded-2xl border border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/[0.06] px-7 py-8 transition-all duration-300 hover:border-emerald-500/30">
+                  <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 text-[12px] font-bold text-emerald-500 mb-4 tracking-wide">
                     {t("painPoint.outcome.label")}
                   </span>
                   <h3 className="text-lg font-semibold text-text-primary mb-3">
@@ -645,10 +645,10 @@ function PricingCard({
       ) : (
         <Link
           href={resolvedHref}
-          className={`mt-8 flex h-12 w-full items-center justify-center rounded-xl text-sm font-semibold text-white transition-all duration-300 ${
+          className={`mt-8 flex h-12 w-full items-center justify-center rounded-xl text-sm font-semibold transition-all duration-300 ${
             isPopular
-              ? "bg-gradient-to-br from-violet-500 to-violet-600 shadow-glow-purple-md hover:shadow-glow-purple hover:scale-[1.01]"
-              : "bg-bg-surface-hover border border-border-strong hover:bg-bg-input-hover"
+              ? "bg-gradient-to-br from-violet-500 to-violet-600 text-white shadow-glow-purple-md hover:shadow-glow-purple hover:scale-[1.01]"
+              : "bg-bg-surface-hover border border-border-strong text-text-primary hover:bg-bg-input-hover"
           }`}
         >
           {resolvedLabel}
