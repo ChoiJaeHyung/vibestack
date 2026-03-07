@@ -31,7 +31,10 @@ function matchRateLimitPrefix(pathname: string): string | null {
 }
 
 // Public pages that never need auth checks (skip Supabase round-trip)
-const PUBLIC_PATHS = ["/callback", "/guide", "/privacy", "/terms", "/robots.txt", "/sitemap.xml", "/icon.png", "/apple-icon.png", "/manifest.webmanifest"];
+const PUBLIC_PATHS = ["/callback", "/guide", "/privacy", "/terms", "/robots.txt", "/sitemap.xml", "/icon.png", "/apple-icon.png", "/manifest.webmanifest", "/about", "/contact"];
+
+// Public path prefixes (multi-level routes)
+const PUBLIC_PATH_PREFIXES = ["/learn", "/blog"];
 
 function detectLocaleFromHeader(request: NextRequest): "ko" | "en" {
   const acceptLang = request.headers.get("accept-language");
@@ -54,7 +57,8 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip Supabase session check for public/static paths
-  if (PUBLIC_PATHS.includes(pathname)) {
+  const isPublicPath = PUBLIC_PATHS.includes(pathname) || PUBLIC_PATH_PREFIXES.some((p) => pathname.startsWith(p));
+  if (isPublicPath) {
     // Still set locale cookie on first visit for public pages
     if (!request.cookies.has("locale")) {
       const locale = detectLocaleFromHeader(request);

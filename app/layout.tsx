@@ -3,6 +3,7 @@ import { JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
+import { CookieConsent } from "@/components/ui/cookie-consent";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -126,7 +127,10 @@ export default async function RootLayout({
           }}
         />
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            {children}
+            <CookieConsent />
+          </ThemeProvider>
         </NextIntlClientProvider>
       </body>
     </html>
