@@ -48,18 +48,18 @@
     },
     "problem": {
       "label": "Problem",
-      "title": "Built it, but don't get it",
-      "description": "AI wrote the code, but you don't understand why it works. When errors hit, you're stuck asking AI again."
+      "title": "Error pops up — back to asking AI again",
+      "description": "You built the app with Cursor, but you have no idea why useEffect runs twice. Copy-pasting error messages to AI is all you can do."
     },
     "solution": {
       "label": "Solution",
-      "title": "AI analyzes your code",
-      "description": "Connect your project and we automatically detect your tech stack, architecture, and patterns — then build a learning path just for you."
+      "title": "It starts from your package.json",
+      "description": "Next.js 15, Supabase, Tailwind — we analyze your actual tech stack and build a personalized roadmap showing what each technology does in your project."
     },
     "outcome": {
       "label": "Outcome",
-      "title": "Your code becomes your textbook",
-      "description": "No abstract tutorials. Learn from the code you actually built. Ask the AI tutor anything, anytime."
+      "title": "Errors don't scare you anymore",
+      "description": "You understand why your code works that way, so you can fix errors yourself. The AI tutor explains everything in the context of your own code."
     }
   },
   "how": {

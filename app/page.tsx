@@ -98,13 +98,13 @@ export default async function LandingPage() {
         <section className="min-h-screen flex items-center justify-center pt-[120px] pb-[80px] px-8 max-md:px-4 relative overflow-hidden">
           {/* Background effects */}
           <div
-            className="absolute blur-[80px] opacity-60 pointer-events-none"
+            className="absolute blur-[80px] opacity-30 pointer-events-none"
             style={{
               top: "-20%",
               left: "50%",
               transform: "translateX(-50%)",
-              width: "800px",
-              height: "800px",
+              width: "600px",
+              height: "600px",
               background: "radial-gradient(circle, rgba(139,92,246,0.12) 0%, rgba(6,182,212,0.06) 40%, transparent 70%)",
             }}
           />
@@ -180,7 +180,7 @@ export default async function LandingPage() {
         </section>
 
         {/* Social Proof Bar */}
-        <SectionReveal className="px-8 max-md:px-4 pb-[80px] flex justify-center">
+        <SectionReveal className="px-8 max-md:px-4 pb-[60px] flex justify-center">
           <div className="max-w-[900px] w-full flex justify-center gap-12 flex-wrap px-12 py-8 rounded-2xl bg-bg-surface border border-border-default max-md:px-6 max-md:gap-8">
             <div className="text-center min-w-[140px]">
               <div className="text-[32px] font-extrabold mb-1">
@@ -204,22 +204,22 @@ export default async function LandingPage() {
         </SectionReveal>
 
         {/* Pain Point: Problem → Solution → Outcome */}
-        <section className="py-[100px] px-8 max-md:px-4 flex justify-center">
+        <section className="py-[80px] px-8 max-md:px-4 flex justify-center">
           <div className="max-w-[1120px] w-full">
-            <SectionReveal className="text-center mb-16">
-              <h2 className="text-4xl font-extrabold text-text-primary tracking-tight">
-                {t("painPoint.title.prefix")}<span className="gradient-text">{t("painPoint.title.highlight")}</span>{t("painPoint.title.suffix")}
+            <SectionReveal className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-text-primary tracking-tight">
+                {t("painPoint.title.prefix")}<span className="text-violet-500">{t("painPoint.title.highlight")}</span>{t("painPoint.title.suffix")}
               </h2>
             </SectionReveal>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
               {/* Problem */}
               <SectionReveal delay={0}>
-                <div className="relative h-full rounded-2xl border border-red-500/20 bg-red-500/[0.04] px-7 py-8 transition-all duration-300 hover:border-red-500/30 hover:scale-[1.02]">
+                <div className="relative h-full rounded-2xl border border-red-500/20 bg-red-500/[0.06] px-7 py-8 transition-all duration-300 hover:border-red-500/30">
                   <span className="inline-block px-3 py-1 rounded-full bg-red-500/10 text-[12px] font-bold text-red-400 mb-4 tracking-wide">
                     {t("painPoint.problem.label")}
                   </span>
-                  <h3 className="text-xl font-bold text-text-primary mb-3">
+                  <h3 className="text-lg font-semibold text-text-primary mb-3">
                     {t("painPoint.problem.title")}
                   </h3>
                   <p className="text-[15px] leading-relaxed text-text-muted">
@@ -230,11 +230,11 @@ export default async function LandingPage() {
 
               {/* Solution */}
               <SectionReveal delay={150}>
-                <div className="relative h-full rounded-2xl border border-violet-500/20 bg-violet-500/[0.04] px-7 py-8 transition-all duration-300 hover:border-violet-500/30 hover:scale-[1.02]">
+                <div className="relative h-full rounded-2xl border border-violet-500/20 bg-violet-500/[0.06] px-7 py-8 transition-all duration-300 hover:border-violet-500/30">
                   <span className="inline-block px-3 py-1 rounded-full bg-violet-500/10 text-[12px] font-bold text-violet-400 mb-4 tracking-wide">
                     {t("painPoint.solution.label")}
                   </span>
-                  <h3 className="text-xl font-bold text-text-primary mb-3">
+                  <h3 className="text-lg font-semibold text-text-primary mb-3">
                     {t("painPoint.solution.title")}
                   </h3>
                   <p className="text-[15px] leading-relaxed text-text-muted">
@@ -245,11 +245,11 @@ export default async function LandingPage() {
 
               {/* Outcome */}
               <SectionReveal delay={300}>
-                <div className="relative h-full rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] px-7 py-8 transition-all duration-300 hover:border-emerald-500/30 hover:scale-[1.02]">
+                <div className="relative h-full rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] px-7 py-8 transition-all duration-300 hover:border-emerald-500/30">
                   <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 text-[12px] font-bold text-emerald-400 mb-4 tracking-wide">
                     {t("painPoint.outcome.label")}
                   </span>
-                  <h3 className="text-xl font-bold text-text-primary mb-3">
+                  <h3 className="text-lg font-semibold text-text-primary mb-3">
                     {t("painPoint.outcome.title")}
                   </h3>
                   <p className="text-[15px] leading-relaxed text-text-muted">
@@ -265,49 +265,51 @@ export default async function LandingPage() {
         {/* How It Works */}
         <section id="how" className="py-[100px] px-8 max-md:px-4 flex justify-center">
           <div className="max-w-[1120px] w-full">
-            <SectionReveal className="text-center mb-16">
-              <h2 className="text-4xl font-extrabold text-text-primary tracking-tight">
-                {t("how.title.prefix")}<span className="gradient-text">{t("how.title.highlight")}</span>{t("how.title.suffix")}
+            <SectionReveal className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-text-primary tracking-tight">
+                {t("how.title.prefix")}<span className="text-violet-500">{t("how.title.highlight")}</span>{t("how.title.suffix")}
               </h2>
               <p className="text-base text-text-faint max-w-[480px] mx-auto mt-4">
                 {t("how.subtitle")}
               </p>
             </SectionReveal>
 
-            <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-16">
               {STEPS.map((step, i) => (
-                <GlowCard key={i} delay={i * 150} glowColor={i % 2 === 0 ? "purple" : "cyan"}>
-                  <div className="flex gap-8 items-start flex-wrap">
-                    <div className="flex-[1_1_320px] min-w-[280px]">
-                      <div className="text-[13px] font-extrabold font-mono gradient-text mb-2">
+                <SectionReveal key={i} delay={i * 150}>
+                  <div className={`flex gap-12 items-center ${i % 2 === 1 ? "flex-row-reverse" : ""} max-md:flex-col`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13px] font-bold font-mono text-violet-500 mb-2">
                         {String(i + 1).padStart(2, "0")}
                       </div>
-                      <div className="text-[28px] mb-3">{step.emoji}</div>
-                      <h3 className="text-[22px] font-bold text-text-primary mb-2">
+                      <div className="w-10 h-10 rounded-xl bg-violet-500/8 flex items-center justify-center text-[22px] mb-3">
+                        {step.emoji}
+                      </div>
+                      <h3 className="text-xl font-semibold text-text-primary mb-2">
                         {step.title}
                       </h3>
                       <p className="text-[15px] leading-relaxed text-text-muted">
                         {step.description}
                       </p>
                     </div>
-                    <div className="flex-[1_1_280px] min-w-[260px]">
+                    <div className="flex-1 min-w-0 max-md:w-full">
                       <div className="rounded-[10px] p-4 border border-zinc-700/50 bg-zinc-900 font-mono text-xs leading-relaxed text-zinc-300 whitespace-pre-wrap">
                         {step.code}
                       </div>
                     </div>
                   </div>
-                </GlowCard>
+                </SectionReveal>
               ))}
             </div>
           </div>
         </section>
 
         {/* Features */}
-        <section id="features" className="py-[100px] px-8 max-md:px-4 flex justify-center">
+        <section id="features" className="py-[80px] px-8 max-md:px-4 flex justify-center">
           <div className="max-w-[1120px] w-full">
-            <SectionReveal className="text-center mb-16">
-              <h2 className="text-4xl font-extrabold text-text-primary tracking-tight">
-                {t("features.title.prefix")}<span className="gradient-text">{t("features.title.highlight")}</span>
+            <SectionReveal className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-text-primary tracking-tight">
+                {t("features.title.prefix")}<span className="text-violet-500">{t("features.title.highlight")}</span>
               </h2>
               <p className="text-base text-text-faint max-w-[480px] mx-auto mt-4">
                 {t("features.subtitle")}
@@ -317,8 +319,10 @@ export default async function LandingPage() {
             <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5">
               {FEATURES.map((feature, i) => (
                 <GlowCard key={i} delay={i * 100} glowColor={i % 2 === 0 ? "purple" : "cyan"}>
-                  <div className="text-[32px] mb-4">{feature.emoji}</div>
-                  <h3 className="text-lg font-bold text-text-primary mb-2.5">
+                  <div className="w-10 h-10 rounded-xl bg-violet-500/8 flex items-center justify-center text-[24px] mb-4">
+                    {feature.emoji}
+                  </div>
+                  <h3 className="text-lg font-semibold text-text-primary mb-2.5">
                     {feature.title}
                   </h3>
                   <p className="text-sm leading-relaxed text-text-muted">
@@ -331,22 +335,11 @@ export default async function LandingPage() {
         </section>
 
         {/* Pricing */}
-        <section id="pricing" className="py-[100px] px-8 max-md:px-4 flex justify-center relative">
-          <div
-            className="absolute blur-[80px] opacity-40 pointer-events-none"
-            style={{
-              top: "10%",
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: "600px",
-              height: "600px",
-              background: "radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 60%)",
-            }}
-          />
-          <div className="max-w-[1120px] w-full relative z-10">
-            <SectionReveal className="text-center mb-16">
-              <h2 className="text-4xl font-extrabold text-text-primary tracking-tight">
-                {t("pricing.title.prefix")}<span className="gradient-text">{t("pricing.title.highlight")}</span>
+        <section id="pricing" className="py-[100px] px-8 max-md:px-4 flex justify-center">
+          <div className="max-w-[1120px] w-full">
+            <SectionReveal className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-text-primary tracking-tight">
+                {t("pricing.title.prefix")}<span className="text-violet-500">{t("pricing.title.highlight")}</span>
               </h2>
               <p className="text-base text-text-faint max-w-[480px] mx-auto mt-4">
                 {t("pricing.subtitle")}
@@ -424,11 +417,11 @@ export default async function LandingPage() {
         </section>
 
         {/* FAQ */}
-        <section id="faq" className="py-[100px] pb-[120px] px-8 max-md:px-4 flex justify-center">
+        <section id="faq" className="py-[80px] pb-[100px] px-8 max-md:px-4 flex justify-center">
           <div className="max-w-[720px] w-full">
-            <SectionReveal className="text-center mb-16">
-              <h2 className="text-4xl font-extrabold text-text-primary tracking-tight">
-                {t("faq.title.prefix")}<span className="gradient-text">{t("faq.title.highlight")}</span>
+            <SectionReveal className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-text-primary tracking-tight">
+                {t("faq.title.prefix")}<span className="text-violet-500">{t("faq.title.highlight")}</span>
               </h2>
             </SectionReveal>
 
@@ -437,21 +430,21 @@ export default async function LandingPage() {
         </section>
 
         {/* Final CTA */}
-        <SectionReveal className="px-8 max-md:px-4 pb-[120px] flex justify-center">
+        <SectionReveal className="px-8 max-md:px-4 pb-[100px] flex justify-center">
           <div className="max-w-[800px] w-full text-center px-12 py-16 rounded-3xl bg-gradient-to-b from-violet-500/[0.08] to-cyan-500/[0.04] border border-violet-500/20 relative overflow-hidden max-md:px-6">
             <div
-              className="absolute blur-[60px] opacity-50 pointer-events-none"
+              className="absolute blur-[60px] opacity-20 pointer-events-none"
               style={{
                 top: "-30%",
                 left: "50%",
                 transform: "translateX(-50%)",
-                width: "400px",
-                height: "400px",
+                width: "300px",
+                height: "300px",
                 background: "radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 60%)",
               }}
             />
             <div className="relative z-10">
-              <h2 className="text-[32px] font-extrabold text-text-primary tracking-tight">
+              <h2 className="text-[28px] font-bold text-text-primary tracking-tight">
                 {t("finalCta.title")}
               </h2>
               <p className="text-base text-text-muted leading-relaxed max-w-[500px] mx-auto mt-4 mb-8">
@@ -462,14 +455,14 @@ export default async function LandingPage() {
               {userEmail ? (
                 <Link
                   href="/dashboard"
-                  className="inline-block px-10 py-4 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 text-base font-bold text-white shadow-glow-purple-lg hover:scale-[1.03] transition-all duration-300"
+                  className="inline-block px-10 py-4 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 text-base font-bold text-white shadow-glow-purple-lg hover:scale-[1.01] transition-all duration-300"
                 >
                   {t("finalCta.dashboard")}
                 </Link>
               ) : (
                 <Link
                   href="/signup"
-                  className="inline-block px-10 py-4 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 text-base font-bold text-white shadow-glow-purple-lg hover:scale-[1.03] transition-all duration-300"
+                  className="inline-block px-10 py-4 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 text-base font-bold text-white shadow-glow-purple-lg hover:scale-[1.01] transition-all duration-300"
                 >
                   {t("finalCta.signup")}
                 </Link>
