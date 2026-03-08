@@ -21,8 +21,23 @@ export default async function AboutPage() {
     { icon: Users, title: isKo ? "AI 튜터" : "AI Tutor", desc: isKo ? "궁금한 코드를 선택하면 AI 튜터가 내 프로젝트 맥락에서 설명해줍니다. 일반적인 답변이 아닌, 내 코드에 특화된 답변을 제공합니다." : "Select any code and the AI tutor explains it in your project's context, providing answers specific to your code rather than generic responses." },
   ];
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "name": "About VibeUniv",
+    "description": "VibeUniv는 바이브 코더들이 AI로 만든 프로젝트의 기술 스택을 이해하고 학습할 수 있도록 돕는 교육 플랫폼입니다.",
+    "url": "https://vibeuniv.com/about",
+    "mainEntity": {
+      "@type": "Organization",
+      "name": "VibeUniv",
+      "url": "https://vibeuniv.com",
+      "email": "support@vibeuniv.com",
+    },
+  };
+
   return (
     <div className="max-w-[800px] mx-auto px-8 max-md:px-4 py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Breadcrumb
         items={[
           { label: "Home", href: "/" },

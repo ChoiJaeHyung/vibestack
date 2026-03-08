@@ -32,7 +32,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function GuidePage() {
   const t = await getTranslations("Guide");
-  const tLanding = await getTranslations("Landing");
 
   let userEmail: string | null = null;
   try {
@@ -97,11 +96,39 @@ export default async function GuidePage() {
           </div>
         </section>
 
+        {/* Quick Nav */}
+        <div className="mx-auto max-w-4xl px-6 pt-8">
+          <div className="flex flex-wrap justify-center gap-2">
+            {[
+              { id: "step-0", label: t("step0.title") },
+              { id: "step-1", label: t("step1.title") },
+              { id: "step-2", label: t("step2.title") },
+              { id: "step-3", label: t("step3.title") },
+              { id: "step-4", label: t("step4.title") },
+              { id: "step-5", label: t("step5.title") },
+              { id: "step-6", label: t("step6.title") },
+              { id: "step-7", label: t("step7.title") },
+              { id: "rest-api", label: t("restApi.title") },
+              { id: "troubleshooting", label: t("troubleshooting.title") },
+              { id: "security", label: t("security.title") },
+            ].map(({ id, label }) => (
+              <a
+                key={id}
+                href={`#${id}`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border-default bg-bg-primary px-3 py-1.5 text-xs font-medium text-text-secondary hover:border-violet-500/40 hover:text-violet-400 transition-all"
+              >
+                {label}
+              </a>
+            ))}
+          </div>
+        </div>
+
         {/* Steps */}
         <section className="mx-auto max-w-4xl px-6 py-16">
           <div className="space-y-16">
             {/* Step 0 */}
             <StepSection
+              id="step-0"
               step={0}
               icon={<CheckCircle2 className="h-5 w-5" />}
               title={t("step0.title")}
@@ -122,6 +149,7 @@ export default async function GuidePage() {
 
             {/* Step 1 */}
             <StepSection
+              id="step-1"
               step={1}
               icon={<UserPlus className="h-5 w-5" />}
               title={t("step1.title")}
@@ -131,6 +159,7 @@ export default async function GuidePage() {
 
             {/* Step 2 */}
             <StepSection
+              id="step-2"
               step={2}
               icon={<Key className="h-5 w-5" />}
               title={t("step2.title")}
@@ -146,6 +175,7 @@ export default async function GuidePage() {
 
             {/* Step 3 */}
             <StepSection
+              id="step-3"
               step={3}
               icon={<KeyRound className="h-5 w-5" />}
               title={t("step3.title")}
@@ -161,6 +191,7 @@ export default async function GuidePage() {
 
             {/* Step 4 */}
             <StepSection
+              id="step-4"
               step={4}
               icon={<Cable className="h-5 w-5" />}
               title={t("step4.title")}
@@ -421,6 +452,7 @@ VIBEUNIV_API_KEY = "${t("step4.apiKeyPlaceholder")}"`}
 
             {/* Step 5 */}
             <StepSection
+              id="step-5"
               step={5}
               icon={<RefreshCw className="h-5 w-5" />}
               title={t("step5.title")}
@@ -455,6 +487,7 @@ VIBEUNIV_API_KEY = "${t("step4.apiKeyPlaceholder")}"`}
 
             {/* Step 6 */}
             <StepSection
+              id="step-6"
               step={6}
               icon={<BarChart3 className="h-5 w-5" />}
               title={t("step6.title")}
@@ -469,6 +502,7 @@ VIBEUNIV_API_KEY = "${t("step4.apiKeyPlaceholder")}"`}
 
             {/* Step 7 */}
             <StepSection
+              id="step-7"
               step={7}
               icon={<BookOpen className="h-5 w-5" />}
               title={t("step7.title")}
@@ -486,7 +520,7 @@ VIBEUNIV_API_KEY = "${t("step4.apiKeyPlaceholder")}"`}
         </section>
 
         {/* REST API Section */}
-        <section className="border-t border-border-default bg-bg-surface">
+        <section id="rest-api" className="border-t border-border-default bg-bg-surface scroll-mt-4">
           <div className="mx-auto max-w-4xl px-6 py-16">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-500/10">
@@ -541,7 +575,7 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
         </section>
 
         {/* Troubleshooting Section */}
-        <section className="border-t border-border-default">
+        <section id="troubleshooting" className="border-t border-border-default scroll-mt-4">
           <div className="mx-auto max-w-4xl px-6 py-16">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10">
@@ -589,7 +623,7 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
         </section>
 
         {/* Security Section */}
-        <section className="border-t border-border-default bg-bg-surface">
+        <section id="security" className="border-t border-border-default bg-bg-surface scroll-mt-4">
           <div className="mx-auto max-w-4xl px-6 py-16">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/10">
@@ -682,40 +716,17 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border-default">
-        <div className="mx-auto max-w-6xl px-6 py-12">
-          <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-            <div className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-violet-400" />
-              <span className="font-semibold text-text-primary">
-                VibeUniv
-              </span>
-            </div>
-            <div className="flex items-center gap-6 text-sm text-text-muted">
-              <Link
-                href="/privacy"
-                className="transition-colors hover:text-text-primary"
-              >
-                {tLanding("footer.privacy")}
-              </Link>
-              <Link
-                href="/terms"
-                className="transition-colors hover:text-text-primary"
-              >
-                {tLanding("footer.terms")}
-              </Link>
-              <a
-                href="https://github.com/vibestack"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="transition-colors hover:text-text-primary"
-              >
-                GitHub
-              </a>
-            </div>
-          </div>
-          <div className="mt-8 text-center text-sm text-text-faint">
-            {t("footer.copyright")}
+      <footer className="border-t border-border-default bg-bg-primary/50 py-8">
+        <div className="max-w-[1120px] mx-auto px-8 max-md:px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-text-muted">
+          <span>&copy; {new Date().getFullYear()} VibeUniv. All rights reserved.</span>
+          <div className="flex items-center gap-4">
+            <Link href="/about" className="hover:text-text-primary transition-colors">About</Link>
+            <Link href="/guide" className="hover:text-text-primary transition-colors">Guide</Link>
+            <Link href="/blog" className="hover:text-text-primary transition-colors">Blog</Link>
+            <Link href="/technology" className="hover:text-text-primary transition-colors">Technology</Link>
+            <Link href="/terms" className="hover:text-text-primary transition-colors">Terms</Link>
+            <Link href="/privacy" className="hover:text-text-primary transition-colors">Privacy</Link>
+            <Link href="/contact" className="hover:text-text-primary transition-colors">Contact</Link>
           </div>
         </div>
       </footer>
@@ -751,18 +762,20 @@ curl -X POST https://vibeuniv.com/api/v1/projects/{project_id}/files \\
 /* ─── Sub-components ──────────────────────────────────────────────── */
 
 function StepSection({
+  id,
   step,
   icon,
   title,
   children,
 }: {
+  id?: string;
   step: number;
   icon: React.ReactNode;
   title: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative pl-14">
+    <div id={id} className="relative pl-14 scroll-mt-8">
       {/* Step badge */}
       <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 text-sm font-bold text-white">
         {step}

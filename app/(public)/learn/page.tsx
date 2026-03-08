@@ -40,8 +40,24 @@ export default async function PublicLearnPage() {
   const locale = await getLocale();
   const isKo = locale === "ko";
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    "name": "AI 맞춤 학습 커리큘럼",
+    "description": "AI가 분석한 실제 프로젝트 기반 학습 커리큘럼. 내 코드가 교과서가 되는 새로운 학습 방식.",
+    "provider": {
+      "@type": "Organization",
+      "name": "VibeUniv",
+      "url": "https://vibeuniv.com",
+    },
+    "url": "https://vibeuniv.com/learn",
+    "educationalLevel": "Beginner to Advanced",
+    "isAccessibleForFree": true,
+  };
+
   return (
     <div className="max-w-[960px] mx-auto px-8 max-md:px-4 py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Breadcrumb
         items={[
           { label: "Home", href: "/" },

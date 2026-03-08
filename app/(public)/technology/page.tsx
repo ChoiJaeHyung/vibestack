@@ -53,8 +53,29 @@ export default async function TechnologyPage() {
         </p>
       </div>
 
+      {/* Quick Nav */}
+      <div className="flex flex-wrap justify-center gap-2 mb-12">
+        {[
+          { id: "knowledge-graph", icon: Network, label: isKo ? "지식 그래프" : "Knowledge Graph" },
+          { id: "adaptive-curriculum", icon: BookOpen, label: isKo ? "적응형 커리큘럼" : "Adaptive Curriculum" },
+          { id: "local-first-ai", icon: Shield, label: isKo ? "Local-First AI" : "Local-First AI" },
+          { id: "multi-llm", icon: Cpu, label: isKo ? "멀티 LLM" : "Multi-LLM" },
+          { id: "quality-assurance", icon: Sparkles, label: isKo ? "품질 보장" : "Quality Assurance" },
+          { id: "comparison", icon: Zap, label: isKo ? "비교" : "Comparison" },
+        ].map(({ id, icon: Icon, label }) => (
+          <a
+            key={id}
+            href={`#${id}`}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border-default bg-bg-primary px-3 py-1.5 text-xs font-medium text-text-secondary hover:border-violet-500/40 hover:text-violet-400 transition-all"
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </a>
+        ))}
+      </div>
+
       {/* Tech 1: Knowledge Graph */}
-      <section className="mb-16">
+      <section id="knowledge-graph" className="mb-16 scroll-mt-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
             <Network className="h-5 w-5 text-white" />
@@ -113,7 +134,7 @@ export default async function TechnologyPage() {
       </section>
 
       {/* Tech 2: Adaptive Curriculum */}
-      <section className="mb-16">
+      <section id="adaptive-curriculum" className="mb-16 scroll-mt-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
             <BookOpen className="h-5 w-5 text-white" />
@@ -176,7 +197,7 @@ export default async function TechnologyPage() {
       </section>
 
       {/* Tech 3: Local-First AI */}
-      <section className="mb-16">
+      <section id="local-first-ai" className="mb-16 scroll-mt-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
             <Shield className="h-5 w-5 text-white" />
@@ -247,7 +268,7 @@ export default async function TechnologyPage() {
       </section>
 
       {/* Tech 4: Multi-LLM */}
-      <section className="mb-16">
+      <section id="multi-llm" className="mb-16 scroll-mt-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
             <Cpu className="h-5 w-5 text-white" />
@@ -298,7 +319,7 @@ export default async function TechnologyPage() {
       </section>
 
       {/* Tech 5: Quality Assurance */}
-      <section className="mb-16">
+      <section id="quality-assurance" className="mb-16 scroll-mt-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center">
             <Sparkles className="h-5 w-5 text-white" />
@@ -349,7 +370,7 @@ export default async function TechnologyPage() {
       </section>
 
       {/* Comparison */}
-      <section className="mb-16">
+      <section id="comparison" className="mb-16 scroll-mt-8">
         <h2 className="text-2xl font-bold text-text-primary mb-6 text-center">
           {isKo ? "기존 학습 방식과의 차이" : "How We're Different"}
         </h2>
