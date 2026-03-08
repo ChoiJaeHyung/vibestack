@@ -481,7 +481,37 @@ export default async function LandingPage() {
             </div>
             <span className="text-sm font-semibold text-text-faint">VibeUniv</span>
           </div>
-          <div className="flex gap-6 text-[13px] text-text-dim">
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-text-dim">
+            <Link
+              href="/about"
+              className="hover:text-text-tertiary transition-colors"
+            >
+              About
+            </Link>
+            <Link
+              href="/guide"
+              className="hover:text-text-tertiary transition-colors"
+            >
+              Guide
+            </Link>
+            <Link
+              href="/blog"
+              className="hover:text-text-tertiary transition-colors"
+            >
+              Blog
+            </Link>
+            <Link
+              href="/technology"
+              className="hover:text-text-tertiary transition-colors"
+            >
+              Technology
+            </Link>
+            <Link
+              href="/contact"
+              className="hover:text-text-tertiary transition-colors"
+            >
+              Contact
+            </Link>
             <Link
               href="/privacy"
               className="hover:text-text-tertiary transition-colors"
