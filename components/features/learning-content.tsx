@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LearningPathCard } from "@/components/features/learning-path-card";
 import { LearningGenerator } from "@/components/features/learning-generator";
@@ -100,6 +100,27 @@ export function LearningContent() {
 
       {/* Ad Banner */}
       <GeoAd planType={planType} />
+
+      {/* Knowledge Graph link */}
+      {paths.length > 0 && (
+        <Link
+          href="/learning/knowledge-map"
+          className="flex items-center gap-3 rounded-2xl border border-border-default bg-bg-surface p-4 hover:border-violet-500/40 transition-colors group"
+        >
+          <div className="rounded-xl bg-violet-500/10 p-2.5 group-hover:bg-violet-500/20 transition-colors">
+            <Network className="h-5 w-5 text-violet-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-text-primary">
+              {t('knowledgeMap.title')}
+            </p>
+            <p className="text-xs text-text-muted truncate">
+              {t('knowledgeMap.description')}
+            </p>
+          </div>
+          <span className="text-xs text-text-faint group-hover:text-violet-400 transition-colors">&rarr;</span>
+        </Link>
+      )}
 
       {/* Learning paths list */}
       {paths.length === 0 ? (

@@ -12,7 +12,8 @@
   },
   "knowledgeMap": {
     "title": "지식 그래프",
-    "description": "프로젝트 기술 스택의 개념 관계를 시각화합니다",
+    "description": "내가 배운 개념과 아직 모르는 개념을 한눈에 확인하세요",
+    "guide": "노드를 클릭하면 상세 정보를 볼 수 있어요. 회색 노드부터 시작해보세요!",
     "mastery": "숙련도",
     "keyPoints": "핵심 포인트",
     "markKnown": "알고 있어요",
@@ -27,7 +28,9 @@
     "legend": {
       "mastered": "마스터",
       "inProgress": "학습 중",
-      "notStarted": "미시작"
+      "notStarted": "미시작",
+      "sameTechEdge": "같은 기술 내 연결",
+      "crossTechEdge": "기술 간 연결"
     }
   },
   "moduleType": {
@@ -51,8 +54,10 @@
   },
   "challenge": {
     "codeEditor": "코드 에디터",
-    "showAnswer": "답 확인",
-    "hideAnswer": "답 숨기기",
+    "fillBlanks": "빈칸을 직접 채워보세요",
+    "blankHint": "BLANK 부분을 지우고 코드를 입력하세요",
+    "showAnswer": "정답 보기",
+    "hideAnswer": "정답 숨기기",
     "answerCode": "정답 코드",
     "completed": "완료"
   },

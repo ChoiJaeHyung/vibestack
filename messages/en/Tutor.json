@@ -32,7 +32,9 @@
     "title": "AI Tutor",
     "chat": "Chat",
     "search": "Search",
-    "selectModule": "Select a learning module"
+    "selectModule": "Select a learning module",
+    "selectModuleHint": "Open a module from the Learning page to chat with the AI tutor",
+    "selectModulePlaceholder": "Select a module first..."
   },
   "search": {
     "title": "Search the web",

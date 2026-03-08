@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, type ReactNode } from "react";
+import { useRef, useCallback, useState, type ReactNode } from "react";
 
 interface SectionRevealProps {
   children: ReactNode;
@@ -9,17 +9,30 @@ interface SectionRevealProps {
 }
 
 export function SectionReveal({ children, delay = 0, className = "" }: SectionRevealProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  // 콘텐츠는 항상 보임 (Google 크롤러 호환)
+  // 스크롤 시 미세한 강조 애니메이션만 적용
+  const [revealed, setRevealed] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
-  useEffect(() => {
-    const el = ref.current;
+  const callbackRef = useCallback((el: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+
     if (!el) return;
+
+    // 이미 뷰포트 안이면 즉시 revealed
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      setRevealed(true);
+      return;
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
+          setRevealed(true);
           observer.unobserve(el);
         }
       },
@@ -27,17 +40,17 @@ export function SectionReveal({ children, delay = 0, className = "" }: SectionRe
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+    observerRef.current = observer;
   }, []);
 
   return (
     <div
-      ref={ref}
+      ref={callbackRef}
       className={className}
       style={{
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? "translateY(0)" : "translateY(30px)",
-        transition: `opacity 700ms cubic-bezier(0.25,0.46,0.45,0.94) ${delay}ms, transform 700ms cubic-bezier(0.25,0.46,0.45,0.94) ${delay}ms`,
+        opacity: revealed ? 1 : 0.85,
+        transform: revealed ? "translateY(0)" : "translateY(12px)",
+        transition: `opacity 600ms cubic-bezier(0.25,0.46,0.45,0.94) ${delay}ms, transform 600ms cubic-bezier(0.25,0.46,0.45,0.94) ${delay}ms`,
       }}
     >
       {children}
