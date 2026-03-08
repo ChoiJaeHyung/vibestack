@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const mod = await getPublicModuleContent(pathId, moduleId);
   if (!mod) return { title: "Not Found" };
   return {
-    title: `${mod.title} | VibeUniv`,
+    title: mod.title,
     description: mod.description ?? undefined,
   };
 }

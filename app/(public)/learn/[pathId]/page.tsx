@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await getPublicLearningPathDetail(pathId);
   if (!data) return { title: "Not Found" };
   return {
-    title: `${data.path.title} | VibeUniv`,
+    title: data.path.title,
     description: data.path.description ?? undefined,
   };
 }

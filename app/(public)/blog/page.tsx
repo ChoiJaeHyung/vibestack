@@ -5,7 +5,7 @@ import { getAllPosts } from "@/lib/blog/posts";
 import { getLocale } from "next-intl/server";
 
 export const metadata: Metadata = {
-  title: "Blog | VibeUniv",
+  title: "Blog",
   description:
     "바이브 코딩, AI 학습, 기술 스택 분석에 대한 인사이트와 가이드. VibeUniv 블로그에서 최신 정보를 확인하세요.",
   openGraph: {

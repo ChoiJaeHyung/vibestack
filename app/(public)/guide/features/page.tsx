@@ -31,7 +31,7 @@ import {
 import { getLocale } from "next-intl/server";
 
 export const metadata: Metadata = {
-  title: "Features Guide | VibeUniv",
+  title: "Features Guide",
   description: "VibeUniv의 메뉴별 기능을 상세히 알아보세요. 대시보드, 프로젝트, 학습, 설정, 리워드까지 모든 기능을 안내합니다.",
 };
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { ArrowLeft, Clock } from "lucide-react";
 import { getPostBySlug, getAllPosts } from "@/lib/blog/posts";
 import { getLocale } from "next-intl/server";
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = getPostBySlug(slug);
   if (!post) return { title: "Not Found" };
   return {
-    title: `${post.title} | VibeUniv Blog`,
+    title: post.title,
     description: post.description,
     openGraph: {
       title: post.title,
@@ -69,7 +70,7 @@ export default async function BlogPostPage({ params }: Props) {
         </header>
 
         <div className="prose prose-sm max-w-none text-text-secondary prose-headings:text-text-primary prose-strong:text-text-secondary prose-a:text-violet-400 prose-code:text-violet-400 prose-code:bg-bg-code prose-code:rounded prose-code:px-1.5 prose-code:py-0.5 prose-code:text-xs prose-pre:bg-[#1e1e2e] prose-pre:border prose-pre:border-border-default prose-blockquote:border-violet-500/30 prose-blockquote:text-text-muted prose-table:text-sm prose-th:text-text-primary prose-td:text-text-secondary">
-          <ReactMarkdown>{body}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
         </div>
       </article>
 

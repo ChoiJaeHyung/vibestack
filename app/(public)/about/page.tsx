@@ -3,7 +3,7 @@ import { GraduationCap, Zap, Globe, Shield, BookOpen, Code2, Brain, Users } from
 import { getLocale } from "next-intl/server";
 
 export const metadata: Metadata = {
-  title: "About | VibeUniv",
+  title: "About",
   description:
     "VibeUniv는 바이브 코더들이 AI로 만든 프로젝트의 기술 스택을 이해하고 학습할 수 있도록 돕는 교육 플랫폼입니다.",
 };

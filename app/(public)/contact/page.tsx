@@ -4,7 +4,7 @@ import { Mail, MessageSquare, Clock } from "lucide-react";
 import { getLocale } from "next-intl/server";
 
 export const metadata: Metadata = {
-  title: "Contact | VibeUniv",
+  title: "Contact",
   description: "VibeUniv에 문의하세요. 서비스 이용, 결제, 기술 지원 등 무엇이든 도와드립니다.",
 };
 

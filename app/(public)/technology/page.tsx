@@ -17,7 +17,7 @@ import {
 import { getLocale } from "next-intl/server";
 
 export const metadata: Metadata = {
-  title: "Technology | VibeUniv",
+  title: "Technology",
   description:
     "VibeUniv만의 온톨로지 기반 학습 시스템. 지식 그래프, 개념 숙련도 추적, 적응형 커리큘럼으로 AI가 만든 코드를 체계적으로 이해합니다.",
 };
