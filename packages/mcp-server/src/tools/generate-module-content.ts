@@ -245,17 +245,20 @@ Output ONLY a JSON array of sections (no code fences/explanations):
     "challenge_starter_code": "string (required for challenge) — Contains ___BLANK___",
     "challenge_answer_code": "string (required for challenge) — Completed code",
 
-    "concept_keys": ["string (optional — KB concept_key identifiers this module teaches)"]
+    "concept_keys": ["string (1-3 KB concept_key identifiers this module teaches — required if KB hints provided)"]
   }
 ]
 
-**Required Rules:**
+**Required Rules (server will reject if not met — fix ALL before submitting):**
 - At least ${minCodeExamples} code_example(s) + ${minQuizQuestions} quiz_question(s) + 1 challenge
 - Minimum ${minSections} sections
-- explanation body must be at least ${minBodyChars} characters
-- If KB concept hints are provided above, add "concept_keys" array to your JSON output
-  listing ONLY the concept_key identifiers this module actually teaches (not just mentions).
-  If unsure, you may omit this field.${difficulty === "beginner" ? `
+- **CRITICAL: EVERY explanation section body must be at least ${minBodyChars} characters.** Count carefully! Write ${difficulty === "beginner" ? "8-12 substantial paragraphs" : "5-8 paragraphs"} to ensure you meet the minimum. This is the #1 cause of submission failures.
+- code_example MUST have BOTH: "body" (description, ${"\u2265"}20 chars) AND "code" (actual code). These are SEPARATE fields.
+- quiz_question MUST have: "quiz_options" (exactly 4 strings), "quiz_answer" (0-3), "quiz_explanation" (${"\\u2265"}20 chars)
+- challenge MUST have: "challenge_starter_code" AND "challenge_answer_code"
+- If KB concept hints are provided above, you MUST add "concept_keys" array to your JSON output
+  listing 1-3 concept_key identifiers this module actually teaches (not just mentions).
+  Do NOT leave concept_keys empty when KB hints are available.${difficulty === "beginner" ? `
 
 **[Beginner-only Additional Rules — Must Follow]:**
 - Every concept must have "What if this didn't exist?" before/after comparison
@@ -330,16 +333,19 @@ ${filesSection}${eduSection}${kbSection}
     "challenge_starter_code": "string (challenge일 때 필수) — ___BLANK___ 포함",
     "challenge_answer_code": "string (challenge일 때 필수) — 완성 코드",
 
-    "concept_keys": ["string (선택 — 이 모듈이 가르치는 KB concept_key 식별자 배열)"]
+    "concept_keys": ["string (KB 힌트가 있으면 필수 — 이 모듈이 가르치는 concept_key 1-3개)"]
   }
 ]
 
-**필수 규칙:**
+**필수 규칙 (미충족 시 서버가 거부합니다 — 제출 전 모두 확인):**
 - 모듈당 code_example 최소 ${minCodeExamples}개 + quiz_question 최소 ${minQuizQuestions}개 + challenge 최소 1개
 - 최소 ${minSections}개 섹션
-- explanation body는 ${minBodyChars}자 이상
-- 위에 KB concept 힌트가 있다면, JSON 출력에 "concept_keys" 배열을 추가하세요.
-  이 모듈이 실제로 가르치는 개념의 concept_key만 포함 (단순 언급 제외). 생략 가능.${difficulty === "beginner" ? `
+- **핵심: 모든 explanation 섹션의 body는 반드시 ${minBodyChars}자 이상이어야 합니다.** 꼼꼼히 세세요! ${difficulty === "beginner" ? "8-12개의 충실한 문단" : "5-8개 문단"}을 작성하세요. 이것이 제출 실패의 #1 원인입니다.
+- code_example은 반드시 "body" (설명, 20자 이상)와 "code" (실제 코드) 두 개의 별도 필드가 필요합니다. body에 코드를 넣지 마세요.
+- quiz_question은 반드시: "quiz_options" (정확히 4개 문자열), "quiz_answer" (0-3), "quiz_explanation" (20자 이상)
+- challenge는 반드시: "challenge_starter_code"와 "challenge_answer_code" 모두 필요
+- 위에 KB concept 힌트가 있다면, JSON 출력에 "concept_keys" 배열을 반드시 추가하세요.
+  이 모듈이 실제로 가르치는 개념의 concept_key 1-3개 포함 (단순 언급 제외). concept_keys를 비워두지 마세요.${difficulty === "beginner" ? `
 
 **[초급 전용 추가 규칙 — 반드시 준수]:**
 - 모든 개념에 "이게 없으면?" before/after 비교 필수

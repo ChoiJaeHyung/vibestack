@@ -3,7 +3,8 @@ import { successResponse, errorResponse } from "@/lib/utils/api-response";
 import { authenticateApiKey, isAuthResult } from "@/server/middleware/api-auth";
 import { createServiceClient } from "@/lib/supabase/service";
 import { validateModule } from "@/lib/utils/curriculum-validation";
-import type { Database, Json } from "@/types/database";
+import { getKBHints } from "@/lib/knowledge";
+import type { Database, Json, Locale } from "@/types/database";
 
 type ModuleType = Database["public"]["Enums"]["module_type"];
 type LearningModuleInsert = Database["public"]["Tables"]["learning_modules"]["Insert"];
@@ -38,7 +39,7 @@ export async function POST(
     // Verify learning_path exists, belongs to this project+user, and is in draft status
     const { data: learningPath, error: pathError } = await supabase
       .from("learning_paths")
-      .select("id, status, difficulty, total_modules, project_id")
+      .select("id, status, difficulty, total_modules, project_id, locale")
       .eq("id", pathId)
       .eq("project_id", projectId)
       .eq("user_id", authResult.userId)
@@ -89,7 +90,13 @@ export async function POST(
 
     const validation = validateModule(moduleData, body.module_order - 1, difficulty);
     if (!validation.valid) {
-      return errorResponse(validation.error, 400);
+      const allErrors = validation.errors;
+      return errorResponse(
+        allErrors.length > 1
+          ? `${allErrors.length} validation errors:\n${allErrors.map((e, i) => `  ${i + 1}. ${e}`).join("\n")}`
+          : validation.error,
+        400,
+      );
     }
 
     // Map tech_name → tech_stack_id
@@ -118,11 +125,28 @@ export async function POST(
     } as unknown as Json;
 
     // Extract concept_keys if provided (R6: Module→Concept coverage)
-    const conceptKeys = Array.isArray(body.concept_keys)
+    let conceptKeys = Array.isArray(body.concept_keys)
       ? (body.concept_keys as unknown[]).filter(
           (k): k is string => typeof k === "string" && k.length > 0,
         )
       : [];
+
+    // Smart fallback: if concept_keys empty, infer from title/description + KB
+    if (conceptKeys.length === 0 && typeof body.tech_name === "string") {
+      const pathLocale = (learningPath as { locale?: string }).locale as Locale | undefined;
+      const kbHints = await getKBHints(body.tech_name, pathLocale ?? "ko");
+      if (kbHints.length > 0) {
+        const searchText = `${body.title} ${body.description}`.toLowerCase();
+        conceptKeys = kbHints
+          .filter((h) =>
+            h.concept_key.split("-").some((word) => searchText.includes(word)) ||
+            h.concept_name.toLowerCase().split(/\s+/).some((word) => word.length > 2 && searchText.includes(word)) ||
+            h.tags?.some((tag) => searchText.includes(tag.toLowerCase()))
+          )
+          .slice(0, 3)
+          .map((h) => h.concept_key);
+      }
+    }
 
     // Atomic upsert using DB unique constraint on (learning_path_id, module_order)
     const moduleUpsert: LearningModuleInsert = {
