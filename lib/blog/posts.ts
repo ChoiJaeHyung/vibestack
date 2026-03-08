@@ -753,3 +753,18 @@ export function getPostBySlug(slug: string): BlogPost | undefined {
 export function getAllPosts(): BlogPost[] {
   return [...blogPosts].sort((a, b) => b.date.localeCompare(a.date));
 }
+
+export function getRelatedPosts(slug: string, limit = 3): BlogPost[] {
+  const current = getPostBySlug(slug);
+  if (!current) return [];
+
+  const others = blogPosts.filter((p) => p.slug !== slug);
+
+  // Prioritize same category, then by date
+  const sameCategory = others.filter((p) => p.category === current.category);
+  const diffCategory = others.filter((p) => p.category !== current.category);
+
+  return [...sameCategory, ...diffCategory]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, limit);
+}

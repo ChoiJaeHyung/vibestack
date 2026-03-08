@@ -15,6 +15,7 @@ import {
   Globe,
 } from "lucide-react";
 import { getLocale } from "next-intl/server";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 export const metadata: Metadata = {
   title: "Technology",
@@ -28,6 +29,12 @@ export default async function TechnologyPage() {
 
   return (
     <div className="max-w-[900px] mx-auto px-8 max-md:px-4 py-12">
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Technology" },
+        ]}
+      />
       {/* Hero */}
       <div className="text-center mb-16">
         <div className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-400 mb-6">
@@ -181,9 +188,18 @@ export default async function TechnologyPage() {
 
         <div className="rounded-2xl border border-border-default bg-bg-primary p-6 mb-4">
           <p className="text-text-secondary leading-relaxed mb-6">
-            {isKo
-              ? "MCP(Model Context Protocol)로 연동하면, AI 분석과 콘텐츠 생성이 여러분의 로컬 환경에서 직접 수행됩니다. 코드가 외부 서버로 전송되지 않아요."
-              : "When connected via MCP (Model Context Protocol), AI analysis and content generation run directly in your local environment. Your code never leaves your machine."}
+            {isKo ? (
+              <>
+                <Link href="/blog/what-is-mcp" className="text-violet-400 hover:underline">MCP(Model Context Protocol)</Link>
+                로 연동하면, AI 분석과 콘텐츠 생성이 여러분의 로컬 환경에서 직접 수행됩니다. 코드가 외부 서버로 전송되지 않아요.
+              </>
+            ) : (
+              <>
+                When connected via{" "}
+                <Link href="/blog/what-is-mcp" className="text-violet-400 hover:underline">MCP (Model Context Protocol)</Link>
+                , AI analysis and content generation run directly in your local environment. Your code never leaves your machine.
+              </>
+            )}
           </p>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -213,9 +229,10 @@ export default async function TechnologyPage() {
         </div>
 
         <div className="rounded-xl border border-border-default bg-bg-primary p-5">
-          <h4 className="text-sm font-semibold text-text-primary mb-3">
+          <Link href="/guide" className="text-sm font-semibold text-text-primary mb-3 hover:text-violet-400 transition-colors inline-flex items-center gap-1.5">
             {isKo ? "지원하는 AI 코딩 도구" : "Supported AI Coding Tools"}
-          </h4>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
           <div className="flex flex-wrap gap-2">
             {["Claude Code", "Cursor", "Windsurf", "Cline", "Kimi Code", "Gemini CLI", "OpenAI Codex"].map((tool) => (
               <span
@@ -266,9 +283,15 @@ export default async function TechnologyPage() {
 
           <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
             <p className="text-sm text-text-secondary">
-              {isKo
-                ? "💡 BYOK(Bring Your Own Key): Pro 플랜에서 본인의 API 키를 등록하면, 원하는 모델을 자유롭게 사용할 수 있어요. 키는 AES-256-GCM으로 암호화되어 안전하게 보관됩니다."
-                : "💡 BYOK (Bring Your Own Key): On Pro plan, register your own API key to freely use any model. Keys are encrypted with AES-256-GCM for secure storage."}
+              {isKo ? (
+                <>
+                  💡 <Link href="/guide" className="text-violet-400 hover:underline">BYOK(Bring Your Own Key)</Link>: Pro 플랜에서 본인의 API 키를 등록하면, 원하는 모델을 자유롭게 사용할 수 있어요. 키는 AES-256-GCM으로 암호화되어 안전하게 보관됩니다.
+                </>
+              ) : (
+                <>
+                  💡 <Link href="/guide" className="text-violet-400 hover:underline">BYOK (Bring Your Own Key)</Link>: On Pro plan, register your own API key to freely use any model. Keys are encrypted with AES-256-GCM for secure storage.
+                </>
+              )}
             </p>
           </div>
         </div>

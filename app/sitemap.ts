@@ -1,7 +1,8 @@
 import { MetadataRoute } from "next";
 import { getAllPosts } from "@/lib/blog/posts";
+import { getPublicLearningPaths, getPublicLearningPathDetail } from "@/server/actions/public-learning";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const posts = getAllPosts();
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -86,5 +87,33 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...blogPages];
+  // Dynamic learning path pages
+  const learningPages: MetadataRoute.Sitemap = [];
+  try {
+    const paths = await getPublicLearningPaths();
+    for (const path of paths) {
+      learningPages.push({
+        url: `https://vibeuniv.com/learn/${path.id}`,
+        lastModified: new Date(path.created_at),
+        changeFrequency: "weekly",
+        priority: 0.7,
+      });
+
+      const detail = await getPublicLearningPathDetail(path.id);
+      if (detail?.modules) {
+        for (const mod of detail.modules) {
+          learningPages.push({
+            url: `https://vibeuniv.com/learn/${path.id}/${mod.id}`,
+            lastModified: new Date(path.created_at),
+            changeFrequency: "monthly",
+            priority: 0.6,
+          });
+        }
+      }
+    }
+  } catch {
+    // If DB is unavailable, skip dynamic learning pages
+  }
+
+  return [...staticPages, ...blogPages, ...learningPages];
 }

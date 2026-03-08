@@ -29,6 +29,7 @@ import {
   FileCode,
 } from "lucide-react";
 import { getLocale } from "next-intl/server";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 export const metadata: Metadata = {
   title: "Features Guide",
@@ -330,6 +331,13 @@ export default async function FeaturesGuidePage() {
 
   return (
     <div className="max-w-[900px] mx-auto px-8 max-md:px-4 py-12">
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Guide", href: "/guide" },
+          { label: isKo ? "Features" : "Features" },
+        ]}
+      />
       {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">

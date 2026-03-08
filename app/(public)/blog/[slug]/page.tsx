@@ -3,9 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ArrowLeft, Clock } from "lucide-react";
-import { getPostBySlug, getAllPosts } from "@/lib/blog/posts";
+import { Clock } from "lucide-react";
+import { getPostBySlug, getAllPosts, getRelatedPosts } from "@/lib/blog/posts";
 import { getLocale } from "next-intl/server";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -22,6 +23,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: post.title,
     description: post.description,
+    alternates: {
+      canonical: `https://vibeuniv.com/blog/${slug}`,
+    },
     openGraph: {
       title: post.title,
       description: post.description,
@@ -41,16 +45,17 @@ export default async function BlogPostPage({ params }: Props) {
 
   const title = isKo ? post.title : post.titleEn;
   const body = isKo ? post.body : post.bodyEn;
+  const relatedPosts = getRelatedPosts(slug, 3);
 
   return (
     <div className="max-w-[720px] mx-auto px-8 max-md:px-4 py-12">
-      <Link
-        href="/blog"
-        className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text-primary transition-colors mb-8"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Blog
-      </Link>
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Blog", href: "/blog" },
+          { label: title },
+        ]}
+      />
 
       <article>
         <header className="mb-8">
@@ -73,6 +78,37 @@ export default async function BlogPostPage({ params }: Props) {
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
         </div>
       </article>
+
+      {/* Related Posts */}
+      {relatedPosts.length > 0 && (
+        <section className="mt-12 mb-4">
+          <h2 className="text-lg font-bold text-text-primary mb-4">
+            {isKo ? "관련 글" : "Related Posts"}
+          </h2>
+          <div className="grid gap-4 md:grid-cols-3">
+            {relatedPosts.map((rp) => (
+              <Link
+                key={rp.slug}
+                href={`/blog/${rp.slug}`}
+                className="rounded-xl border border-border-default bg-bg-primary hover:border-violet-500/40 transition-all p-4 group"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[10px] font-medium text-violet-400 bg-violet-500/10 border border-violet-500/20 rounded-full px-2 py-0.5">
+                    {rp.category}
+                  </span>
+                  <span className="flex items-center gap-1 text-[10px] text-text-muted">
+                    <Clock className="h-2.5 w-2.5" />
+                    {rp.readTime}{isKo ? "분" : "min"}
+                  </span>
+                </div>
+                <h3 className="text-sm font-semibold text-text-primary group-hover:text-violet-400 transition-colors line-clamp-2">
+                  {isKo ? rp.title : rp.titleEn}
+                </h3>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* CTA */}
       <div className="mt-12 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-cyan-500/5 p-8 text-center">

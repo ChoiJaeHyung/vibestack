@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { getPublicLearningPaths } from "@/server/actions/public-learning";
 import { getLocale } from "next-intl/server";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 export const metadata: Metadata = {
   title: "Learn — AI 맞춤 학습 커리큘럼",
@@ -41,6 +42,12 @@ export default async function PublicLearnPage() {
 
   return (
     <div className="max-w-[960px] mx-auto px-8 max-md:px-4 py-12">
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Learn" },
+        ]}
+      />
       {/* ===== Section 1: Hero / Introduction ===== */}
       <div className="text-center mb-16">
         <div className="inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-1.5 mb-6">

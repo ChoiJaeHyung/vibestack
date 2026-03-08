@@ -3,12 +3,18 @@ import Link from "next/link";
 import { Clock, ArrowRight } from "lucide-react";
 import { getAllPosts } from "@/lib/blog/posts";
 import { getLocale } from "next-intl/server";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 export const metadata: Metadata = {
   title: "Blog",
   description:
     "바이브 코딩, AI 학습, 기술 스택 분석에 대한 인사이트와 가이드. VibeUniv 블로그에서 최신 정보를 확인하세요.",
   openGraph: {
+    title: "VibeUniv Blog",
+    description: "바이브 코딩과 AI 학습에 대한 인사이트와 가이드",
+  },
+  twitter: {
+    card: "summary_large_image",
     title: "VibeUniv Blog",
     description: "바이브 코딩과 AI 학습에 대한 인사이트와 가이드",
   },
@@ -21,6 +27,12 @@ export default async function BlogPage() {
 
   return (
     <div className="max-w-[960px] mx-auto px-8 max-md:px-4 py-12">
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Blog" },
+        ]}
+      />
       <div className="mb-12">
         <h1 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">Blog</h1>
         <p className="text-text-muted">

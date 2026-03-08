@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Clock, Lock, BookOpen, Code2, HelpCircle, Compass } from "lucide-react";
+import { Clock, Lock, BookOpen, Code2, HelpCircle, Compass } from "lucide-react";
 import { getPublicLearningPathDetail } from "@/server/actions/public-learning";
 import { getLocale } from "next-intl/server";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 interface Props {
   params: Promise<{ pathId: string }>;
@@ -16,6 +17,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: data.path.title,
     description: data.path.description ?? undefined,
+    alternates: {
+      canonical: `https://vibeuniv.com/learn/${pathId}`,
+    },
   };
 }
 
@@ -44,14 +48,13 @@ export default async function PublicLearningPathPage({ params }: Props) {
 
   return (
     <div className="max-w-[800px] mx-auto px-8 max-md:px-4 py-12">
-      {/* Back */}
-      <Link
-        href="/learn"
-        className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text-primary transition-colors mb-8"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        {isKo ? "목록으로" : "Back to list"}
-      </Link>
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Learn", href: "/learn" },
+          { label: path.title },
+        ]}
+      />
 
       {/* Header */}
       <div className="mb-10">

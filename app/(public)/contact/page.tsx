@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Mail, MessageSquare, Clock } from "lucide-react";
 import { getLocale } from "next-intl/server";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -14,6 +15,12 @@ export default async function ContactPage() {
 
   return (
     <div className="max-w-[800px] mx-auto px-8 max-md:px-4 py-12">
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: isKo ? "Contact" : "Contact" },
+        ]}
+      />
       <div className="text-center mb-12">
         <h1 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">
           {isKo ? "문의하기" : "Contact Us"}
