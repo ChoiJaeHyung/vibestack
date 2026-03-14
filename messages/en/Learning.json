@@ -10,6 +10,10 @@
     "prerequisiteBanner": "We recommend completing these prerequisite modules first: {names}",
     "back": "Back"
   },
+  "feedbackAlert": {
+    "title": "Content Quality Notice",
+    "description": "This learning path has received {count} negative feedback reports. The \"{module}\" module may need improvement."
+  },
   "knowledgeMap": {
     "title": "Knowledge Graph",
     "description": "See what you've learned and what's left at a glance",
@@ -20,6 +24,7 @@
     "markUnlearned": "Learn again",
     "goToLearning": "Go to Learning",
     "learnConcept": "Learn this concept",
+    "selectProject": "Select Project",
     "noProject": "No analyzed projects found",
     "goToProjects": "Go to Projects",
     "error": "Failed to load knowledge graph",
@@ -30,8 +35,11 @@
       "inProgress": "In Progress",
       "notStarted": "Not Started",
       "sameTechEdge": "Same tech link",
-      "crossTechEdge": "Cross-tech link"
-    }
+      "crossTechEdge": "Cross-tech link",
+      "foundInProject": "Found in project ({count})"
+    },
+    "matchedFiles": "Used in project",
+    "moreFiles": "more files"
   },
   "moduleType": {
     "concept": "Concept",
@@ -74,6 +82,9 @@
     "notReady": "Learning content is not ready yet.",
     "defaultError": "Failed to generate content.",
     "unknownError": "An error occurred while generating content."
+  },
+  "codeMatch": {
+    "title": "Concepts in this module found in {count} files in your project"
   },
   "module": {
     "completed": "Completed",
@@ -137,7 +148,15 @@
     "title": "Congratulations!",
     "subtitle": "{name} completed",
     "score": "Quiz score: {score}",
-    "nextModule": "Next Module"
+    "nextModule": "Next Module",
+    "share": "Share",
+    "copy": "Copy",
+    "shareText": "I just completed \"{module}\" on VibeUniv! Learning my own code, one module at a time.",
+    "shareTextWithScore": "I just completed \"{module}\" with a score of {score}% on VibeUniv!"
+  },
+  "public": {
+    "quizLogin": "Log in to take the quiz and check your score",
+    "challengeLogin": "Log in to write code and check the answer"
   },
   "regenerate": {
     "button": "Regenerate",
@@ -151,5 +170,10 @@
     "cancel": "Cancel",
     "confirm": "Regenerate",
     "limitReachedPaid": "Regeneration limit reached"
+  },
+  "weakConcepts": {
+    "title": "Concepts to Review",
+    "description": "These concepts need more practice. Study related modules to improve your mastery.",
+    "study": "Study"
   }
 }

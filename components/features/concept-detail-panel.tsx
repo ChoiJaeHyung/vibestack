@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, BookOpen, CheckCircle2, Lightbulb, GraduationCap } from "lucide-react";
+import { X, BookOpen, CheckCircle2, Lightbulb, GraduationCap, Code2, FileCode } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -136,6 +136,39 @@ export function ConceptDetailPanel({
                   {tag}
                 </span>
               ))}
+            </div>
+          )}
+
+          {/* Matched files from project */}
+          {node.matchedFiles && node.matchedFiles.length > 0 && (
+            <div>
+              <h4 className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
+                <Code2 className="h-3 w-3 text-amber-400" />
+                {t("knowledgeMap.matchedFiles")}
+                <span className="ml-auto text-[10px] text-amber-400 tabular-nums">
+                  {Math.round((node.relevanceScore ?? 0) * 100)}%
+                </span>
+              </h4>
+              <ul className="mt-2 space-y-1">
+                {node.matchedFiles.slice(0, 5).map((filePath) => {
+                  const fileName = filePath.split("/").pop() ?? filePath;
+                  return (
+                    <li
+                      key={filePath}
+                      className="flex items-center gap-1.5 text-[11px] text-text-secondary"
+                      title={filePath}
+                    >
+                      <FileCode className="h-3 w-3 shrink-0 text-text-faint" />
+                      <span className="truncate">{fileName}</span>
+                    </li>
+                  );
+                })}
+                {node.matchedFiles.length > 5 && (
+                  <li className="text-[10px] text-text-faint pl-[18px]">
+                    +{node.matchedFiles.length - 5} {t("knowledgeMap.moreFiles")}
+                  </li>
+                )}
+              </ul>
             </div>
           )}
 

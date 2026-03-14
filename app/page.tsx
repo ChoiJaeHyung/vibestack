@@ -71,12 +71,12 @@ export default async function LandingPage() {
   ];
 
   const FEATURES = [
-    { emoji: "🔌", title: t("features.0.title"), description: t("features.0.description") },
-    { emoji: "🤖", title: t("features.1.title"), description: t("features.1.description") },
-    { emoji: "📚", title: t("features.2.title"), description: t("features.2.description") },
-    { emoji: "💬", title: t("features.3.title"), description: t("features.3.description") },
-    { emoji: "🔐", title: t("features.4.title"), description: t("features.4.description") },
-    { emoji: "🔑", title: t("features.5.title"), description: t("features.5.description") },
+    { emoji: "📚", title: t("features.0.title"), description: t("features.0.description") },
+    { emoji: "🎯", title: t("features.1.title"), description: t("features.1.description") },
+    { emoji: "💬", title: t("features.2.title"), description: t("features.2.description") },
+    { emoji: "🧠", title: t("features.3.title"), description: t("features.3.description") },
+    { emoji: "⏰", title: t("features.4.title"), description: t("features.4.description") },
+    { emoji: "🔗", title: t("features.5.title"), description: t("features.5.description") },
   ];
 
   const FAQ_ITEMS = [
@@ -190,7 +190,7 @@ export default async function LandingPage() {
             </div>
             <div className="text-center min-w-[140px]">
               <div className="text-[32px] font-extrabold mb-1">
-                <AnimatedCounter target={11} suffix={t("stats.aiModelsSuffix")} />
+                <AnimatedCounter target={300} suffix={t("stats.aiModelsSuffix")} />
               </div>
               <div className="text-[13px] text-text-faint">{t("stats.aiModels")}</div>
             </div>
@@ -334,6 +334,38 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        {/* Testimonials — before Pricing for social proof */}
+        <section className="py-[80px] px-8 max-md:px-4 flex justify-center">
+          <div className="max-w-[1120px] w-full">
+            <SectionReveal className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-text-primary tracking-tight">
+                {t("testimonials.title")}<span className="text-violet-500">{t("testimonials.titleHighlight")}</span>
+              </h2>
+            </SectionReveal>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {[0, 1, 2, 3].map((i) => (
+                <SectionReveal key={i}>
+                  <div className="rounded-2xl border border-border-default bg-bg-surface p-6 hover:border-violet-500/30 transition-colors">
+                    <p className="text-sm text-text-secondary leading-relaxed mb-4">
+                      &ldquo;{t(`testimonials.items.${i}.text`)}&rdquo;
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-full bg-gradient-to-br from-violet-500/20 to-cyan-500/20 flex items-center justify-center text-sm font-bold text-violet-400">
+                        {t(`testimonials.items.${i}.name`).charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">{t(`testimonials.items.${i}.name`)}</p>
+                        <p className="text-xs text-text-muted">{t(`testimonials.items.${i}.role`)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </SectionReveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Pricing */}
         <section id="pricing" className="py-[100px] px-8 max-md:px-4 flex justify-center">
           <div className="max-w-[1120px] w-full">
@@ -390,6 +422,7 @@ export default async function LandingPage() {
                 currentPlanLabel={t("pricing.currentPlan")}
                 upgradeLabel={t("pricing.upgrade")}
                 popularLabel={t("pricing.popular")}
+                annualNote={t("pricing.pro.annualNote")}
               />
               <PricingCard
                 name="Team"
@@ -406,6 +439,7 @@ export default async function LandingPage() {
                 ctaHref="/signup"
                 isLoggedIn={!!userEmail}
                 userPlanType={userPlanType}
+                comingSoon
                 checkColor="text-cyan-500"
                 perMonthLabel={t("pricing.perMonth")}
                 currentPlanLabel={t("pricing.currentPlan")}
@@ -482,56 +516,14 @@ export default async function LandingPage() {
             <span className="text-sm font-semibold text-text-faint">VibeUniv</span>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-text-dim">
-            <Link
-              href="/about"
-              className="hover:text-text-tertiary transition-colors"
-            >
-              About
-            </Link>
-            <Link
-              href="/guide"
-              className="hover:text-text-tertiary transition-colors"
-            >
-              Guide
-            </Link>
-            <Link
-              href="/blog"
-              className="hover:text-text-tertiary transition-colors"
-            >
-              Blog
-            </Link>
-            <Link
-              href="/technology"
-              className="hover:text-text-tertiary transition-colors"
-            >
-              Technology
-            </Link>
-            <Link
-              href="/contact"
-              className="hover:text-text-tertiary transition-colors"
-            >
-              Contact
-            </Link>
-            <Link
-              href="/privacy"
-              className="hover:text-text-tertiary transition-colors"
-            >
-              {t("footer.privacy")}
-            </Link>
-            <Link
-              href="/terms"
-              className="hover:text-text-tertiary transition-colors"
-            >
-              {t("footer.terms")}
-            </Link>
-            <a
-              href="https://github.com/vibestack"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-text-tertiary transition-colors"
-            >
-              GitHub
-            </a>
+            <Link href="/about" className="hover:text-text-tertiary transition-colors">{t("footer.about")}</Link>
+            <Link href="/guide" className="hover:text-text-tertiary transition-colors">{t("footer.guide")}</Link>
+            <Link href="/blog" className="hover:text-text-tertiary transition-colors">{t("footer.blog")}</Link>
+            <Link href="/technology" className="hover:text-text-tertiary transition-colors">{t("footer.technology")}</Link>
+            <Link href="/contact" className="hover:text-text-tertiary transition-colors">{t("footer.contact")}</Link>
+            <Link href="/privacy" className="hover:text-text-tertiary transition-colors">{t("footer.privacy")}</Link>
+            <Link href="/terms" className="hover:text-text-tertiary transition-colors">{t("footer.terms")}</Link>
+            <a href="https://github.com/vibestack" target="_blank" rel="noopener noreferrer" className="hover:text-text-tertiary transition-colors">{t("footer.github")}</a>
           </div>
           <div className="text-xs text-text-ghost">
             <div>{t("footer.copyright")}</div>
@@ -577,11 +569,13 @@ function PricingCard({
   isPopular,
   isLoggedIn,
   userPlanType,
+  comingSoon,
   checkColor,
   perMonthLabel,
   currentPlanLabel,
   upgradeLabel,
   popularLabel,
+  annualNote,
 }: {
   name: string;
   planKey: string;
@@ -593,11 +587,13 @@ function PricingCard({
   isPopular?: boolean;
   isLoggedIn?: boolean;
   userPlanType?: string | null;
+  comingSoon?: boolean;
   checkColor: string;
   perMonthLabel: string;
   currentPlanLabel: string;
   upgradeLabel: string;
   popularLabel: string;
+  annualNote?: string;
 }) {
   const isCurrentPlan = isLoggedIn && userPlanType === planKey;
   const userRank = PLAN_RANK[userPlanType ?? "free"] ?? 0;
@@ -606,9 +602,9 @@ function PricingCard({
 
   let resolvedLabel = ctaLabel;
   let resolvedHref = ctaHref;
-  let disabled = false;
+  let disabled = !!comingSoon;
 
-  if (isLoggedIn) {
+  if (!comingSoon && isLoggedIn) {
     if (isCurrentPlan) {
       resolvedLabel = currentPlanLabel;
       resolvedHref = "/settings/billing";
@@ -639,11 +635,16 @@ function PricingCard({
       )}
       <h3 className="text-xl font-bold text-text-primary">{name}</h3>
       <p className="text-[13px] text-text-faint mt-1">{description}</p>
-      <div className="mt-4 flex items-baseline">
-        <span className="text-[44px] font-extrabold text-text-primary tracking-[-2px]">
-          {price}
-        </span>
-        <span className="ml-1 text-sm text-text-faint">{perMonthLabel}</span>
+      <div className="mt-4">
+        <div className="flex items-baseline">
+          <span className="text-[44px] font-extrabold text-text-primary tracking-[-2px]">
+            {price}
+          </span>
+          <span className="ml-1 text-sm text-text-faint">{perMonthLabel}</span>
+        </div>
+        {annualNote && (
+          <p className="mt-1 text-xs text-violet-400 font-medium">{annualNote}</p>
+        )}
       </div>
       <ul className="mt-6 space-y-3">
         {features.map((feature) => (

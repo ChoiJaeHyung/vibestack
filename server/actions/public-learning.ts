@@ -126,26 +126,37 @@ export async function getPublicModuleContent(
 
   if (!path) return null;
 
-  const { data: module } = await supabase
+  // First, fetch module_order to determine preview eligibility (without content)
+  const { data: meta } = await supabase
     .from("learning_modules")
-    .select("id, title, description, module_type, module_order, tech_stack_id, estimated_minutes, content")
+    .select("id, title, description, module_type, module_order, tech_stack_id, estimated_minutes")
     .eq("id", moduleId)
     .eq("learning_path_id", pathId)
     .single();
 
-  if (!module) return null;
+  if (!meta) return null;
 
-  // 첫 2개 모듈만 전체 콘텐츠 공개
-  const isPreviewable = module.module_order <= 2;
+  // Only fetch content column for previewable modules (first 2)
+  const isPreviewable = meta.module_order <= 2;
+  let content: Record<string, unknown> | null = null;
+
+  if (isPreviewable) {
+    const { data: fullModule } = await supabase
+      .from("learning_modules")
+      .select("content")
+      .eq("id", moduleId)
+      .single();
+    content = (fullModule?.content as Record<string, unknown>) ?? null;
+  }
 
   return {
-    id: module.id,
-    title: module.title,
-    description: module.description,
-    module_type: module.module_type,
-    module_order: module.module_order,
-    tech_stack_id: module.tech_stack_id,
-    estimated_minutes: module.estimated_minutes,
-    content: isPreviewable ? (module.content as Record<string, unknown>) : null,
+    id: meta.id,
+    title: meta.title,
+    description: meta.description,
+    module_type: meta.module_type,
+    module_order: meta.module_order,
+    tech_stack_id: meta.tech_stack_id,
+    estimated_minutes: meta.estimated_minutes,
+    content,
   };
 }

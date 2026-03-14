@@ -1,10 +1,15 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
-import { ArchitectureMap } from "@/components/features/architecture-map";
 import { getArchitectureData } from "@/server/actions/architecture";
+
+const ArchitectureMap = dynamic(
+  () => import("@/components/features/architecture-map").then((m) => m.ArchitectureMap),
+  { loading: () => <div className="flex h-96 items-center justify-center text-text-faint">Loading...</div> },
+);
 
 interface ArchitecturePageProps {
   params: Promise<{ id: string }>;

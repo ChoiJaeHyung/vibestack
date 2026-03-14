@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
   CheckCircle2,
@@ -17,10 +18,10 @@ import {
   Target,
   RefreshCw,
   RotateCcw,
-  Eye,
   Brain,
   Sparkles,
   AlertTriangle,
+  FileCode,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CelebrationModal } from "@/components/features/celebration-modal";
@@ -30,21 +31,10 @@ import rehypeHighlight from "rehype-highlight";
 import { updateLearningProgress, generateModuleContent, prefetchNextModuleContent } from "@/server/actions/learning";
 import { regenerateModuleContent } from "@/server/actions/curriculum";
 import type { RegenerationReason } from "@/server/actions/curriculum";
+import { getWeakConceptRecommendations, getConceptMatchesForModule, type WeakConceptRecommendation, type ModuleConceptMatch } from "@/server/actions/knowledge-graph";
 import { useTutorPanel } from "@/components/features/tutor-panel-context";
 import { translateError } from "@/lib/utils/translate-error";
-import hljs from "highlight.js/lib/core";
-import javascript from "highlight.js/lib/languages/javascript";
-import typescript from "highlight.js/lib/languages/typescript";
-import xml from "highlight.js/lib/languages/xml";
-import css from "highlight.js/lib/languages/css";
-import json from "highlight.js/lib/languages/json";
-
-hljs.registerLanguage("javascript", javascript);
-hljs.registerLanguage("typescript", typescript);
-hljs.registerLanguage("xml", xml);
-hljs.registerLanguage("css", css);
-hljs.registerLanguage("json", json);
-
+import { analytics } from "@/lib/utils/analytics";
 // ─── Types ──────────────────────────────────────────────────────────
 
 interface ContentSection {
@@ -80,6 +70,7 @@ interface ModuleContentProps {
   projectName?: string;
   prevModuleId: string | null;
   nextModuleId: string | null;
+  conceptKeys?: string[];
   needsGeneration?: boolean;
   planType?: "free" | "pro" | "team";
   regenerationCount?: number;
@@ -318,22 +309,6 @@ const markdownComponents = {
 };
 
 // ─── Challenge Section Component ────────────────────────────────────
-
-function highlightCode(code: string): string {
-  try {
-    const result = hljs.highlightAuto(code, [
-      "javascript",
-      "typescript",
-      "xml",
-      "css",
-      "json",
-    ]);
-    return result.value;
-  } catch {
-    // hljs 실패 시 raw text (HTML 이스케이프)
-    return code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-}
 
 // ─── Fill-in-the-blank helpers ───────────────────────────────────
 
@@ -602,6 +577,7 @@ export function ModuleContent({
   projectName,
   prevModuleId,
   nextModuleId,
+  conceptKeys,
   needsGeneration,
   regenerationCount = 0,
   maxRegenerationCount = 1,
@@ -616,10 +592,20 @@ export function ModuleContent({
   );
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationScore, setCelebrationScore] = useState<number | null>(null);
+  const [weakConcepts, setWeakConcepts] = useState<WeakConceptRecommendation[]>([]);
   const startTimeRef = useRef<number>(Date.now());
   const quizResultsRef = useRef<Map<number, boolean>>(new Map());
   const contentRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
+  const [conceptMatches, setConceptMatches] = useState<ModuleConceptMatch[]>([]);
+
+  // Fetch code matches for this module's concepts (non-blocking)
+  useEffect(() => {
+    if (!conceptKeys || conceptKeys.length === 0 || !projectId) return;
+    getConceptMatchesForModule(projectId, conceptKeys)
+      .then((r) => setConceptMatches(r.matches))
+      .catch(() => {});
+  }, [projectId, conceptKeys]);
 
   const handleQuizResult = useCallback((sectionIndex: number, correct: boolean) => {
     quizResultsRef.current.set(sectionIndex, correct);
@@ -774,9 +760,15 @@ export function ModuleContent({
         timeSpentSeconds,
       );
       if (result.success) {
+        analytics.moduleComplete(0);
+        if (score !== undefined) analytics.quizSubmit(score);
         setIsCompleted(true);
         setCelebrationScore(score ?? null);
         setShowCelebration(true);
+        // Fetch weak concept recommendations in background
+        getWeakConceptRecommendations(projectId, 3)
+          .then((r) => setWeakConcepts(r.recommendations))
+          .catch(() => {});
       } else {
         alert(t('progress.saveError'));
       }
@@ -786,7 +778,7 @@ export function ModuleContent({
     } finally {
       setCompleting(false);
     }
-  }, [moduleId, t]);
+  }, [moduleId, projectId, t]);
 
   const handleRetryGeneration = useCallback(() => {
     setGenerationError(null);
@@ -991,6 +983,41 @@ export function ModuleContent({
           </p>
         )}
       </div>
+
+      {/* Code match banner — shows which project files use concepts from this module */}
+      {conceptMatches.length > 0 && (
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] px-4 py-3">
+          <div className="flex items-start gap-2.5">
+            <FileCode className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-text-secondary">
+                {t("codeMatch.title", { count: conceptMatches.reduce((sum, m) => sum + m.matchedFiles.length, 0) })}
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {conceptMatches.flatMap((m) =>
+                  m.matchedFiles.slice(0, 3).map((filePath) => {
+                    const fileName = filePath.split("/").pop() ?? filePath;
+                    return (
+                      <span
+                        key={`${m.conceptKey}:${filePath}`}
+                        className="inline-flex items-center gap-1 rounded-md bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-700 dark:text-amber-400 font-mono"
+                        title={filePath}
+                      >
+                        {fileName}
+                      </span>
+                    );
+                  }),
+                ).slice(0, 6)}
+                {conceptMatches.reduce((sum, m) => sum + m.matchedFiles.length, 0) > 6 && (
+                  <span className="text-[11px] text-text-dim self-center">
+                    +{conceptMatches.reduce((sum, m) => sum + m.matchedFiles.length, 0) - 6}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Regeneration dialog */}
       {showRegenDialog && (
@@ -1201,6 +1228,46 @@ export function ModuleContent({
                   </Button>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Weak Concept Recommendations (shown after completion) */}
+      {isCompleted && weakConcepts.length > 0 && (
+        <div className="mx-auto max-w-3xl px-6 pb-6">
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-amber-400">
+              <Target className="h-4 w-4" />
+              {t('weakConcepts.title')}
+            </h3>
+            <p className="mt-1 text-xs text-text-muted">{t('weakConcepts.description')}</p>
+            <div className="mt-3 space-y-2">
+              {weakConcepts.map((wc) => (
+                <div key={wc.conceptKey} className="flex items-center justify-between rounded-lg bg-bg-surface px-3 py-2">
+                  <div>
+                    <span className="text-sm font-medium text-text-primary">{wc.conceptName}</span>
+                    <span className="ml-2 text-xs text-text-muted">{wc.techName}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-16 rounded-full bg-bg-input">
+                      <div
+                        className="h-full rounded-full bg-amber-500"
+                        style={{ width: `${wc.level}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-text-muted">{wc.level}%</span>
+                    {wc.relatedModules.length > 0 && wc.relatedModules[0].status !== "completed" && (
+                      <Link
+                        href={`/learning/${wc.relatedModules[0].pathId}/${wc.relatedModules[0].id}`}
+                        className="text-xs text-violet-400 hover:text-violet-300"
+                      >
+                        {t('weakConcepts.study')}
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

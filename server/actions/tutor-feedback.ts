@@ -24,7 +24,7 @@ export async function submitTutorFeedback(
       return { success: false, error: "Not authenticated" };
     }
 
-    const rl = rateLimit(`tutor-feedback:${user.id}`, 30);
+    const rl = await rateLimit(`tutor-feedback:${user.id}`, 30);
     if (!rl.success) {
       return { success: false, error: "Too many requests" };
     }

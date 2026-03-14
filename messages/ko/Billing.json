@@ -16,10 +16,16 @@
   "usageLabel": {
     "projects": "프로젝트",
     "learningPaths": "학습 로드맵 (이번 달)",
-    "aiChats": "AI 대화 (이번 달)"
+    "aiChats": "AI 대화 (이번 달)",
+    "tokenBudget": "토큰 사용량 (이번 달)"
   },
   "plan": {
     "perMonth": "/월",
+    "perYear": "/년",
+    "monthly": "월간",
+    "annual": "연간",
+    "savePercent": "-17%",
+    "annualSaveNote": "월간 대비 $38 절약",
     "currentPlan": "현재 플랜",
     "popular": "인기",
     "free": {
@@ -43,12 +49,12 @@
       }
     },
     "team": {
-      "cta": "Team 시작하기",
+      "cta": "출시 예정",
       "features": {
         "pro": "Pro 전체 기능",
-        "share": "팀 프로젝트 공유",
-        "dashboard": "팀 학습 대시보드",
-        "support": "우선 지원"
+        "share": "팀 프로젝트 공유 (출시 예정)",
+        "dashboard": "팀 학습 대시보드 (출시 예정)",
+        "support": "우선 지원 (출시 예정)"
       }
     }
   },

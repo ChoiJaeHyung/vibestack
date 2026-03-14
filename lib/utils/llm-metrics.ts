@@ -21,6 +21,5 @@ export function logLlmCall(entry: LlmMetricEntry): void {
     timestamp: new Date().toISOString(),
     ...entry,
   };
-  // eslint-disable-next-line no-console
   console.log(JSON.stringify(record));
 }

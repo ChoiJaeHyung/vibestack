@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
 import type Stripe from "stripe";
+import { sendWelcomeProEmail } from "@/server/actions/email-notifications";
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -71,6 +72,20 @@ export async function POST(request: NextRequest) {
         });
 
         console.log("[stripe-webhook] Checkout completed for user:", userId, "plan:", plan);
+
+        // Send welcome email for Pro upgrade
+        if (plan === "pro" || plan === "team") {
+          const { data: userData } = await serviceClient
+            .from("users")
+            .select("email, nickname")
+            .eq("id", userId)
+            .single();
+          if (userData?.email) {
+            sendWelcomeProEmail(userData.email, userData.nickname ?? "there").catch((err) =>
+              console.error("[stripe-webhook] Welcome email failed:", err),
+            );
+          }
+        }
         break;
       }
 

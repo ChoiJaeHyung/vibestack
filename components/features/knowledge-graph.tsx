@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -17,6 +17,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useTranslations } from "next-intl";
+import { Code2 } from "lucide-react";
 import { ConceptNode, type ConceptNodeType } from "./concept-node";
 import { ConceptDetailPanel } from "./concept-detail-panel";
 import type {
@@ -86,6 +87,8 @@ function buildFlowNodes(
           technologyName: concept.technologyName,
           masteryLevel: concept.masteryLevel,
           conceptKey: concept.conceptKey,
+          relevanceScore: concept.relevanceScore,
+          matchedFileCount: concept.matchedFiles?.length,
         },
       });
     }
@@ -99,27 +102,41 @@ function buildFlowNodes(
 function buildFlowEdges(
   graphEdges: ConceptGraphData["edges"],
 ): Edge[] {
-  return graphEdges.map((e) => ({
-    id: e.id,
-    source: e.source,
-    target: e.target,
-    type: "default",
-    animated: e.edgeType === "cross_tech",
-    style: {
-      stroke:
-        e.edgeType === "cross_tech"
+  return graphEdges.map((e) => {
+    const isRelated = e.edgeType === "related";
+    const isCrossTech = e.edgeType === "cross_tech";
+    const isDiffFlow = e.edgeType === "difficulty_flow";
+
+    return {
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      type: "default",
+      animated: isCrossTech,
+      style: {
+        stroke: isCrossTech
           ? "var(--accent-purple)"
-          : "var(--border-default)",
-      strokeWidth: e.edgeType === "cross_tech" ? 2 : 1,
-    },
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-      color:
-        e.edgeType === "cross_tech"
+          : isRelated
+            ? "var(--accent-blue, #3b82f6)"
+            : isDiffFlow
+              ? "var(--accent-emerald, #10b981)"
+              : "var(--border-default)",
+        strokeWidth: isCrossTech ? 2 : isRelated ? 1.5 : 1,
+        strokeDasharray: isRelated ? "6 3" : undefined,
+        opacity: isRelated ? 0.6 : 1,
+      },
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        color: isCrossTech
           ? "var(--accent-purple)"
-          : "var(--border-default)",
-    },
-  }));
+          : isRelated
+            ? "var(--accent-blue, #3b82f6)"
+            : isDiffFlow
+              ? "var(--accent-emerald, #10b981)"
+              : "var(--border-default)",
+      },
+    };
+  });
 }
 
 // ── Component ───────────────────────────────────────────────────
@@ -146,7 +163,10 @@ export function KnowledgeGraph({ initialData, projectId }: KnowledgeGraphProps) 
       (n) => n.masteryLevel > 0 && n.masteryLevel < MASTERY.MASTERED_THRESHOLD,
     ).length;
     const notStarted = total - mastered - inProgress;
-    return { total, mastered, inProgress, notStarted };
+    const foundInProject = graphData.nodes.filter(
+      (n) => (n.relevanceScore ?? 0) > 0,
+    ).length;
+    return { total, mastered, inProgress, notStarted, foundInProject };
   }, [graphData.nodes]);
 
   const flowNodes = useMemo(
@@ -158,8 +178,17 @@ export function KnowledgeGraph({ initialData, projectId }: KnowledgeGraphProps) 
     [graphData],
   );
 
-  const [nodes, , onNodesChange] = useNodesState(flowNodes);
-  const [edges, , onEdgesChange] = useEdgesState(flowEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState(flowNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(flowEdges);
+
+  // Sync ReactFlow state when graphData changes (e.g., mastery update)
+  useEffect(() => {
+    setNodes(flowNodes);
+  }, [flowNodes, setNodes]);
+
+  useEffect(() => {
+    setEdges(flowEdges);
+  }, [flowEdges, setEdges]);
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (_, node) => {
@@ -229,7 +258,7 @@ export function KnowledgeGraph({ initialData, projectId }: KnowledgeGraphProps) 
                 <span className="font-semibold text-text-primary">{stats.notStarted}</span>
               </span>
             </div>
-            <div className="mt-2 flex items-center gap-4 text-xs">
+            <div className="mt-2 flex items-center gap-4 text-xs flex-wrap">
               <span className="flex items-center gap-1.5">
                 <span className="h-px w-4 bg-border-default" />
                 <span className="text-text-muted">{t("knowledgeMap.legend.sameTechEdge")}</span>
@@ -238,6 +267,14 @@ export function KnowledgeGraph({ initialData, projectId }: KnowledgeGraphProps) 
                 <span className="h-px w-4 bg-violet-500 border-t border-dashed border-violet-500" />
                 <span className="text-text-muted">{t("knowledgeMap.legend.crossTechEdge")}</span>
               </span>
+              {stats.foundInProject > 0 && (
+                <span className="flex items-center gap-1.5">
+                  <Code2 className="h-3 w-3 text-amber-400" />
+                  <span className="text-text-muted">
+                    {t("knowledgeMap.legend.foundInProject", { count: stats.foundInProject })}
+                  </span>
+                </span>
+              )}
             </div>
             <p className="mt-1.5 text-[11px] text-text-faint">
               {t("knowledgeMap.guide")}

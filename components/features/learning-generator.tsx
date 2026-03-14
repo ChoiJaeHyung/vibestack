@@ -19,6 +19,7 @@ import { generateLearningPath } from "@/server/actions/learning";
 import { createClient } from "@/lib/supabase/client";
 import { invalidateCache } from "@/lib/hooks/use-cached-fetch";
 import { translateError } from "@/lib/utils/translate-error";
+import { analytics } from "@/lib/utils/analytics";
 import type { UsageData } from "@/server/actions/usage";
 
 type Difficulty = "beginner" | "intermediate" | "advanced";
@@ -223,6 +224,7 @@ export function LearningGenerator({ hasExistingPaths = false }: LearningGenerato
       );
 
       if (response.success && response.data) {
+        analytics.curriculumGenerate(difficulty);
         setResult(response.data);
         invalidateCache("/api/dashboard");
         invalidateCache("/api/learning");

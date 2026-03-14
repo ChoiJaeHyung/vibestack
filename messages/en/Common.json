@@ -23,6 +23,36 @@
     "weeksAgo": "{count}w ago",
     "monthsAgo": "{count}mo ago"
   },
+  "breadcrumb": {
+    "home": "Home",
+    "blog": "Blog",
+    "guide": "Guide",
+    "features": "Features"
+  },
+  "footer": {
+    "copyright": "All rights reserved."
+  },
+  "label": {
+    "freePreview": "Free Preview",
+    "membersOnly": "Members only"
+  },
+  "nav": {
+    "about": "About",
+    "guide": "Guide",
+    "blog": "Blog",
+    "learn": "Learn",
+    "technology": "Technology",
+    "contact": "Contact",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "github": "GitHub"
+  },
+  "moduleType": {
+    "concept": "Concept",
+    "practical": "Practical",
+    "quiz": "Quiz",
+    "project_walkthrough": "Walkthrough"
+  },
   "cookieConsent": {
     "message": "This website uses cookies to improve your experience. Essential cookies are used for login and language settings. Analytics cookies help us improve the service.",
     "accept": "Accept All",

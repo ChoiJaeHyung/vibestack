@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Clock } from "lucide-react";
 import { getPostBySlug, getAllPosts, getRelatedPosts } from "@/lib/blog/posts";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 interface Props {
@@ -41,18 +41,19 @@ export default async function BlogPostPage({ params }: Props) {
   if (!post) notFound();
 
   const locale = await getLocale();
-  const isKo = locale === "ko";
+  const t = await getTranslations("Public");
+  const tc = await getTranslations("Common");
 
-  const title = isKo ? post.title : post.titleEn;
-  const body = isKo ? post.body : post.bodyEn;
+  const title = locale === "ko" ? post.title : post.titleEn;
+  const body = locale === "ko" ? post.body : post.bodyEn;
   const relatedPosts = getRelatedPosts(slug, 3);
 
   return (
     <div className="max-w-[720px] mx-auto px-8 max-md:px-4 py-12">
       <Breadcrumb
         items={[
-          { label: "Home", href: "/" },
-          { label: "Blog", href: "/blog" },
+          { label: tc("breadcrumb.home"), href: "/" },
+          { label: tc("breadcrumb.blog"), href: "/blog" },
           { label: title },
         ]}
       />
@@ -66,7 +67,7 @@ export default async function BlogPostPage({ params }: Props) {
             <span className="text-xs text-text-muted">{post.date}</span>
             <span className="flex items-center gap-1 text-xs text-text-muted">
               <Clock className="h-3 w-3" />
-              {post.readTime}{isKo ? "분" : "min"}
+              {post.readTime}{t("blog.readTime")}
             </span>
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-text-primary leading-tight">
@@ -83,7 +84,7 @@ export default async function BlogPostPage({ params }: Props) {
       {relatedPosts.length > 0 && (
         <section className="mt-12 mb-4">
           <h2 className="text-lg font-bold text-text-primary mb-4">
-            {isKo ? "관련 글" : "Related Posts"}
+            {t("blog.relatedPosts")}
           </h2>
           <div className="grid gap-4 md:grid-cols-3">
             {relatedPosts.map((rp) => (
@@ -98,11 +99,11 @@ export default async function BlogPostPage({ params }: Props) {
                   </span>
                   <span className="flex items-center gap-1 text-[10px] text-text-muted">
                     <Clock className="h-2.5 w-2.5" />
-                    {rp.readTime}{isKo ? "분" : "min"}
+                    {rp.readTime}{t("blog.readTime")}
                   </span>
                 </div>
                 <h3 className="text-sm font-semibold text-text-primary group-hover:text-violet-400 transition-colors line-clamp-2">
-                  {isKo ? rp.title : rp.titleEn}
+                  {locale === "ko" ? rp.title : rp.titleEn}
                 </h3>
               </Link>
             ))}
@@ -113,18 +114,16 @@ export default async function BlogPostPage({ params }: Props) {
       {/* CTA */}
       <div className="mt-12 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-cyan-500/5 p-8 text-center">
         <h3 className="text-lg font-bold text-text-primary mb-2">
-          {isKo ? "내 프로젝트로 학습 시작하기" : "Start Learning with Your Project"}
+          {t("blog.ctaTitle")}
         </h3>
         <p className="text-sm text-text-muted mb-6 max-w-md mx-auto">
-          {isKo
-            ? "AI로 만든 프로젝트를 연결하면, 내 코드가 교재가 되는 맞춤 학습이 시작됩니다."
-            : "Connect your AI-built project and start personalized learning with your code as the textbook."}
+          {t("blog.ctaDesc")}
         </p>
         <Link
           href="/signup"
           className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
         >
-          {isKo ? "무료로 시작하기" : "Get Started Free"}
+          {t("blog.ctaButton")}
         </Link>
       </div>
 
@@ -136,7 +135,7 @@ export default async function BlogPostPage({ params }: Props) {
             "@context": "https://schema.org",
             "@type": "Article",
             headline: title,
-            description: isKo ? post.description : post.descriptionEn,
+            description: locale === "ko" ? post.description : post.descriptionEn,
             datePublished: post.date,
             author: { "@type": "Organization", name: "VibeUniv" },
             publisher: { "@type": "Organization", name: "VibeUniv", url: "https://vibeuniv.com" },

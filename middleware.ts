@@ -78,7 +78,7 @@ export async function middleware(request: NextRequest) {
   if (prefix) {
     const limit = RATE_LIMITS[prefix];
     const key = getRateLimitKey(request, prefix);
-    const result = rateLimit(key, limit);
+    const result = await rateLimit(key, limit);
 
     if (!result.success) {
       const retryAfter = Math.ceil(

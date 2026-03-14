@@ -6,6 +6,7 @@ import { ApiKeyManager } from "@/components/features/api-key-manager";
 import { LlmKeyManager } from "@/components/features/llm-key-manager";
 import { WeeklyTargetSetting } from "@/components/features/weekly-target-setting";
 import { LocaleSelector } from "@/components/features/locale-selector";
+import { DeleteAccountSection } from "@/components/features/delete-account-section";
 import { getCurrentPlan } from "@/server/actions/billing";
 import { getStreak } from "@/server/actions/streak";
 import { getAuthUserLocale } from "@/server/actions/learning";
@@ -112,6 +113,8 @@ export default async function SettingsPage() {
             </CardHeader>
           </Card>
         </Link>
+
+        {authUser && <DeleteAccountSection />}
       </div>
     </div>
   );

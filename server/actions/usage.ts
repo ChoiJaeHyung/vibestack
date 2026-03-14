@@ -2,6 +2,7 @@
 
 import { getAuthUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
+import { checkTokenBudget } from "@/lib/utils/usage-limits";
 
 // ─── Response Types ──────────────────────────────────────────────────
 
@@ -9,6 +10,7 @@ export interface UsageData {
   projects: { used: number; limit: number | null };
   learningPaths: { used: number; limit: number | null };
   aiChats: { used: number; limit: number | null };
+  tokenBudget: { used: number; limit: number | null } | null;
   planType: "free" | "pro" | "team";
 }
 
@@ -82,6 +84,15 @@ export async function getUsageData(): Promise<UsageDataResult> {
     const learningPathCount = learningPathResult.count;
     const aiChatCount = aiChatResult.count;
 
+    // Fetch token budget for Free non-BYOK users
+    let tokenBudget: UsageData["tokenBudget"] = null;
+    if (isFree) {
+      const tb = await checkTokenBudget(user.id);
+      if (tb.budget !== null) {
+        tokenBudget = { used: tb.used, limit: tb.budget };
+      }
+    }
+
     return {
       success: true,
       data: {
@@ -97,6 +108,7 @@ export async function getUsageData(): Promise<UsageDataResult> {
           used: aiChatCount ?? 0,
           limit: isFree ? FREE_LIMITS.aiChats : null,
         },
+        tokenBudget,
         planType,
       },
     };

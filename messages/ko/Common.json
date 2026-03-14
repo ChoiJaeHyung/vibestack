@@ -23,6 +23,36 @@
     "weeksAgo": "{count}주 전",
     "monthsAgo": "{count}개월 전"
   },
+  "breadcrumb": {
+    "home": "홈",
+    "blog": "블로그",
+    "guide": "가이드",
+    "features": "기능 가이드"
+  },
+  "footer": {
+    "copyright": "All rights reserved."
+  },
+  "label": {
+    "freePreview": "무료 미리보기",
+    "membersOnly": "회원 전용"
+  },
+  "nav": {
+    "about": "소개",
+    "guide": "가이드",
+    "blog": "블로그",
+    "learn": "학습",
+    "technology": "기술",
+    "contact": "문의",
+    "terms": "이용약관",
+    "privacy": "개인정보처리방침",
+    "github": "GitHub"
+  },
+  "moduleType": {
+    "concept": "개념",
+    "practical": "실습",
+    "quiz": "퀴즈",
+    "project_walkthrough": "프로젝트 실습"
+  },
   "cookieConsent": {
     "message": "이 웹사이트는 서비스 향상을 위해 쿠키를 사용합니다. 필수 쿠키는 로그인과 언어 설정에 사용되며, 분석 쿠키는 서비스 개선에 도움을 줍니다.",
     "accept": "모두 수락",

@@ -1,10 +1,15 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ArrowLeft, Activity } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
-import { CodeHealthReport } from "@/components/features/code-health-report";
 import { createClient } from "@/lib/supabase/server";
+
+const CodeHealthReport = dynamic(
+  () => import("@/components/features/code-health-report").then((m) => m.CodeHealthReport),
+  { loading: () => <div className="flex h-96 items-center justify-center text-text-faint">Loading...</div> },
+);
 
 interface HealthPageProps {
   params: Promise<{ id: string }>;

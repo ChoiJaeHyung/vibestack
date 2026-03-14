@@ -19,9 +19,11 @@ import { decryptContent } from "@/lib/utils/content-encryption";
 import { getKBHints } from "@/lib/knowledge";
 import { generateKBForTech, generateMissingKBs } from "@/server/actions/knowledge";
 import { rateLimit } from "@/lib/utils/rate-limit";
+import { withRetry } from "@/lib/utils/retry";
 import { checkAndAwardBadges } from "@/server/actions/badges";
 import type { NewlyEarnedBadge } from "@/server/actions/badges";
 import { updateStreak } from "@/server/actions/streak";
+import { sendCurriculumReadyEmail } from "@/server/actions/email-notifications";
 import { after } from "next/server";
 import type { Database, Json, Locale } from "@/types/database";
 import type { EducationalAnalysis } from "@/types/educational-analysis";
@@ -192,6 +194,7 @@ interface LearningModuleDetail {
   module_type: ModuleType | null;
   module_order: number;
   estimated_minutes: number | null;
+  concept_keys: string[];
   tech_stack_id: string | null;
   content: ModuleContent;
   learning_path_id: string;
@@ -438,7 +441,7 @@ export async function generateLearningPath(
     }
 
     // Rate limit: 5 learning path generations per minute per user
-    const rl = rateLimit(`learning:${user.id}`, 5);
+    const rl = await rateLimit(`learning:${user.id}`, 5);
     if (!rl.success) {
       return { success: false, error: "Too many requests. Please try again later." };
     }
@@ -513,10 +516,12 @@ export async function generateLearningPath(
       locale,
     );
 
-    const structureResult = await provider.chat({
-      messages: [{ role: "user", content: structurePrompt }],
-      maxTokens: 32768,
-    });
+    const structureResult = await withRetry(
+      () => provider.chat({
+        messages: [{ role: "user", content: structurePrompt }],
+        maxTokens: 32768,
+      }),
+    );
 
     const totalInputTokens = structureResult.input_tokens;
     const totalOutputTokens = structureResult.output_tokens;
@@ -679,6 +684,24 @@ export async function generateLearningPath(
         } catch (err) {
           console.error("[learning] Background generation failed:", err instanceof Error ? err.message : err);
         }
+
+        // Step 3: Send curriculum ready email
+        try {
+          const { data: userData } = await serviceClient
+            .from("users")
+            .select("email, nickname")
+            .eq("id", user.id)
+            .single();
+          if (userData?.email) {
+            await sendCurriculumReadyEmail(
+              userData.email,
+              userData.nickname ?? "there",
+              structure.title,
+            );
+          }
+        } catch (err) {
+          console.error("[learning] Curriculum ready email failed:", err instanceof Error ? err.message : err);
+        }
       });
     }
 
@@ -706,7 +729,7 @@ export async function generateLearningPath(
  * - All explanation sections have body >= 200 chars (400 for beginner)
  */
 function _validateGeneratedSections(
-  sections: Array<{ type?: string; body?: string; code?: string; quiz_options?: unknown[]; quiz_answer?: unknown }>,
+  sections: Array<{ type?: string; title?: string; body?: string; code?: string; quiz_options?: unknown[]; quiz_answer?: unknown }>,
   difficulty?: string,
 ): boolean {
   const minSections = difficulty === "beginner" ? 5 : 3;
@@ -730,6 +753,28 @@ function _validateGeneratedSections(
     (s) => s.type === "explanation" && (!s.body || s.body.trim().length < minExplanationLength),
   );
   if (hasThinExplanation) return false;
+
+  // Semantic: reject code blocks that are comments-only or too short
+  const hasBadCode = sections.some((s) => {
+    if (s.type !== "code_example" || typeof s.code !== "string") return false;
+    const code = s.code.trim();
+    if (code.length < 10) return true;
+    const lines = code.split("\n").filter((l) => l.trim().length > 0);
+    return lines.length > 0 && lines.every((l) => l.trim().startsWith("//") || l.trim().startsWith("#") || l.trim().startsWith("/*") || l.trim().startsWith("*"));
+  });
+  if (hasBadCode) return false;
+
+  // Semantic: reject quizzes with duplicate options
+  const hasDupeQuizOptions = sections.some((s) => {
+    if (s.type !== "quiz_question" || !Array.isArray(s.quiz_options)) return false;
+    const opts = (s.quiz_options as string[]).map((o) => String(o).trim().toLowerCase());
+    return new Set(opts).size < opts.length;
+  });
+  if (hasDupeQuizOptions) return false;
+
+  // Semantic: reject duplicate section titles
+  const titles = sections.map((s) => (s.title ?? "").trim().toLowerCase()).filter(Boolean);
+  if (new Set(titles).size < titles.length) return false;
 
   return true;
 }
@@ -1039,10 +1084,12 @@ async function _generateContentForModule(
     pathLocale,
   );
 
-  const llmResult = await provider.chat({
-    messages: [{ role: "user", content: contentPrompt }],
-    maxTokens: Math.min(batchModules.length * (difficulty === "beginner" ? 24000 : 16000), 128000),
-  });
+  const llmResult = await withRetry(
+    () => provider.chat({
+      messages: [{ role: "user", content: contentPrompt }],
+      maxTokens: Math.min(batchModules.length * (difficulty === "beginner" ? 24000 : 16000), 128000),
+    }),
+  );
 
   let batchContent: ContentBatchItem[];
   try {
@@ -1285,8 +1332,10 @@ export async function prefetchNextModuleContent(
         if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 120_000) continue;
       }
 
-      // Fire-and-forget: batch generation will also cover sibling modules
-      _generateContentForModule(nextModule.id, user.id).catch(() => {});
+      // Background prefetch with error logging
+      _generateContentForModule(nextModule.id, user.id).catch((err) => {
+        console.error("[learning] Prefetch content failed:", err instanceof Error ? err.message : err);
+      });
     }
   } catch {
     // Silently ignore prefetch errors
@@ -1493,7 +1542,7 @@ export async function getLearningModule(
     const { data: moduleData, error: moduleError } = await supabase
       .from("learning_modules")
       .select(
-        "id, title, description, module_type, module_order, estimated_minutes, tech_stack_id, content, learning_path_id",
+        "id, title, description, module_type, module_order, estimated_minutes, tech_stack_id, content, learning_path_id, concept_keys",
       )
       .eq("id", moduleId)
       .single();
@@ -1544,6 +1593,7 @@ export async function getLearningModule(
         tech_stack_id: moduleData.tech_stack_id,
         content: moduleData.content as unknown as ModuleContent,
         learning_path_id: moduleData.learning_path_id,
+        concept_keys: (moduleData.concept_keys as string[] | null) ?? [],
         progress,
       },
     };
@@ -1649,8 +1699,12 @@ export async function updateLearningProgress(
 
     // ── Streak + Badge check on module completion ──────────────────────
     if (status === "completed") {
-      // Update streak (fire-and-forget, non-blocking)
-      updateStreak(user.id).catch(() => {});
+      // Non-blocking streak update with error logging
+      try {
+        await updateStreak(user.id);
+      } catch (err) {
+        console.error("[learning] Streak update failed:", err instanceof Error ? err.message : err);
+      }
 
       try {
         const newBadges = await checkAndAwardBadges(user.id, {
@@ -1692,7 +1746,7 @@ export async function sendTutorMessage(
     }
 
     // Rate limit: 20 tutor messages per minute per user
-    const rl = rateLimit(`tutor:${user.id}`, 20);
+    const rl = await rateLimit(`tutor:${user.id}`, 20);
     if (!rl.success) {
       return { success: false, error: "Too many messages. Please try again later." };
     }
@@ -1874,9 +1928,10 @@ export async function sendTutorMessage(
 
     // Create LLM provider and call chat
     const provider = createLLMProvider(llmKeyData.provider, llmKeyData.apiKey);
-    const chatResult = await provider.chat({
-      messages: allMessages,
-    });
+    const chatResult = await withRetry(
+      () => provider.chat({ messages: allMessages }),
+      { maxAttempts: 2 },
+    );
 
     const totalTokens = chatResult.input_tokens + chatResult.output_tokens;
 

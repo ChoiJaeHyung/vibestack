@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
+import { analytics } from "@/lib/utils/analytics";
 
 export default function SignupPage() {
   const t = useTranslations("Auth");
@@ -51,6 +52,7 @@ export default function SignupPage() {
       return;
     }
 
+    analytics.signup();
     setSuccess(true);
     setLoading(false);
   };

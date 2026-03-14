@@ -311,6 +311,39 @@ export interface Database {
         };
         Relationships: [];
       };
+      project_concept_matches: {
+        Row: {
+          id: string;
+          project_id: string;
+          technology_name: string;
+          concept_key: string;
+          match_score: number;
+          matched_files: string[];
+          marker_summary: Json;
+          computed_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          technology_name: string;
+          concept_key: string;
+          match_score: number;
+          matched_files?: string[];
+          marker_summary?: Json;
+          computed_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          technology_name?: string;
+          concept_key?: string;
+          match_score?: number;
+          matched_files?: string[];
+          marker_summary?: Json;
+          computed_at?: string;
+        };
+        Relationships: [];
+      };
       tech_stacks: {
         Row: {
           id: string;

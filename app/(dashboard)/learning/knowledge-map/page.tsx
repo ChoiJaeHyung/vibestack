@@ -1,11 +1,17 @@
 import { redirect } from "next/navigation";
 import { ArrowLeft, Network } from "lucide-react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
-import { KnowledgeGraph } from "@/components/features/knowledge-graph";
 import { createClient } from "@/lib/supabase/server";
 import { getConceptGraph } from "@/server/actions/knowledge-graph";
+import { ProjectSelector } from "./project-selector";
+
+const KnowledgeGraph = dynamic(
+  () => import("@/components/features/knowledge-graph").then((m) => m.KnowledgeGraph),
+  { loading: () => <div className="flex h-96 items-center justify-center text-text-faint">Loading...</div> },
+);
 
 interface KnowledgeMapPageProps {
   searchParams: Promise<{ project?: string }>;
@@ -26,22 +32,23 @@ export default async function KnowledgeMapPage({
     redirect("/auth/login");
   }
 
-  // If no project specified, get the first analyzed project
+  // Fetch all analyzed projects for the selector
+  const { data: analyzedProjects } = await supabase
+    .from("projects")
+    .select("id, name")
+    .eq("user_id", user.id)
+    .eq("status", "analyzed")
+    .order("updated_at", { ascending: false });
+
+  const projects = analyzedProjects ?? [];
+
+  // Determine which project to show
   let targetProjectId = projectId;
-
-  if (!targetProjectId) {
-    const { data: projects } = await supabase
-      .from("projects")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("status", "analyzed")
-      .order("updated_at", { ascending: false })
-      .limit(1);
-
-    targetProjectId = projects?.[0]?.id;
+  if (!targetProjectId && projects.length > 0) {
+    targetProjectId = projects[0].id;
   }
 
-  if (!targetProjectId) {
+  if (!targetProjectId || projects.length === 0) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -100,21 +107,30 @@ export default async function KnowledgeMapPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/learning">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t("pathDetail.back")}
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">
-            {t("knowledgeMap.title")}
-          </h1>
-          <p className="mt-1 text-sm text-text-muted">
-            {t("knowledgeMap.description")}
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link href="/learning">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {t("pathDetail.back")}
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-text-primary">
+              {t("knowledgeMap.title")}
+            </h1>
+            <p className="mt-1 text-sm text-text-muted">
+              {t("knowledgeMap.description")}
+            </p>
+          </div>
         </div>
+
+        {projects.length > 1 && (
+          <ProjectSelector
+            projects={projects}
+            currentProjectId={targetProjectId}
+          />
+        )}
       </div>
 
       {hasNodes ? (

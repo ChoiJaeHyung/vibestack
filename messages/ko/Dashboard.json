@@ -38,6 +38,7 @@
     "projects": "프로젝트",
     "learningPaths": "학습 로드맵 (이번 달)",
     "aiChats": "AI 대화 (이번 달)",
+    "tokenBudget": "토큰 사용량",
     "unlimited": "무제한",
     "loading": "데이터를 불러오는 중..."
   },
@@ -50,7 +51,12 @@
   "onboarding": {
     "mcpSetup": { "label": "MCP 설정", "desc": "Claude Code나 Cursor에서 연결" },
     "syncProject": { "label": "프로젝트 동기화", "desc": "자동으로 파일 수집 & 분석" },
-    "startLearning": { "label": "학습 시작", "desc": "AI 맞춤 커리큘럼 생성" }
+    "startLearning": { "label": "학습 시작", "desc": "AI 맞춤 커리큘럼 생성" },
+    "completeModule": { "label": "모듈 완료", "desc": "첫 번째 학습 모듈을 완료하세요" }
+  },
+  "onboardingBanner": {
+    "title": "VibeUniv에 오신 것을 환영합니다!",
+    "progress": "{completed} / {total} 단계 완료"
   },
   "category": {
     "framework": "프레임워크",
@@ -89,9 +95,62 @@
   "badge": {
     "earned": "새 배지 획득!"
   },
+  "growth": {
+    "title": "학습 성장",
+    "conceptsMastered": "마스터한 개념",
+    "conceptsSubtitle": "숙련도 80% 이상",
+    "avgQuizScore": "평균 퀴즈 점수",
+    "quizSubtitle": "총 {count}회 시도",
+    "modulesCompleted": "완료한 모듈",
+    "monthlySubtitle": "이번 달 {count}개 완료"
+  },
+  "points": {
+    "backToDashboard": "대시보드로 돌아가기",
+    "shopTitle": "보상 상점",
+    "shopDescription": "학습 포인트(VP)로 보상을 구매하세요",
+    "history": "포인트 내역",
+    "noHistory": "아직 포인트 내역이 없습니다",
+    "locale": "ko",
+    "tx": {
+      "module_complete": "모듈 완료",
+      "quiz_perfect": "퀴즈 만점",
+      "quiz_high_score": "퀴즈 고득점",
+      "streak_milestone": "스트릭 달성",
+      "badge_earned": "배지 획득",
+      "arch_challenge": "아키텍처 챌린지",
+      "refactor_challenge": "리팩토링 챌린지",
+      "reward_purchase": "보상 구매",
+      "reward_refund": "보상 환불"
+    }
+  },
   "upgradeBanner": {
     "title": "Pro로 업그레이드",
     "description": "무제한 프로젝트 분석, AI 대화, 학습 로드맵으로 더 빠르게 성장하세요",
     "cta": "Pro 시작하기"
+  },
+  "reviewNeeded": {
+    "title": "복습 필요",
+    "subtitle": "시간이 지나 기억이 흐려진 개념이에요",
+    "viewMap": "지식 지도",
+    "daysAgo": "{days}일 전"
+  },
+  "recommendedConcepts": {
+    "title": "추천 학습 개념",
+    "subtitle": "지금 배우면 가장 효과적인 개념이에요",
+    "empty": "프로젝트를 분석하고 학습을 시작해보세요",
+    "mastery": "숙련도 {level}%",
+    "readiness": "준비도 {score}%",
+    "startLearning": "학습하기",
+    "viewMap": "지식 지도 보기",
+    "filesFound": "{count}개 파일"
+  },
+  "techProgress": {
+    "title": "기술별 학습 진행률",
+    "subtitle": "프로젝트 기술 스택 마스터 현황",
+    "empty": "프로젝트를 분석하면 기술별 진행률을 확인할 수 있어요",
+    "mastered": "{count}개 마스터",
+    "avgMastery": "평균 숙련도 {level}%",
+    "crossTechReady": "{tech} 학습 준비도 {percent}%",
+    "concepts": "{mastered}/{total} 개념"
   }
 }

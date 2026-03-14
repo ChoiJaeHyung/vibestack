@@ -19,7 +19,8 @@
   "list": {
     "title": "프로젝트",
     "projectCount": "{count}개 프로젝트",
-    "newProject": "새 프로젝트"
+    "newProject": "새 프로젝트",
+    "upgrade": "업그레이드"
   },
   "limit": {
     "title": "프로젝트 등록 한도에 도달했어요",
@@ -33,6 +34,10 @@
     "mcpSetup": "MCP 설정"
   },
   "filter": {
+    "all": "전체",
+    "analyzed": "분석 완료",
+    "analyzing": "분석 중",
+    "uploaded": "업로드됨",
     "noResults": "해당 상태의 프로젝트가 없습니다",
     "showAll": "전체 보기"
   },

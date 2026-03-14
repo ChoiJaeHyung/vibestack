@@ -12,5 +12,9 @@
   "billing_key_issue_failed": "Failed to issue billing key",
   "billing_key_issue_error": "An error occurred while issuing billing key",
   "payment_confirm_failed": "Payment confirmation failed",
-  "payment_confirm_error": "An error occurred during payment confirmation"
+  "payment_confirm_error": "An error occurred during payment confirmation",
+  "unexpected": "Something went wrong",
+  "tryAgain": "A temporary error occurred. Please try again.",
+  "retry": "Try again",
+  "goHome": "Go home"
 }

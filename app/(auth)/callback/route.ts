@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { createServiceClient } from "@/lib/supabase/service";
+import { sendOnboardingDay0 } from "@/lib/email/onboarding";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
         response.cookies.set(name, value, options);
       });
 
-      // Sync locale between cookie and DB
+      // Sync locale between cookie and DB + send welcome email for new users
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
           const serviceClient = createServiceClient();
           const { data: dbUser } = await serviceClient
             .from("users")
-            .select("locale")
+            .select("locale, created_at, email, nickname")
             .eq("id", user.id)
             .single();
 
@@ -82,6 +83,17 @@ export async function GET(request: NextRequest) {
               sameSite: "lax",
               maxAge: 31536000,
             });
+          }
+
+          // Send welcome email for new users (created within last 60 seconds)
+          if (dbUser?.created_at && dbUser.email) {
+            const createdAt = new Date(dbUser.created_at).getTime();
+            const now = Date.now();
+            if (now - createdAt < 60_000) {
+              sendOnboardingDay0(dbUser.email, dbUser.nickname ?? "there").catch((err) =>
+                console.error("[auth-callback] Welcome email failed:", err)
+              );
+            }
           }
         }
       } catch {

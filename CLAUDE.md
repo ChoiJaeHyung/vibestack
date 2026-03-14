@@ -111,7 +111,13 @@ STRIPE_SECRET_KEY=              # Stripe Secret Key
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY= # Stripe Publishable Key
 STRIPE_WEBHOOK_SECRET=          # Stripe Webhook Signing Secret
 STRIPE_PRO_PRICE_ID=            # Stripe Price ID for Pro ($19/mo)
+STRIPE_PRO_ANNUAL_PRICE_ID=     # Stripe Price ID for Pro Annual ($190/yr)
 STRIPE_TEAM_PRICE_ID=           # Stripe Price ID for Team ($45/mo)
+RESEND_API_KEY=                 # Resend 이메일 API 키
+NEXT_PUBLIC_GA_MEASUREMENT_ID=  # Google Analytics 4 측정 ID (G-XXXXXXX)
+NEXT_PUBLIC_SENTRY_DSN=         # Sentry DSN (에러 모니터링)
+SENTRY_ORG=                     # Sentry 조직 slug
+SENTRY_PROJECT=                 # Sentry 프로젝트 slug
 NEXT_PUBLIC_APP_URL=
 ```
 
@@ -156,30 +162,38 @@ NEXT_PUBLIC_APP_URL=
 | **Server Actions** | `server/actions/` | 핵심 비즈니스 로직 |
 | **LLM 어댑터** | `lib/llm/` | 멀티 LLM Provider 팩토리 |
 | **파일 분석** | `lib/analysis/` | 파일 파싱, 다이제스트 생성, tech-stack upsert 유틸 |
-| **학습 시스템** | `lib/learning/`, `lib/prompts/` | 커리큘럼 생성 (2-Phase), 상세 콘텐츠 + 인용 링크, 퀴즈 점수 추적(최고점 유지), 콘텐츠 검증 + retry, 모듈 선수관계 자동 계산(`prerequisite-compute.ts`), 개념별 숙련도 추적 |
+| **학습 시스템** | `lib/learning/`, `lib/prompts/` | 커리큘럼 생성 (2-Phase, Mastery-Aware), 상세 콘텐츠 + 인용 링크, 퀴즈 점수 추적(최고점 유지), 콘텐츠 검증 + retry, 모듈 선수관계 자동 계산(`prerequisite-compute.ts`), 개념별 숙련도 추적, 숙련도 기반 커리큘럼 개인화, 약한 개념 추천 |
 | **AI 튜터 패널** | `components/features/tutor-panel*.tsx`, `tutor-chat.tsx`, `tutor-search.tsx`, `dashboard-main.tsx` | 우측 슬라이드 패널 (채팅/검색 탭), 텍스트 선택→AI 질문, Google 검색, 메시지 피드백(👍👎) |
 | **튜터 피드백** | `server/actions/tutor-feedback.ts` | 메시지별 피드백 UPSERT/삭제/조회 |
 | **LLM 메트릭** | `lib/utils/llm-metrics.ts` | 구조화 JSON 로깅 (Vercel log drain) |
 | **게이미피케이션** | `components/features/celebration-modal.tsx`, `streak-widget.tsx`, `badge-*.tsx`, `server/actions/streak.ts`, `server/actions/badges.ts` | 모듈 완료 축하(confetti), 학습 스트릭(주간 캘린더), 배지/업적, 넛지 배너 |
-| **KB 시스템** | `lib/knowledge/` | 3-Tier 지식 베이스 |
+| **KB 시스템** | `lib/knowledge/` | 3-Tier 지식 베이스 (20기술, 329개념, 64 cross-tech 링크), DB 자동 동기화(`syncAllSeedsToDB`), Lazy sync on fallback, CodeSignature 코드 매칭 |
+| **코드 매칭** | `lib/knowledge/code-matcher.ts`, `server/actions/concept-matches.ts` | CodeSignature 기반 프로젝트→개념 매칭, 3-Phase(path→config→content), DB upsert 캐시(`project_concept_matches`) |
+| **어드민 KB 관리** | `server/actions/admin-knowledge.ts`, `app/(admin)/admin/knowledge/page.tsx` | KB 목록 조회, 안전한 KB 재생성(UPDATE only, knowledge_id 보존, 동시성 잠금, concept_key 안정성 유도), 재생성 영향도 분석 |
+| **온톨로지 그래프** | `server/actions/knowledge-graph.ts` | 5-Phase 그래프 빌드, 4 엣지 타입, 망각 곡선 감쇠, 적응형 추천, 기술별 진행률, 코드 매칭 relevanceScore, 복습 필요 개념(`getReviewNeededConcepts`), 모듈별 코드 매칭(`getConceptMatchesForModule`) |
+| **대시보드 위젯** | `components/features/recommended-concepts.tsx`, `tech-progress.tsx`, `review-needed.tsx` | 추천 학습 개념(코드 매칭 배지), 기술별 진행률, 복습 필요(Ebbinghaus 감쇠 시각화) |
 | **프롬프트** | `lib/prompts/` | LLM 프롬프트 템플릿 |
 | **보안** | `lib/utils/encryption.ts`, `content-encryption.ts` | AES-256-GCM 암호화, 콘텐츠 복호화 |
 | **보안 헤더** | `next.config.ts` | CSP, HSTS, X-Frame-Options 등 |
+| **이메일** | `lib/email/`, `server/actions/email-notifications.ts` | Resend 기반 트랜잭션 이메일 (Pro 환영, 스트릭, 커리큘럼 완료, 주간 다이제스트, 재참여) |
 | **SEO** | `app/opengraph-image.tsx`, `twitter-image.tsx`, `not-found.tsx` | OG 이미지, 404 페이지 |
 | **퍼블릭 페이지** | `app/(public)/` | 블로그, 학습 미리보기, About, Contact (공개 라우트 그룹) |
 | **블로그** | `lib/blog/posts.ts` | 5개 바이링구얼 블로그 포스트 (정적 데이터) |
 | **퍼블릭 학습** | `server/actions/public-learning.ts` | 공개 커리큘럼 조회 (is_public, 첫 2모듈 미리보기) |
 | **쿠키 동의** | `components/ui/cookie-consent.tsx` | GDPR 쿠키 동의 배너 |
 | **커리큘럼 검증** | `lib/utils/curriculum-validation.ts` | 공유 모듈 검증 유틸리티 (섹션 수/글자 수/code/quiz 검증) |
+| **이메일** | `lib/email/index.ts`, `lib/email/onboarding.ts`, `lib/email/templates.ts`, `server/actions/email-notifications.ts` | Resend 이메일 (온보딩 Day 0/1/3/7, 환영, 스트릭, 커리큘럼, 주간 다이제스트, 비활성) |
+| **Analytics** | `lib/utils/analytics.ts`, `components/ui/ga-script.tsx` | GA4 이벤트 추적 (signup, login, module_complete, upgrade 등) |
+| **에러 모니터링** | `sentry.*.config.ts`, `instrumentation.ts`, `app/global-error.tsx` | Sentry (조건부, DSN 설정 시에만 활성) |
 | **MCP 서버** | `packages/mcp-server/src/` | 12개 MCP 도구 (v0.3.12, Local-First + Per-Module) |
 | **DB 타입** | `types/database.ts` | Supabase 전체 스키마 타입 |
 | **i18n** | `i18n/request.ts`, `messages/{ko,en}/*.json`, `lib/utils/translate-error.ts` | next-intl 설정, 13개 네임스페이스(ko/en), 서버 에러 코드 번역 |
-| **마이그레이션** | `supabase/migrations/` | 001~025 SQL (010: locale, 017: tutor_feedback+token_budget, 020: concept_level_mastery, 021: module_concept_keys, 022: concept_mastery_badges, 023: badge 조건 수정, 025: is_public+RLS) |
+| **마이그레이션** | `supabase/migrations/` | 001~029 SQL (010: locale, 017: tutor_feedback+token_budget, 020: concept_level_mastery, 021: module_concept_keys, 022: concept_mastery_badges, 023: badge 조건 수정, 025: is_public+RLS, 026: content_templates, 027: mastery_last_reviewed, 028: project_concept_matches, 029: adaptive_decay review_count) |
 
-### DB 테이블 (32개)
+### DB 테이블 (33개)
 
 **사용자**: `users` (+ `nickname`), `user_api_keys`, `user_llm_keys`
-**프로젝트**: `projects`, `project_files`, `tech_stacks`, `analysis_jobs`, `educational_analyses`
+**프로젝트**: `projects`, `project_files`, `tech_stacks`, `analysis_jobs`, `educational_analyses`, `project_concept_matches`
 **학습**: `learning_paths`, `learning_modules`, `learning_progress`
 **지식 그래프**: `user_concept_mastery`
 **아키텍처**: `architecture_challenges`
@@ -195,10 +209,10 @@ NEXT_PUBLIC_APP_URL=
 
 1. **프로젝트 분석 (웹)**: 파일 업로드 → file-parser → digest-generator(`after()` 백그라운드) → LLM 분석 → tech_stacks 저장
 2. **프로젝트 분석 (MCP, Local-First)**: analyze → 서버에서 파일 fetch → 로컬 AI 분석 → submit_tech_stacks → 서버 저장 (서버 LLM 0)
-3. **커리큘럼 생성 (2-Phase, 웹)**: users.locale 조회 → Phase 1: 구조 생성(LLM, locale 분기) → Phase 2: 기술별 콘텐츠 생성(LLM+KB, locale 분기) → 콘텐츠 검증(`_validateGeneratedSections(sections, difficulty)`: beginner→최소 7섹션, 800자↑, code 2개↑, quiz 2개↑ / 그 외→최소 5섹션, 400자↑, code+quiz 각 1개↑) → 실패 시 최대 3회 retry 후 `validation_failed`. beginner maxTokens 24000*n (1.5배)
+3. **커리큘럼 생성 (2-Phase, Mastery-Aware, 웹)**: users.locale 조회 → 숙련도+KB개념 조회(`fetchMasteryAndConcepts`) → Phase 1: 구조 생성(LLM, 숙련도 컨텍스트 주입: MASTERED 스킵/learning 복습/new 전용 모듈) → Phase 2: 기술별 콘텐츠 생성(LLM+KB+숙련도, concept_keys 필수 태깅+스마트 폴백) → 콘텐츠 검증 → 실패 시 최대 3회 retry 후 `validation_failed`. beginner maxTokens 24000*n (1.5배)
 4. **커리큘럼 생성 (MCP, Per-Module)**: generate_curriculum → 구조 지시문 반환 → 로컬 AI 구조 JSON 생성 → create_curriculum(draft learning_path 생성) → 각 모듈: generate_module_content → submit_module(모듈별 개별 검증+저장, beginner→7섹션↑/800자↑/code 2개↑/quiz 2개↑ / 그 외→5섹션↑/400자↑/code+quiz 각 1개↑) → 마지막 모듈 도착 시 자동 status="active"
 4-1. **커리큘럼 생성 (MCP, Legacy)**: v0.3.12에서 submit_curriculum 제거됨 — Per-Module 방식만 지원
-5. **AI 튜터 (웹)**: 우선순위 기반 파일 선택(file_type/file_path 정렬, 30K 총 예산) + 기술 스택 + 현재 모듈 콘텐츠 서머리(6000자) → 시스템 프롬프트(LRU 캐시, locale에 따라 해요체/영어) → LLM 대화(메트릭 로깅) → 토큰 누적 추적 + 월간 예산 체크(Free 500K/월, admin 조정 가능) → 메시지별 피드백(👍👎)
+5. **AI 튜터 (웹)**: 우선순위 기반 파일 선택(file_type/file_path 정렬, 30K 총 예산) + 기술 스택 + 현재 모듈 콘텐츠 서머리(6000자) + 학생 숙련도 프로필(개념별 Weak/Learning/Mastered 구분) → 시스템 프롬프트(LRU 캐시, locale에 따라 해요체/영어) → LLM 대화(메트릭 로깅) → 토큰 누적 추적 + 월간 예산 체크(Free 500K/월, admin 조정 가능) → 메시지별 피드백(👍👎)
 6. **AI 튜터 (MCP, Local-First)**: tutor-context → `/api/v1/user/locale` 캐시 조회 → locale 기반 ko/en 지시문 → 로컬 AI가 직접 답변 (서버 LLM 0)
 7. **결제**: createCheckoutSession → Stripe Checkout (호스팅 결제 페이지) → 웹훅으로 plan 업그레이드. 구독 관리는 Stripe Customer Portal.
 8. **웹훅**: Stripe 웹훅 → `stripe.webhooks.constructEvent()` 서명 검증 → checkout.session.completed / subscription.updated / subscription.deleted 처리
@@ -355,3 +369,14 @@ Anthropic, OpenAI, Google, Groq, Mistral, DeepSeek, Cohere, Together, Fireworks,
 - [x] 결제 시스템 마이그레이션: 토스페이먼츠 → Stripe (Checkout + Customer Portal + Webhooks), 통화 KRW → USD (Pro $19/mo, Team $45/mo), DB 마이그레이션(toss_* → stripe_* 컬럼)
 - [x] 학습 온톨로지 고도화: 매직넘버 상수 추출(`mastery-constants.ts`), 개념 단위 숙련도 R5'(`concept_key` 컬럼), 모듈-개념 커버리지 R6(`concept_keys TEXT[]`+GIN), 모듈 선수관계 자동 계산 R4'(`prerequisite-compute.ts`), 선수모듈 소프트잠금 UI, 지식그래프 개념→모듈 네비게이션, 개념 마스터 배지 2종
 - [x] Google AdSense 공개 콘텐츠: 블로그 5개(~15,000 words), 학습 미리보기(첫 2모듈 공개), About/Contact 페이지, 쿠키 동의 배너, sitemap 6→15+ URL 확장, `(public)` 라우트 그룹
+- [x] 측정 인프라: GA4 이벤트 추적(signup/login/module_complete/upgrade 등 12개 이벤트), Sentry 에러 모니터링(조건부 활성화)
+- [x] 전환 최적화: 랜딩 Testimonials 섹션, 온보딩 이메일 (Day 0 회원가입 시 자동 발송), 연간 결제 옵션 ($190/yr, 17% 할인), 대시보드 인터랙티브 온보딩 체크리스트 (4단계 진행률 표시), 모듈 완료 SNS 공유 (X/LinkedIn/복사)
+- [x] 온톨로지 실질 고도화: KB 개념 해상도 12-18개/기술(기존 5-7), 숙련도 기반 커리큘럼 개인화(Mastery-Aware: MASTERED 스킵/learning 복습/new 전용), concept_keys 필수 태깅+스마트 폴백(title/description 키워드 매칭), AI 튜터 숙련도 컨텍스트(Weak/Learning/Mastered), 약한 개념 추천 UI(`getWeakConceptRecommendations`), MCP concept_keys 필수화, 시드 데이터 확장(React 15/Next.js 14/TS 12/Supabase 12/Tailwind 10개 개념)
+- [x] 온톨로지 Phase 2 — 스키마 확장+시드 20기술(329개념)+그래프 로직 고도화: DifficultyTier/CrossTechLink/TechCategory 타입, 5-Phase 그래프 빌드(prerequisite+cross_tech+related+difficulty_flow), 그래프 구조 캐시(5분 TTL), N+1 배치 수정, Promise.all 병렬화, 64 cross-tech 링크
+- [x] 온톨로지 Phase 3 — 적응형 추천+기술 진행률: Ebbinghaus 망각 곡선(last_reviewed_at+14일 반감기 감쇠), Jaccard 태그 기반 related 엣지(≥0.4, max 3/pair), 대시보드 추천 개념 3개(readiness 기반), 기술별 진행률+cross-tech 준비도, ReactFlow 엣지 스타일 차별화(related=점선 파란색, difficulty_flow=녹색)
+- [x] 온톨로지 Phase 3 Gap 수정: getConceptGraph 망각 곡선 감쇠 적용, 레거시 mastery 경로 last_reviewed_at 추가
+- [x] KB 시드 DB 동기화 Phase 1-1: 정적 시드(lib/knowledge/data/) → DB 자동 동기화(`syncSeedToDB`, `syncAllSeedsToDB`), getKBHints 시드 폴백 시 lazy sync, 핵심 6기술 ko+en 시드 추가(React/Next.js/TS/Supabase/Tailwind/Stripe), 19기술 ko DB 동기화 완료(총 66행)
+- [x] 온톨로지 CodeSignature — 코드 매핑 시스템: CodeSignature 타입(import/syntax/file/config_markers), 5개 핵심 기술 63개 개념에 code_signature 추가, KB 생성 프롬프트 확장, 3-Phase 코드 매칭(path→config→content), project_concept_matches DB upsert 캐시 테이블(UNIQUE 제약+stale cleanup), 분석 후 자동 매칭 + 그래프 lazy compute, ConceptGraphNode에 relevanceScore 추가, 지식그래프 UI(amber ring+Code2 아이콘+매칭 파일 목록+범례)
+- [x] 어드민 KB 관리: KB 목록 조회(개념수/code_signature 비율/상태), 안전한 KB 재생성(UPDATE only — knowledge_id 보존, 기존 concept_key LLM 프롬프트 주입, 동시성 잠금 optimistic lock, 실패 시 rollback), 재생성 영향도 분석(연결된 mastery/프로젝트), 재생성 후 project_concept_matches 자동 무효화
+- [x] 온톨로지 UX 고도화 — 코드 매칭+망각 곡선 사용자 노출: 학습 모듈 코드 매칭 배너(`getConceptMatchesForModule` — concept_keys→파일 매핑 표시), 대시보드 복습 필요 위젯(`ReviewNeeded` — Ebbinghaus 감쇠로 rawMastery≥80% but effectiveMastery<80% 개념 표시, dual-bar 시각화), 추천 개념 코드 매칭 배지(`matchedFileCount`), 지식그래프 노드 파일 수 표시
+- [x] 온톨로지 백엔드 고도화 4-Phase: (1) 5-Tier 숙련도 분류(Expert 90+/NearMastery 70+/Learning 40+/Beginner 10+/New 0-9) — 커리큘럼 구조+콘텐츠+튜터 프로필 전체 적용, (2) 프로젝트 관련도 기반 학습 우선순위(CodeSignature 매칭 점수→커리큘럼 구조 프롬프트 주입, [used in N files] 태그), (3) 적응형 망각 곡선(review_count 기반 반감기 연장, `adaptiveLambda()`, migration 029), (4) 다차원 숙련도 LLM 평가(`evaluateMasteryWithLLM` — 퀴즈+시간+튜터대화+코드매칭+시도횟수 시그널 수집, 백그라운드 LLM 판단으로 -10~+10 조정)

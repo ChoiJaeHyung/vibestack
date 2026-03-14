@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAuthUser } from "@/lib/supabase/auth";
 import { getAllBadges, getUserBadges } from "@/server/actions/badges";
 import { getStreak } from "@/server/actions/streak";
+import { checkTokenBudget } from "@/lib/utils/usage-limits";
 import type { StreakData } from "@/server/actions/streak";
 import type { Json } from "@/types/database";
 
@@ -55,6 +56,7 @@ export interface DashboardData {
     projects: { used: number; limit: number | null };
     learningPaths: { used: number; limit: number | null };
     aiChats: { used: number; limit: number | null };
+    tokenBudget: { used: number; limit: number | null } | null;
     planType: "free" | "pro" | "team";
   };
   badges: {
@@ -278,6 +280,15 @@ export async function GET() {
       | "team";
     const isFree = planType === "free";
 
+    // Token budget for Free non-BYOK users
+    let tokenBudget: DashboardData["usage"]["tokenBudget"] = null;
+    if (isFree) {
+      const tb = await checkTokenBudget(authUser.id);
+      if (tb.budget !== null) {
+        tokenBudget = { used: tb.used, limit: tb.budget };
+      }
+    }
+
     const dashboardData: DashboardData = {
       totalProjects: totalProjects ?? 0,
       uniqueTechnologies,
@@ -305,6 +316,7 @@ export async function GET() {
           used: monthlyChats ?? 0,
           limit: isFree ? FREE_LIMITS.aiChats : null,
         },
+        tokenBudget,
         planType,
       },
       badges: badgesForDashboard,

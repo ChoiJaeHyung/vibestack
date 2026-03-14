@@ -14,6 +14,7 @@ const STRUCTURE_JSON_SCHEMA = `{
       "module_type": "concept | practical | quiz | project_walkthrough",
       "estimated_minutes": number (15-45),
       "tech_name": "string (exact technology name this module covers)",
+      "concept_keys": ["string (1-3 concept_key identifiers from Available Concepts that this module teaches)"],
       "relevant_files": ["string (file paths from the project that are relevant to this module)"],
       "learning_objectives": ["string (2-4 specific things the student will learn)"]
     }
@@ -49,6 +50,82 @@ const CONTENT_JSON_SCHEMA = `[
 import type { EducationalAnalysis } from "@/types/educational-analysis";
 import type { ConceptHint } from "@/lib/knowledge/types";
 import type { Locale } from "@/types/database";
+
+/** Mastery data per concept for personalizing prompts */
+export interface ConceptMasteryInput {
+  conceptKey: string;
+  conceptName: string;
+  techName: string;
+  level: number; // 0-100
+}
+
+/** KB concepts grouped by technology for structure prompt */
+export interface TechConceptsInput {
+  techName: string;
+  concepts: ConceptHint[];
+}
+
+/** concept_key → { score, files } from CodeSignature matching */
+export type RelevanceScoreMap = Map<string, { score: number; files: string[] }>;
+
+function buildMasterySection(
+  masteryData: ConceptMasteryInput[],
+  techConcepts: TechConceptsInput[],
+  locale: Locale,
+  relevanceScores?: RelevanceScoreMap,
+): string {
+  if (techConcepts.length === 0) return "";
+
+  const header = locale === "en"
+    ? "## Available Concepts per Technology & Student's Current Knowledge"
+    : "## 기술별 개념 목록 & 학생의 현재 숙련도";
+
+  const masteryMap = new Map<string, number>();
+  for (const m of masteryData) {
+    masteryMap.set(m.conceptKey, m.level);
+  }
+
+  const sections: string[] = [];
+  for (const tc of techConcepts) {
+    if (tc.concepts.length === 0) continue;
+
+    const conceptLines = tc.concepts.map((c) => {
+      const level = masteryMap.get(c.concept_key) ?? 0;
+      const status = level >= 90 ? (locale === "en" ? "EXPERT" : "전문가")
+        : level >= 70 ? (locale === "en" ? "NEAR_MASTERY" : "거의마스터")
+        : level >= 40 ? (locale === "en" ? "LEARNING" : "학습중")
+        : level >= 10 ? (locale === "en" ? "BEGINNER" : "입문")
+        : (locale === "en" ? "NEW" : "신규");
+      const rel = relevanceScores?.get(c.concept_key);
+      const relTag = rel ? ` [used in ${rel.files.length} file${rel.files.length > 1 ? "s" : ""}]` : "";
+      return `- \`${c.concept_key}\`: ${c.concept_name} — ${status} (${level}%)${relTag}`;
+    });
+
+    sections.push(`### ${tc.techName}\n${conceptLines.join("\n")}`);
+  }
+
+  const instruction = locale === "en"
+    ? `\n\n**Rules for concept-aware module design (5-Tier):**
+- Each module MUST include a "concept_keys" array with 1-3 concept_keys from the list above.
+- EXPERT (90%+): Skip entirely. Do NOT create any module. Only reference as known background.
+- NEAR_MASTERY (70-89%): Create brief advanced modules — edge cases, performance tips, best practices only. No basic explanations.
+- LEARNING (40-69%): Create focused review modules — fill knowledge gaps, add practical exercises. Assume basic understanding exists.
+- BEGINNER (10-39%): Create step-by-step modules from fundamentals. Use analogies and simple examples.
+- NEW (0-9%): Create full dedicated modules starting from "why does this exist?" with everyday analogies before any code.
+- Every concept_key with status NEW or BEGINNER MUST appear in at least one module's concept_keys.
+- **Prioritize by project relevance:** Concepts marked with [used in N files] are actually used in the student's project code. Teach these EARLIER in the curriculum — the student will immediately see how the concept applies to their own code.`
+    : `\n\n**개념 기반 모듈 설계 규칙 (5단계):**
+- 각 모듈은 반드시 위 목록에서 1-3개의 concept_keys를 "concept_keys" 배열에 포함해야 합니다.
+- 전문가(90%+): 완전 스킵. 모듈 불필요. 다른 모듈에서 배경지식으로만 참조하세요.
+- 거의마스터(70-89%): 간단한 심화 모듈 — 엣지케이스, 성능 팁, 베스트 프랙티스만. 기본 설명 불필요.
+- 학습중(40-69%): 빈 부분 보강 위주의 복습 모듈 — 실습 중심. 기본 이해가 있다고 가정하세요.
+- 입문(10-39%): 기초부터 단계적으로 설명하는 모듈. 비유와 간단한 예제를 사용하세요.
+- 신규(0-9%): "이게 왜 필요한가?"부터 시작하는 전용 모듈. 코드 전에 일상 비유부터.
+- "신규" 또는 "입문" 상태인 모든 concept_key는 최소 1개 모듈의 concept_keys에 반드시 포함되어야 합니다.
+- **프로젝트 관련도 우선:** [used in N files]로 표시된 개념은 학생의 실제 프로젝트 코드에서 사용 중입니다. 이런 개념을 커리큘럼 앞쪽에 배치하세요 — 학생이 바로 자기 코드에서 활용을 확인할 수 있습니다.`;
+
+  return `${header}\n\n${sections.join("\n\n")}${instruction}\n`;
+}
 
 interface TechStackInput {
   technology_name: string;
@@ -334,9 +411,16 @@ export function buildStructurePrompt(
   userLevel?: "beginner" | "intermediate" | "advanced",
   educationalAnalysis?: EducationalAnalysis,
   locale: Locale = "ko",
+  masteryData?: ConceptMasteryInput[],
+  techConcepts?: TechConceptsInput[],
+  relevanceScores?: RelevanceScoreMap,
 ): string {
   const level = userLevel ?? "beginner";
   const techListSection = buildTechListSection(techStacks);
+
+  const masterySection = (masteryData && techConcepts)
+    ? `\n\n${buildMasterySection(masteryData, techConcepts, locale, relevanceScores)}`
+    : "";
 
   const educationalContext = educationalAnalysis
     ? `\n\n${formatStructureContext(educationalAnalysis, level)}\n`
@@ -371,7 +455,7 @@ ${techListSection}
 ## Project Digest
 
 ${projectDigest}
-${educationalContext}
+${masterySection}${educationalContext}
 ## Instructions
 
 ${locale === "en" ? "Write ALL output in English. Module titles, descriptions, and learning_objectives should all be in English." : "Write ALL output in Korean (한국어). Module titles, descriptions, and learning_objectives should all be in Korean."}
@@ -429,12 +513,14 @@ export function buildContentBatchPrompt(
     description: string;
     module_type: string;
     learning_objectives: string[];
+    concept_keys?: string[];
   }>,
   relevantCode: Array<{ path: string; content: string }>,
   userLevel?: "beginner" | "intermediate" | "advanced",
   educationalAnalysis?: EducationalAnalysis,
   kbHints?: ConceptHint[],
   locale: Locale = "ko",
+  masteryData?: ConceptMasteryInput[],
 ): string {
   const level = userLevel ?? "beginner";
 
@@ -444,7 +530,7 @@ export function buildContentBatchPrompt(
         `### ${m.title}
 - Type: ${m.module_type}
 - Description: ${m.description}
-- Learning objectives: ${m.learning_objectives.join("; ")}`,
+- Learning objectives: ${m.learning_objectives.join("; ")}${m.concept_keys && m.concept_keys.length > 0 ? `\n- Concept keys: ${m.concept_keys.join(", ")}` : ""}`,
     )
     .join("\n\n");
 
@@ -475,7 +561,22 @@ ${modulesSection}
 ## Student's Actual Source Code
 
 ${codeSection}
-${kbSection}
+${kbSection}${masteryData && masteryData.length > 0 ? `
+## Student's Concept Mastery for ${techName}
+
+${masteryData.filter(m => kbHints?.some(h => h.concept_key === m.conceptKey)).map(m => {
+  const label = m.level >= 90 ? (locale === "en" ? "EXPERT" : "전문가")
+    : m.level >= 70 ? (locale === "en" ? "NEAR_MASTERY" : "거의마스터")
+    : m.level >= 40 ? (locale === "en" ? "LEARNING" : "학습중")
+    : m.level >= 10 ? (locale === "en" ? "BEGINNER" : "입문")
+    : (locale === "en" ? "NEW" : "신규");
+  return `- \`${m.conceptKey}\` (${m.conceptName}): ${m.level}% — ${label}`;
+}).join("\n")}
+
+${locale === "en"
+  ? "Adjust explanation depth based on 5-tier mastery:\n- EXPERT (90%+): Skip or mention in one sentence as known background.\n- NEAR_MASTERY (70-89%): Brief advanced tips only — edge cases, gotchas, performance.\n- LEARNING (40-69%): Fill gaps with focused explanations and exercises. Assume basics are known.\n- BEGINNER (10-39%): Teach from fundamentals with analogies and simple examples.\n- NEW (0-9%): Start from 'why does this exist?' with everyday analogies before showing any code."
+  : "5단계 숙련도에 따라 설명 깊이를 조절하세요:\n- 전문가(90%+): 스킵하거나 한 문장으로 배경지식 언급만.\n- 거의마스터(70-89%): 엣지케이스, 주의점, 성능 팁 등 심화 내용만.\n- 학습중(40-69%): 빈 부분 채우기 + 실습. 기본은 안다고 가정.\n- 입문(10-39%): 비유와 간단한 예제로 기초부터 교육.\n- 신규(0-9%): '이게 왜 필요한가?'부터 시작. 코드 전에 일상 비유부터."}
+` : ""}
 ${educationalAnalysis ? `\n${formatContentContext(educationalAnalysis, level, relevantCode.map((f) => f.path))}\n` : ""}
 ## Instructions
 
@@ -593,8 +694,8 @@ ${buildLevelGuidance(level, locale)}${level === "beginner" ? `
      .eq('user_id', user.id)
    \`\`\`${kbHints && kbHints.length > 0 ? `
 13. ${locale === "en"
-      ? '**concept_keys tagging**: If concept_key list is provided above, add a "concept_keys" array to each module\'s JSON. Include only the concept_keys this module actually teaches (not just mentions). You may omit if unsure.'
-      : '**concept_keys 태깅**: 위 concept_key 목록이 있다면, 각 모듈의 JSON에 "concept_keys" 배열을 추가하세요. 해당 모듈이 실제로 가르치는 개념만 포함하세요 (단순 언급 제외). 확실하지 않으면 생략 가능.'}` : ""}${educationalAnalysis ? `
+      ? '**concept_keys tagging (MANDATORY)**: Each module\'s JSON MUST include a "concept_keys" array with 1-3 concept_keys from the vocabulary above. Include only the concept_keys this module actually teaches (not just mentions). If the module has concept_keys pre-assigned from Phase 1, use those. Do NOT leave concept_keys empty.'
+      : '**concept_keys 태깅 (필수)**: 각 모듈의 JSON에 반드시 "concept_keys" 배열을 포함하세요. 위 vocabulary에서 1-3개의 concept_key를 선택하여, 해당 모듈이 실제로 가르치는 개념만 포함하세요. Phase 1에서 이미 concept_keys가 지정되었다면 그것을 사용하세요. concept_keys를 비워두지 마세요.'}` : ""}${educationalAnalysis ? `
 ${kbHints && kbHints.length > 0 ? "14" : "13"}. **Use the Educational Metadata above** to enrich your content. Reference gotchas as quiz questions, use teaching_notes for explanation sections, and leverage code quality observations as practical learning points. For beginner level, use the Tech Stack Metaphors to make concepts accessible.` : ""}
 
 ## Important Rules

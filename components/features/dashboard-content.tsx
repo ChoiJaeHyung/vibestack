@@ -25,6 +25,7 @@ import { GrowthSection } from "@/components/features/growth-section";
 import { OnboardingBanner } from "@/components/features/onboarding-banner";
 import { RecommendedConcepts } from "@/components/features/recommended-concepts";
 import { TechProgress } from "@/components/features/tech-progress";
+import { ReviewNeeded } from "@/components/features/review-needed";
 import type { DashboardData } from "@/app/api/dashboard/route";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -441,13 +442,19 @@ export function DashboardContent() {
       {/* Growth Section */}
       <GrowthSection />
 
-      {/* Recommended Concepts + Tech Progress */}
-      {stats?.recentProjects.some((p) => p.status === "analyzed") && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <RecommendedConcepts projectId={stats.recentProjects.find((p) => p.status === "analyzed")!.id} />
-          <TechProgress projectId={stats.recentProjects.find((p) => p.status === "analyzed")!.id} />
-        </div>
-      )}
+      {/* Review Needed + Recommended Concepts + Tech Progress */}
+      {stats?.recentProjects.some((p) => p.status === "analyzed") && (() => {
+        const analyzedProjectId = stats.recentProjects.find((p) => p.status === "analyzed")!.id;
+        return (
+          <>
+            <ReviewNeeded projectId={analyzedProjectId} />
+            <div className="grid gap-4 lg:grid-cols-2">
+              <RecommendedConcepts projectId={analyzedProjectId} />
+              <TechProgress projectId={analyzedProjectId} />
+            </div>
+          </>
+        );
+      })()}
 
       {/* Bento Grid Row 1: Continue Learning (Hero, 2/3) + Usage (1/3) */}
       <div className="grid gap-4 lg:grid-cols-3">

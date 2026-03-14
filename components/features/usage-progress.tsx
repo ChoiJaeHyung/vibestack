@@ -8,6 +8,7 @@ interface UsageProgressProps {
   used: number;
   limit: number | null;
   showUpgradeHint?: boolean;
+  formatValue?: (v: number) => string;
 }
 
 export function UsageProgress({
@@ -15,6 +16,7 @@ export function UsageProgress({
   used,
   limit,
   showUpgradeHint,
+  formatValue,
 }: UsageProgressProps) {
   const tc = useTranslations("Common");
 
@@ -38,7 +40,7 @@ export function UsageProgress({
       <div className="flex items-center justify-between text-sm">
         <span className="text-text-tertiary">{label}</span>
         <span className="font-medium text-text-secondary">
-          {used} / {limit}
+          {formatValue ? formatValue(used) : used} / {formatValue ? formatValue(limit) : limit}
         </span>
       </div>
       <div className="h-2 w-full overflow-hidden rounded-full bg-border-default">

@@ -21,7 +21,7 @@ export function Loading({ size = "md", className = "" }: LoadingProps) {
 
 export function PageLoading() {
   return (
-    <div className="flex min-h-[50vh] items-center justify-center">
+    <div className="flex min-h-[50vh] items-center justify-center" aria-live="polite">
       <Loading size="lg" />
     </div>
   );

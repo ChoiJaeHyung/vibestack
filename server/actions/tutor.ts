@@ -9,6 +9,7 @@ import { checkUsageLimit, checkTokenBudget } from "@/lib/utils/usage-limits";
 import { buildTutorPrompt } from "@/lib/prompts/tutor-chat";
 import { decryptContent } from "@/lib/utils/content-encryption";
 import { rateLimit } from "@/lib/utils/rate-limit";
+import { withRetry } from "@/lib/utils/retry";
 import { logLlmCall } from "@/lib/utils/llm-metrics";
 import { getUserLocale } from "@/server/actions/learning-utils";
 import type { Json } from "@/types/database";
@@ -178,7 +179,7 @@ export async function sendTutorMessage(
     }
 
     // Rate limit: 20 tutor messages per minute per user
-    const rl = rateLimit(`tutor:${user.id}`, 20);
+    const rl = await rateLimit(`tutor:${user.id}`, 20);
     if (!rl.success) {
       return { success: false, error: "Too many messages. Please try again later." };
     }
@@ -318,9 +319,10 @@ export async function sendTutorMessage(
     const llmStart = Date.now();
     let chatResult: { content: string; input_tokens: number; output_tokens: number };
     try {
-      chatResult = await provider.chat({
-        messages: allMessages,
-      });
+      chatResult = await withRetry(
+        () => provider.chat({ messages: allMessages }),
+        { maxAttempts: 2 },
+      );
       logLlmCall({
         user_id: user.id,
         conversation_id: existingConversationId,
@@ -518,6 +520,7 @@ interface LearnerProfileData {
   totalModules: number;
   currentStreak: number;
   moduleScores: Array<{ title: string; score: number }>;
+  conceptMastery: Array<{ conceptName: string; techName: string; level: number }>;
 }
 
 async function fetchLearnerProfileData(
@@ -525,7 +528,8 @@ async function fetchLearnerProfileData(
   userId: string,
   learningPathId: string,
 ): Promise<LearnerProfileData | null> {
-  const [modulesResult, streakResult] = await Promise.all([
+  const serviceClient = createServiceClient();
+  const [modulesResult, streakResult, masteryResult] = await Promise.all([
     supabase
       .from("learning_modules")
       .select("id, title, module_order")
@@ -536,6 +540,12 @@ async function fetchLearnerProfileData(
       .select("current_streak")
       .eq("user_id", userId)
       .single(),
+    serviceClient
+      .from("user_concept_mastery")
+      .select("concept_key, mastery_level, knowledge_id")
+      .eq("user_id", userId)
+      .order("mastery_level", { ascending: true })
+      .limit(20),
   ]);
 
   const modules = modulesResult.data ?? [];
@@ -562,11 +572,21 @@ async function fetchLearnerProfileData(
     }
   }
 
+  // Map mastery data using concept_key as display name (kebab-case → readable)
+  const conceptMastery = (masteryResult.data ?? [])
+    .filter((r) => r.concept_key)
+    .map((r) => ({
+      conceptName: r.concept_key!.replace(/-/g, " "),
+      techName: "", // tech name not needed for tutor prompt display
+      level: r.mastery_level,
+    }));
+
   return {
     completedModules,
     totalModules: modules.length,
     currentStreak: streakResult.data?.current_streak ?? 0,
     moduleScores,
+    conceptMastery,
   };
 }
 
@@ -600,6 +620,42 @@ function formatLearnerProfileData(profile: LearnerProfileData): string {
       lines.push("");
       lines.push("When the student asks about topics related to their weak areas, provide extra detail and check their understanding.");
     }
+  }
+
+  // Concept mastery context (5-Tier)
+  if (profile.conceptMastery.length > 0) {
+    lines.push("");
+    lines.push("### Concept Mastery (5-Tier)");
+
+    const newConcepts = profile.conceptMastery.filter((c) => c.level < 10);
+    const beginner = profile.conceptMastery.filter((c) => c.level >= 10 && c.level < 40);
+    const learning = profile.conceptMastery.filter((c) => c.level >= 40 && c.level < 70);
+    const nearMastery = profile.conceptMastery.filter((c) => c.level >= 70 && c.level < 90);
+    const expert = profile.conceptMastery.filter((c) => c.level >= 90);
+
+    if (newConcepts.length > 0) {
+      lines.push(`- NEW (0-9%, needs analogies first): ${newConcepts.map((c) => `${c.conceptName} (${c.level}%)`).join(", ")}`);
+    }
+    if (beginner.length > 0) {
+      lines.push(`- BEGINNER (10-39%, teach from basics): ${beginner.map((c) => `${c.conceptName} (${c.level}%)`).join(", ")}`);
+    }
+    if (learning.length > 0) {
+      lines.push(`- LEARNING (40-69%, fill gaps): ${learning.map((c) => `${c.conceptName} (${c.level}%)`).join(", ")}`);
+    }
+    if (nearMastery.length > 0) {
+      lines.push(`- NEAR_MASTERY (70-89%, advanced tips only): ${nearMastery.map((c) => `${c.conceptName} (${c.level}%)`).join(", ")}`);
+    }
+    if (expert.length > 0) {
+      lines.push(`- EXPERT (90%+, treat as known): ${expert.map((c) => c.conceptName).join(", ")}`);
+    }
+
+    lines.push("");
+    lines.push("Adjust your explanation depth per tier:");
+    lines.push("- NEW: Start from 'why does this exist?' with everyday analogies before any code.");
+    lines.push("- BEGINNER: Teach fundamentals step-by-step with simple examples.");
+    lines.push("- LEARNING: Assume basics are known. Focus on filling specific gaps and practical exercises.");
+    lines.push("- NEAR_MASTERY: Skip basics entirely. Only discuss edge cases, performance, and best practices.");
+    lines.push("- EXPERT: Reference as known background. No explanation needed unless explicitly asked.");
   }
 
   return lines.join("\n");

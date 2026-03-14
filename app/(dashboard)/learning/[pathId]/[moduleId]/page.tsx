@@ -126,6 +126,7 @@ export default async function ModuleDetailPage({ params }: PageProps) {
         projectName={projectName}
         prevModuleId={prevModule?.id ?? null}
         nextModuleId={nextModule?.id ?? null}
+        conceptKeys={mod.concept_keys}
         needsGeneration={!mod.content.sections || mod.content.sections.length === 0}
         regenerationCount={regenerationCount}
         maxRegenerationCount={maxRegenerationCount}

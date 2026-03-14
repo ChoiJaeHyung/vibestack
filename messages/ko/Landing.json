@@ -24,8 +24,8 @@
       "line3": "여기서 채워요"
     },
     "description": {
-      "line1": "AI 코딩 도구로 앱을 만들었나요?",
-      "line2": "프로젝트를 연결하면 AI가 기술 스택을 분석하고, 딱 필요한 것만 알려드려요"
+      "line1": "AI로 만든 앱, 이제 진짜 이해할 차례예요.",
+      "line2": "내 프로젝트 코드가 교과서가 돼요. 이미 아는 건 건너뛰고, 약한 부분만 집중."
     },
     "cta": {
       "dashboard": "대시보드로 이동",
@@ -35,10 +35,10 @@
     }
   },
   "stats": {
-    "projects": "프로젝트 분석",
-    "aiModelsSuffix": "개",
-    "aiModels": "AI 모델 지원",
-    "modules": "학습 모듈 생성"
+    "projects": "연결된 프로젝트",
+    "aiModelsSuffix": "+",
+    "aiModels": "기술 개념 커버",
+    "modules": "생성된 학습 모듈"
   },
   "painPoint": {
     "title": {
@@ -47,19 +47,19 @@
       "suffix": "인가요?"
     },
     "problem": {
-      "label": "고민",
-      "title": "에러 뜨면 AI한테 또 물어봐야 해요",
-      "description": "Cursor로 앱은 만들었는데, useEffect가 왜 두 번 도는지 모르겠어요. 에러 메시지를 복붙해서 AI한테 물어보는 게 전부예요."
+      "label": "지금 이런 상황이에요",
+      "title": "만든 건 나인데, 왜 됐는지 모르겠어요",
+      "description": "RLS가 뭔지 모르겠어요. 일단 AI가 넣어줬으니까... 에러 → 복붙 → AI → 또 에러. 같은 실수가 반복되는 무한 루프."
     },
     "solution": {
-      "label": "해결",
-      "title": "내 package.json부터 시작해요",
-      "description": "Next.js 15, Supabase, Tailwind — 내 프로젝트의 실제 기술 스택을 분석하고, 각 기술이 어떤 역할을 하는지 맞춤 로드맵을 만들어줘요."
+      "label": "VibeUniv가 이렇게 해요",
+      "title": "내 코드를 읽고, 한 줄씩 설명해요",
+      "description": "내 Supabase 파일을 보고 \"이 코드에서 RLS는 이 역할을 합니다\"라고 알려줘요. 추상적 문서 대신, 내 코드가 교재가 돼요."
     },
     "outcome": {
-      "label": "결과",
-      "title": "에러가 떠도 이제 당황 안 해요",
-      "description": "\"왜 이 코드가 이렇게 동작하는지\" 이해하니까, 에러가 떠도 직접 고칠 수 있어요. AI 튜터가 내 코드 맥락으로 설명해주니까요."
+      "label": "이런 변화가 생겨요",
+      "title": "에러 메시지를 읽고 직접 고쳐요",
+      "description": "React 훅 원리를 알게 되니까 useEffect 에러가 뜨면 의존성 배열을 직접 확인해요. AI 없이도 절반은 스스로 해결하게 됩니다."
     }
   },
   "how": {
@@ -89,34 +89,34 @@
   },
   "features": {
     "0": {
-      "title": "원클릭 프로젝트 연동",
-      "description": "Claude Code, Cursor 등에서 한 번만 설정하면 끝. MCP로 자동 연결됩니다."
+      "title": "내 코드가 교과서",
+      "description": "추상적인 튜토리얼 대신 내가 만든 코드로 배워요. useEffect가 왜 두 번 실행되는지, 내 코드에서 바로 찾아줍니다."
     },
     "1": {
-      "title": "11개 AI 프로바이더 지원",
-      "description": "Anthropic, OpenAI, Google 등 11개 프로바이더의 다양한 모델로 분석하고 학습하세요."
+      "title": "이미 아는 건 건너뛰어요",
+      "description": "300개 이상의 기술 개념 중 이미 마스터한 건 자동으로 스킵. 약한 부분만 골라 집중하니까 시간 낭비가 없어요."
     },
     "2": {
-      "title": "내 코드가 교과서",
-      "description": "추상적인 튜토리얼 대신, 내가 만든 코드로 배워요. 진짜 이해가 됩니다."
+      "title": "AI 튜터가 내 옆에",
+      "description": "코드 선택하고 '이게 뭐야?'라고 물어보면 즉시 답변. StackOverflow 복붙 말고, 내 코드 맥락으로 설명해줘요."
     },
     "3": {
-      "title": "AI 튜터",
-      "description": "모르는 건 바로 물어보세요. 내 코드 컨텍스트로 설명해줘요."
+      "title": "개인 지식 그래프",
+      "description": "마스터/학습중/미시작을 시각화한 개인 지식 지도. 지금 어디 있는지, 다음에 뭘 배워야 하는지 한눈에 보여요."
     },
     "4": {
-      "title": "AES-256 암호화",
-      "description": "모든 API 키와 코드 데이터는 AES-256-GCM으로 암호화되어 안전합니다."
+      "title": "잊을 때쯤 알려줘요",
+      "description": "망각 곡선으로 복습 타이밍을 추적해요. 배운 개념이 희미해질 때 자동으로 복습을 권해줘서 배운 게 정말 남아요."
     },
     "5": {
-      "title": "BYOK (자체 LLM 키)",
-      "description": "플랜 상관없이 본인의 API 키를 등록하면 모든 기능을 무제한 무료로 사용할 수 있어요."
+      "title": "하나 배우면 연관 기술도 준비돼요",
+      "description": "React를 배우면 Next.js 준비도가 자동 업데이트돼요. 기술 간 연결 그래프로 학습 효율이 배가 됩니다."
     },
     "title": {
-      "prefix": "주요 ",
-      "highlight": "기능"
+      "prefix": "이런 걸 ",
+      "highlight": "할 수 있어요"
     },
-    "subtitle": "바이브 코더를 위한 올인원 학습 플랫폼"
+    "subtitle": "일반 코딩 강의에는 없는, 내 코드 기반 학습"
   },
   "pricing": {
     "title": {
@@ -142,6 +142,7 @@
     "pro": {
       "description": "본격적으로 성장하기",
       "price": "$19",
+      "annualNote": "연간 $190 — $38 절약",
       "cta": "Pro 시작하기",
       "features": {
         "0": "무제한 프로젝트",
@@ -154,12 +155,12 @@
     "team": {
       "description": "팀과 함께 학습하기",
       "price": "$45",
-      "cta": "Team 시작하기",
+      "cta": "출시 예정",
       "features": {
         "0": "Pro 전체 기능",
-        "1": "팀 프로젝트 공유",
-        "2": "팀 학습 대시보드",
-        "3": "우선 지원"
+        "1": "팀 프로젝트 공유 (출시 예정)",
+        "2": "팀 학습 대시보드 (출시 예정)",
+        "3": "우선 지원 (출시 예정)"
       }
     }
   },
@@ -205,8 +206,14 @@
   "footer": {
     "copyright": "© 2026 VibeUniv. All rights reserved.",
     "company": "상호명: VibeUniv.Inc | 대표: 최재형 | 사업자등록번호: 257-37-01450",
+    "about": "소개",
+    "guide": "가이드",
+    "blog": "블로그",
+    "technology": "기술",
+    "contact": "문의",
     "privacy": "개인정보처리방침",
-    "terms": "이용약관"
+    "terms": "이용약관",
+    "github": "GitHub"
   },
   "jsonLd": {
     "faq": {
@@ -233,6 +240,32 @@
       "5": {
         "question": "BYOK(Bring Your Own Key)가 뭔가요?",
         "answer": "BYOK는 본인이 가진 LLM API 키를 등록해서 사용하는 기능이에요. Pro 플랜 이상에서 사용할 수 있습니다. Settings > LLM Keys에서 프로바이더를 선택하고 API 키를 입력하면 바로 사용 가능해요."
+      }
+    }
+  },
+  "testimonials": {
+    "title": "",
+    "titleHighlight": "바이브 코더들의 후기",
+    "items": {
+      "0": {
+        "name": "Alex K.",
+        "role": "인디 개발자",
+        "text": "Cursor로 SaaS를 만들었는데 인증 시스템이 어떻게 돌아가는지 전혀 몰랐어요. VibeUniv가 모듈별로 쪼개서 설명해줘서 이제 직접 디버깅할 수 있게 됐습니다."
+      },
+      "1": {
+        "name": "박민준",
+        "role": "사이드 프로젝트 빌더",
+        "text": "AI 튜터가 정말 대단해요. 교과서 예제가 아니라 제 코드를 설명해줘요. 드디어 내 Next.js 앱이 왜 서버 컴포넌트를 쓰는지 이해했어요."
+      },
+      "2": {
+        "name": "Sarah L.",
+        "role": "커리어 전환자",
+        "text": "'그냥 바이브 코딩만 해요'에서 React 훅과 Supabase RLS를 제대로 이해하게 됐어요. 학습 경로가 제 프로젝트 전용으로 만들어진 것 같았어요."
+      },
+      "3": {
+        "name": "타나카 유키",
+        "role": "스타트업 창업자",
+        "text": "MCP로 Claude Code 프로젝트를 30초 만에 연결했어요. 기술 스택 분석과 학습 로드맵이 바로 나왔습니다. 이게 개발 교육의 미래예요."
       }
     }
   }

@@ -10,6 +10,7 @@ export function DashboardMain({ children }: { children: ReactNode }) {
   return (
     <>
       <main
+        id="main-content"
         className={`lg:pl-64 transition-[padding-right] duration-300 ease-in-out ${
           isOpen ? "lg:pr-[420px]" : ""
         }`}

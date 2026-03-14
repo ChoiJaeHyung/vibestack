@@ -2,6 +2,7 @@
 
 import ReactMarkdown from "react-markdown";
 import { Lock } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface Section {
   type: string;
@@ -17,10 +18,10 @@ interface Section {
 
 interface Props {
   sections: unknown[];
-  isKo: boolean;
 }
 
-export function PublicModuleContent({ sections, isKo }: Props) {
+export function PublicModuleContent({ sections }: Props) {
+  const t = useTranslations("Learning");
   const typedSections = sections as Section[];
 
   return (
@@ -87,7 +88,7 @@ export function PublicModuleContent({ sections, isKo }: Props) {
               )}
               <div className="flex items-center gap-2 text-xs text-text-muted">
                 <Lock className="h-3.5 w-3.5" />
-                {isKo ? "로그인하면 퀴즈를 풀고 점수를 확인할 수 있어요" : "Log in to take the quiz and check your score"}
+                {t("public.quizLogin")}
               </div>
             </div>
           )}
@@ -106,7 +107,7 @@ export function PublicModuleContent({ sections, isKo }: Props) {
               {section.challenge_starter_code && (
                 <div className="rounded-lg bg-[#1e1e2e] border border-border-default overflow-hidden mb-3">
                   <div className="px-4 py-2 border-b border-white/5 text-xs text-gray-400">
-                    {isKo ? "빈칸을 채워보세요" : "Fill in the blanks"}
+                    {t("challenge.fillBlanks")}
                   </div>
                   <pre className="p-4 text-xs leading-relaxed overflow-x-auto text-gray-300">
                     <code>{section.challenge_starter_code}</code>
@@ -115,7 +116,7 @@ export function PublicModuleContent({ sections, isKo }: Props) {
               )}
               <div className="flex items-center gap-2 text-xs text-text-muted">
                 <Lock className="h-3.5 w-3.5" />
-                {isKo ? "로그인하면 직접 코드를 작성하고 정답을 확인할 수 있어요" : "Log in to write code and check the answer"}
+                {t("public.challengeLogin")}
               </div>
             </div>
           )}

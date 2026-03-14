@@ -135,37 +135,32 @@ export function registerSubmitModule(server: McpServer, client: VibeUnivClient):
         const message = error instanceof Error ? error.message : String(error);
         const locale = await client.getUserLocale().catch(() => "ko" as const);
 
+        // Parse validation errors from server response (now returns all errors at once)
+        const isMultiError = message.includes("validation errors:");
+
         const hint = locale === "en"
           ? [
               ``,
-              `--- Validation Guide ---`,
-              `Server minimum requirements per module:`,
-              `• Beginner: 7+ sections, 800+ chars/explanation, 2+ code_examples, 2+ quiz_questions`,
-              `• Other: 5+ sections, 400+ chars/explanation, 1+ code_example, 1+ quiz_question`,
-              `• quiz_question needs exactly 4 options + quiz_explanation`,
-              `• challenge needs challenge_starter_code + challenge_answer_code`,
-              ``,
-              `Fix the failing sections and resubmit this module — no need to regenerate everything.`,
-              `If multiple modules fail, you can call vibeuniv_create_curriculum again to start a fresh draft.`,
+              `--- Fix Guide ---`,
+              `All errors are listed above. Fix ALL of them before resubmitting.`,
+              `Key rules: explanation body >= 800 chars (beginner) or 400 chars (other), code_example needs separate "code" field, quiz_question needs 4 options + quiz_answer(0-3) + quiz_explanation, challenge needs starter_code + answer_code.`,
+              `The error messages show current character counts — use them to know exactly how much more to write.`,
             ]
           : [
               ``,
-              `--- 검증 가이드 ---`,
-              `모듈별 서버 최소 요구사항:`,
-              `• 초급: 7개↑ 섹션, explanation 800자↑, code_example 2개↑, quiz_question 2개↑`,
-              `• 그 외: 5개↑ 섹션, explanation 400자↑, code_example 1개↑, quiz_question 1개↑`,
-              `• quiz_question은 정확히 4개 선택지 + quiz_explanation 필수`,
-              `• challenge는 challenge_starter_code + challenge_answer_code 필수`,
-              ``,
-              `실패한 섹션만 수정해서 이 모듈을 다시 제출하세요 — 전체 재생성 불필요.`,
-              `여러 모듈이 실패하면 vibeuniv_create_curriculum을 다시 호출하여 새 초안을 만들 수 있습니다.`,
+              `--- 수정 가이드 ---`,
+              `위의 모든 에러를 한번에 수정한 후 다시 제출하세요.`,
+              `핵심 규칙: explanation body >= 800자(초급) 또는 400자(그 외), code_example은 "body"와 별도로 "code" 필드 필요, quiz_question은 4개 선택지 + quiz_answer(0-3) + quiz_explanation, challenge는 starter_code + answer_code 필요.`,
+              `에러 메시지에 현재 글자 수가 표시됩니다 — 얼마나 더 써야 하는지 확인하세요.`,
             ];
 
         return {
           content: [
             {
               type: "text" as const,
-              text: `Failed to submit module: ${message}\n${hint.join("\n")}`,
+              text: isMultiError
+                ? `Module submission failed:\n${message}\n${hint.join("\n")}`
+                : `Module submission failed: ${message}\n${hint.join("\n")}`,
             },
           ],
           isError: true,

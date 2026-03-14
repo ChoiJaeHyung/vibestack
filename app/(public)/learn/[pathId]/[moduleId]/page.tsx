@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Lock, ArrowRight } from "lucide-react";
 import { getPublicModuleContent, getPublicLearningPathDetail } from "@/server/actions/public-learning";
 import { PublicModuleContent } from "@/components/features/public-module-content";
-import { getLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 interface Props {
@@ -21,6 +21,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: {
       canonical: `https://vibeuniv.com/learn/${pathId}/${moduleId}`,
     },
+    openGraph: {
+      title: mod.title,
+      description: mod.description ?? undefined,
+      type: "article",
+      url: `https://vibeuniv.com/learn/${pathId}/${moduleId}`,
+    },
   };
 }
 
@@ -29,8 +35,8 @@ export default async function PublicModulePage({ params }: Props) {
   const mod = await getPublicModuleContent(pathId, moduleId);
   if (!mod) notFound();
 
-  const locale = await getLocale();
-  const isKo = locale === "ko";
+  const tc = await getTranslations("Common");
+  const t = await getTranslations("Public");
 
   // Get path detail for navigation
   const pathData = await getPublicLearningPathDetail(pathId);
@@ -41,8 +47,8 @@ export default async function PublicModulePage({ params }: Props) {
   const pathTitle = pathData?.path.title ?? "";
 
   const breadcrumbItems = [
-    { label: "Home", href: "/" },
-    { label: "Learn", href: "/learn" },
+    { label: tc("breadcrumb.home"), href: "/" },
+    { label: tc("nav.learn"), href: "/learn" },
     { label: pathTitle, href: `/learn/${pathId}` },
     { label: mod.title },
   ];
@@ -56,15 +62,13 @@ export default async function PublicModulePage({ params }: Props) {
           <Lock className="h-12 w-12 text-text-muted mx-auto mb-4" />
           <h2 className="text-xl font-bold text-text-primary mb-2">{mod.title}</h2>
           <p className="text-text-muted mb-6">
-            {isKo
-              ? "이 모듈은 회원 전용 콘텐츠입니다. 무료로 가입하고 전체 커리큘럼을 학습하세요."
-              : "This module is members-only content. Sign up for free to access the full curriculum."}
+            {t("learnDetail.membersOnly")}
           </p>
           <Link
             href="/signup"
             className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
           >
-            {isKo ? "무료로 시작하기" : "Get Started Free"}
+            {t("learnDetail.ctaButton")}
           </Link>
         </div>
       </div>
@@ -80,14 +84,14 @@ export default async function PublicModulePage({ params }: Props) {
       {/* Module Header */}
       <div className="mb-8">
         <span className="text-xs text-violet-400 font-medium uppercase tracking-wider">
-          {isKo ? `모듈 ${mod.module_order}` : `Module ${mod.module_order}`}
+          {t("learnDetail.moduleLabel", { order: mod.module_order })}
         </span>
         <h1 className="text-2xl font-bold text-text-primary mt-1">{mod.title}</h1>
         <p className="text-text-muted mt-2">{mod.description}</p>
       </div>
 
       {/* Content */}
-      <PublicModuleContent sections={sections} isKo={isKo} />
+      <PublicModuleContent sections={sections} />
 
       {/* Navigation */}
       <div className="mt-12 flex flex-col items-center gap-4">
@@ -96,24 +100,22 @@ export default async function PublicModulePage({ params }: Props) {
             href={`/learn/${pathId}/${nextModule.id}`}
             className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
           >
-            {isKo ? "다음 모듈" : "Next Module"}
+            {t("learnDetail.nextModule")}
             <ArrowRight className="h-4 w-4" />
           </Link>
         ) : (
           <div className="text-center rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-cyan-500/5 p-8 w-full">
             <h3 className="text-lg font-bold text-text-primary mb-2">
-              {isKo ? "여기까지 미리보기였어요!" : "That's the end of the preview!"}
+              {t("learnDetail.previewEnd")}
             </h3>
             <p className="text-sm text-text-muted mb-6 max-w-md mx-auto">
-              {isKo
-                ? "나머지 모듈과 AI 튜터, 퀴즈, 코드 챌린지를 무료로 시작하세요."
-                : "Start the remaining modules with AI tutor, quizzes, and code challenges for free."}
+              {t("learnDetail.previewEndDesc")}
             </p>
             <Link
               href="/signup"
               className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
             >
-              {isKo ? "무료로 시작하기" : "Get Started Free"}
+              {t("learnDetail.ctaButton")}
             </Link>
           </div>
         )}

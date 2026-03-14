@@ -9,6 +9,9 @@ import { checkUsageLimit, checkRegenerationLimit } from "@/lib/utils/usage-limit
 import {
   buildStructurePrompt,
   buildContentBatchPrompt,
+  type ConceptMasteryInput,
+  type TechConceptsInput,
+  type RelevanceScoreMap,
 } from "@/lib/prompts/learning-roadmap";
 import {
   buildProjectDigest,
@@ -18,11 +21,20 @@ import { decryptContent } from "@/lib/utils/content-encryption";
 import { getKBHints } from "@/lib/knowledge";
 import { generateKBForTech, generateMissingKBs } from "@/server/actions/knowledge";
 import { rateLimit } from "@/lib/utils/rate-limit";
+import { withRetry } from "@/lib/utils/retry";
 import { after } from "next/server";
 import { getUserLocale } from "@/server/actions/learning-utils";
+import { getConceptMatchScores } from "@/server/actions/concept-matches";
 import { resetModuleProgress } from "@/server/actions/learning-progress";
-import { validateModule } from "@/lib/utils/curriculum-validation";
+import { validateModule, getMinSections } from "@/lib/utils/curriculum-validation";
 import { computeModulePrerequisites } from "@/lib/learning/prerequisite-compute";
+import {
+  assembleCurriculum,
+  persistAssembledCurriculum,
+  checkMultiTechCoverage,
+} from "@/server/actions/template-assembler";
+import { injectProjectCode } from "@/server/actions/code-injection";
+import { expandTemplatesForTech } from "@/server/actions/template-expansion";
 import type { Database, Json, Locale } from "@/types/database";
 import type { EducationalAnalysis } from "@/types/educational-analysis";
 
@@ -103,6 +115,7 @@ interface StructureModuleResponse {
   module_type: string;
   estimated_minutes: number;
   tech_name: string;
+  concept_keys?: string[];
   relevant_files: string[];
   learning_objectives: string[];
 }
@@ -139,6 +152,7 @@ interface ModuleContentMeta {
   tech_name: string;
   relevant_files: string[];
   learning_objectives: string[];
+  concept_keys?: string[];
   retry_count?: number;
 }
 
@@ -256,6 +270,64 @@ async function loadRelevantFiles(
     }));
 }
 
+// ─── Mastery & KB Concepts Fetching ─────────────────────────────────
+
+/**
+ * Fetch user's existing concept mastery + KB concepts for the project's
+ * tech stacks. Used to inject personalization context into LLM prompts.
+ */
+async function fetchMasteryAndConcepts(
+  userId: string,
+  techStacks: Array<{ technology_name: string; version: string | null }>,
+  locale: Locale,
+): Promise<{
+  masteryData: ConceptMasteryInput[];
+  techConcepts: TechConceptsInput[];
+}> {
+  const techNames = techStacks.map((t) => t.technology_name);
+
+  // Fetch KB concepts for all technologies in parallel
+  const kbResults = await Promise.all(
+    techNames.map((name) =>
+      getKBHints(name, locale).then((concepts) => ({
+        techName: name,
+        concepts,
+      })),
+    ),
+  );
+
+  // Build a concept_key → (conceptName, techName) lookup from KB data
+  const conceptLookup = new Map<string, { conceptName: string; techName: string }>();
+  for (const tc of kbResults) {
+    for (const c of tc.concepts) {
+      conceptLookup.set(c.concept_key, { conceptName: c.concept_name, techName: tc.techName });
+    }
+  }
+
+  // Fetch user mastery (uses typed columns only)
+  const serviceClient = createServiceClient();
+  const { data: masteryRows } = await serviceClient
+    .from("user_concept_mastery")
+    .select("concept_key, mastery_level, knowledge_id")
+    .eq("user_id", userId);
+
+  // Map mastery rows to ConceptMasteryInput using KB lookup
+  const masteryData: ConceptMasteryInput[] = [];
+  for (const row of masteryRows ?? []) {
+    if (!row.concept_key) continue;
+    const lookup = conceptLookup.get(row.concept_key);
+    if (!lookup) continue;
+    masteryData.push({
+      conceptKey: row.concept_key,
+      conceptName: lookup.conceptName,
+      techName: lookup.techName,
+      level: row.mastery_level,
+    });
+  }
+
+  return { masteryData, techConcepts: kbResults };
+}
+
 // ─── Server Actions ──────────────────────────────────────────────────
 
 export async function generateLearningPath(
@@ -275,7 +347,7 @@ export async function generateLearningPath(
     }
 
     // Rate limit: 5 learning path generations per minute per user
-    const rl = rateLimit(`learning:${user.id}`, 5);
+    const rl = await rateLimit(`learning:${user.id}`, 5);
     if (!rl.success) {
       return { success: false, error: "Too many requests. Please try again later." };
     }
@@ -325,6 +397,177 @@ export async function generateLearningPath(
       getUserLocale(user.id),
     ]);
 
+    // Fetch mastery + KB concepts + project relevance in parallel
+    const [{ masteryData, techConcepts }, relevanceScores] = await Promise.all([
+      fetchMasteryAndConcepts(
+        user.id,
+        techStacks.map((t) => ({ technology_name: t.technology_name, version: t.version })),
+        locale,
+      ),
+      getConceptMatchScores(projectId),
+    ]);
+
+    // ─── Template Assembler Branch (AI $0, <2s) ─────────────────────
+    // Check template coverage: if full, use Assembler instead of LLM
+    try {
+      const coverageCheck = await checkMultiTechCoverage(
+        techConcepts.map((tc) => ({
+          techName: tc.techName,
+          conceptKeys: tc.concepts.map((c) => c.concept_key),
+        })),
+        locale,
+      );
+
+      if (coverageCheck.overall === "full" || coverageCheck.overall === "partial") {
+        // Build masteryMap from already-fetched masteryData (avoid duplicate DB query)
+        const masteryMap = new Map<string, number>();
+        for (const m of masteryData) {
+          masteryMap.set(m.conceptKey, typeof m.level === "number" ? m.level : 0);
+        }
+
+        const assembled = await assembleCurriculum({
+          projectId,
+          userId: user.id,
+          techStacks: techStacks.map((t) => ({
+            technology_name: t.technology_name,
+            category: t.category,
+            importance: t.importance,
+            version: t.version,
+          })),
+          difficulty: difficulty ?? "beginner",
+          locale,
+          kbResults: techConcepts.map((tc) => ({
+            techName: tc.techName,
+            concepts: tc.concepts,
+          })),
+          masteryMap,
+        });
+
+        // Strip unresolved LLM fallback placeholders and check usability
+        const strippedModules = assembled.modules.map((mod) => ({
+          ...mod,
+          sections: mod.sections.filter(
+            (s) => !s.body?.startsWith("__LLM_FALLBACK__"),
+          ),
+        }));
+
+        // Re-validate: keep modules that still meet minimum section count
+        const usableModules = strippedModules.filter(
+          (mod) => mod.sections.length >= getMinSections(assembled.difficulty),
+        );
+
+        if (usableModules.length >= 5) {
+          // Recalculate fullyPrebuilt based on usable (placeholder-free) modules
+          const usableCurriculum = {
+            ...assembled,
+            modules: usableModules.map((m, i) => ({
+              ...m,
+              module_order: i + 1,
+              llmFallbackCount: 0,
+            })),
+            fullyPrebuilt: true,
+          };
+          // Persist usable (placeholder-free) curriculum
+          const result = await persistAssembledCurriculum(
+            usableCurriculum,
+            user.id,
+            projectId,
+            techStacks.map((t) => ({ id: t.id, technology_name: t.technology_name })),
+          );
+
+          // Pro + project: background code injection
+          const { data: userData } = await supabase
+            .from("users")
+            .select("plan_type")
+            .eq("id", user.id)
+            .single();
+
+          if (userData?.plan_type === "pro" || userData?.plan_type === "team") {
+            const modulesForInjection = usableCurriculum.modules
+              .filter((m) => m.sections.some((s) => s.type === "code_example"))
+              .map((m) => ({
+                moduleId: "",
+                sections: m.sections,
+                techName: m.tech_name,
+              }));
+
+            if (modulesForInjection.length > 0) {
+              after(async () => {
+                try {
+                  const serviceClient = createServiceClient();
+                  const { data: insertedMods } = await serviceClient
+                    .from("learning_modules")
+                    .select("id, module_order")
+                    .eq("learning_path_id", result.learningPathId)
+                    .order("module_order");
+
+                  if (insertedMods) {
+                    const modulesWithIds = usableCurriculum.modules
+                      .filter((m) => m.sections.some((s) => s.type === "code_example"))
+                      .map((m) => {
+                        const dbMod = insertedMods.find((im) => im.module_order === m.module_order);
+                        return {
+                          moduleId: dbMod?.id ?? "",
+                          sections: m.sections,
+                          techName: m.tech_name,
+                        };
+                      })
+                      .filter((m) => m.moduleId !== "");
+
+                    await injectProjectCode({
+                      learningPathId: result.learningPathId,
+                      projectId,
+                      userId: user.id,
+                      modules: modulesWithIds,
+                    });
+                  }
+                } catch (err) {
+                  console.error("[learning] Code injection failed:", err instanceof Error ? err.message : err);
+                }
+              });
+            }
+          }
+
+          return {
+            success: true,
+            data: {
+              learning_path_id: result.learningPathId,
+              title: usableCurriculum.title,
+              total_modules: result.totalModules,
+              first_module_id: result.firstModuleId,
+            },
+          };
+        }
+      }
+
+      // Trigger background expansion for any uncovered technologies (regardless of overall level)
+      {
+        const uncoveredTechs = coverageCheck.perTech
+          .filter((t) => t.level === "none")
+          .map((t) => t.techName);
+
+        if (uncoveredTechs.length > 0) {
+          after(async () => {
+            for (const techName of uncoveredTechs) {
+              try {
+                await expandTemplatesForTech(techName, locale);
+              } catch (err) {
+                console.error(`[learning] Template expansion failed for ${techName}:`, err instanceof Error ? err.message : err);
+              }
+            }
+          });
+        }
+      }
+    } catch (assemblerErr) {
+      // Assembler failed — fall through to LLM 2-Phase
+      console.warn(
+        "[learning] Template assembler failed, falling back to LLM:",
+        assemblerErr instanceof Error ? assemblerErr.message : assemblerErr,
+      );
+    }
+
+    // ─── LLM 2-Phase Fallback ───────────────────────────────────────
+
     if (!llmKeyResult.data) {
       return {
         success: false,
@@ -348,12 +591,17 @@ export async function generateLearningPath(
       difficulty,
       educationalAnalysis ?? undefined,
       locale,
+      masteryData,
+      techConcepts,
+      relevanceScores,
     );
 
-    const structureResult = await provider.chat({
-      messages: [{ role: "user", content: structurePrompt }],
-      maxTokens: 32768,
-    });
+    const structureResult = await withRetry(
+      () => provider.chat({
+        messages: [{ role: "user", content: structurePrompt }],
+        maxTokens: 32768,
+      }),
+    );
 
     const totalInputTokens = structureResult.input_tokens;
     const totalOutputTokens = structureResult.output_tokens;
@@ -445,6 +693,7 @@ export async function generateLearningPath(
             tech_name: mod.tech_name,
             relevant_files: mod.relevant_files ?? [],
             learning_objectives: mod.learning_objectives ?? [],
+            concept_keys: mod.concept_keys ?? [],
           },
         };
 
@@ -456,6 +705,7 @@ export async function generateLearningPath(
           module_order: index + 1,
           estimated_minutes: mod.estimated_minutes ?? null,
           tech_stack_id: techStackId,
+          concept_keys: mod.concept_keys?.length ? mod.concept_keys : null,
           content: content as unknown as Json,
         };
       },
@@ -685,7 +935,7 @@ export async function regenerateModuleContent(
     }
 
     // Rate limit: 3 regenerations per minute per user
-    const rl = rateLimit(`regen:${user.id}`, 3);
+    const rl = await rateLimit(`regen:${user.id}`, 3);
     if (!rl.success) {
       return { success: false, error: "Too many requests. Please try again later." };
     }
@@ -945,10 +1195,35 @@ async function _generateContentForModule(
     | "intermediate"
     | "advanced";
 
-  // Load KB hints for this technology (cache → DB → seed fallback)
+  // Load KB hints + user mastery for this technology in parallel
   let kbHints = await getKBHints(meta.tech_name, pathLocale);
   if (kbHints.length === 0) {
     kbHints = await generateKBForTech(meta.tech_name, null, provider, pathLocale);
+  }
+
+  // Fetch mastery for this tech to personalize content
+  // Build concept lookup from KB hints
+  const conceptLookup = new Map<string, string>();
+  for (const h of kbHints) {
+    conceptLookup.set(h.concept_key, h.concept_name);
+  }
+
+  const { data: masteryRows } = await serviceClient
+    .from("user_concept_mastery")
+    .select("concept_key, mastery_level")
+    .eq("user_id", userId);
+
+  const contentMasteryData: ConceptMasteryInput[] = [];
+  for (const row of masteryRows ?? []) {
+    if (!row.concept_key) continue;
+    const conceptName = conceptLookup.get(row.concept_key);
+    if (!conceptName) continue;
+    contentMasteryData.push({
+      conceptKey: row.concept_key,
+      conceptName,
+      techName: meta.tech_name,
+      level: row.mastery_level,
+    });
   }
 
   // Build prompt for batch modules
@@ -959,12 +1234,14 @@ async function _generateContentForModule(
       description: m.description,
       module_type: m.module_type,
       learning_objectives: m.meta.learning_objectives,
+      concept_keys: m.meta.concept_keys,
     })),
     relevantFiles,
     difficulty,
     educationalAnalysis ?? undefined,
     kbHints,
     pathLocale,
+    contentMasteryData,
   );
 
   // Inject regeneration hint if present (appended to prompt for better LLM attention)
@@ -975,10 +1252,12 @@ async function _generateContentForModule(
     finalPrompt += `\n\n## Student Feedback on Previous Content\n\n${hintText}\n\nPlease generate completely different content that addresses this feedback. Do NOT repeat the same structure or examples as before.`;
   }
 
-  const llmResult = await provider.chat({
-    messages: [{ role: "user", content: finalPrompt }],
-    maxTokens: Math.min(batchModules.length * (difficulty === "beginner" ? 24000 : 16000), 128000),
-  });
+  const llmResult = await withRetry(
+    () => provider.chat({
+      messages: [{ role: "user", content: finalPrompt }],
+      maxTokens: Math.min(batchModules.length * (difficulty === "beginner" ? 24000 : 16000), 128000),
+    }),
+  );
 
   let batchContent: ContentBatchItem[];
   try {
@@ -1010,11 +1289,29 @@ async function _generateContentForModule(
       const sections = matched?.content?.sections ?? [];
 
       // Extract concept_keys from LLM response (R6: Module→Concept coverage)
-      const conceptKeys = Array.isArray(matched?.concept_keys)
+      let conceptKeys = Array.isArray(matched?.concept_keys)
         ? (matched.concept_keys as string[]).filter(
             (k): k is string => typeof k === "string" && k.length > 0,
           )
         : [];
+
+      // Smart fallback: if LLM didn't tag concept_keys, infer from title/description
+      if (conceptKeys.length === 0 && kbHints.length > 0) {
+        const searchText = `${m.title} ${m.description}`.toLowerCase();
+        conceptKeys = kbHints
+          .filter((h) =>
+            h.concept_key.split("-").some((word) => searchText.includes(word)) ||
+            h.concept_name.toLowerCase().split(/\s+/).some((word) => word.length > 2 && searchText.includes(word)) ||
+            h.tags?.some((tag) => searchText.includes(tag.toLowerCase()))
+          )
+          .slice(0, 3)
+          .map((h) => h.concept_key);
+      }
+
+      // Also merge concept_keys from Phase 1 structure (_meta) if content didn't provide
+      if (conceptKeys.length === 0 && m.meta.concept_keys?.length) {
+        conceptKeys = m.meta.concept_keys;
+      }
 
       if (sections.length > 0 && _validateGeneratedSections(sections, difficulty)) {
         // Set requested module sections only for validated content
@@ -1036,7 +1333,7 @@ async function _generateContentForModule(
               _status: "ready",
               _generated_at: now,
             } as unknown as Json,
-            ...(conceptKeys.length > 0 ? { concept_keys: conceptKeys } : {}),
+            concept_keys: conceptKeys.length > 0 ? conceptKeys : null,
           })
           .eq("id", m.id);
       } else if (sections.length > 0) {
@@ -1333,8 +1630,10 @@ export async function prefetchNextModuleContent(
         if (!Number.isNaN(sinceTime) && Date.now() - sinceTime < 120_000) continue;
       }
 
-      // Fire-and-forget: batch generation will also cover sibling modules
-      _generateContentForModule(nextModule.id, user.id).catch(() => {});
+      // Background prefetch with error logging
+      _generateContentForModule(nextModule.id, user.id).catch((err) => {
+        console.error("[curriculum] Prefetch content failed:", err instanceof Error ? err.message : err);
+      });
     }
   } catch {
     // Silently ignore prefetch errors

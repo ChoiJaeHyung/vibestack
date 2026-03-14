@@ -22,9 +22,8 @@ import {
   getActiveRewards,
   getPointBalance,
   purchaseReward,
-  type RewardItem,
-  type PointBalance,
 } from "@/server/actions/points";
+import type { RewardItem, PointBalance } from "@/server/actions/point-constants";
 
 // Map reward icon names to components
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {

@@ -24,8 +24,8 @@
       "line3": "right here"
     },
     "description": {
-      "line1": "Built an app with AI coding tools?",
-      "line2": "Connect your project and AI analyzes your tech stack, teaching you exactly what you need"
+      "line1": "Your AI-built app — it's time to truly understand it.",
+      "line2": "Your project code becomes the textbook. Skip what you know, focus on what you don't."
     },
     "cta": {
       "dashboard": "Go to Dashboard",
@@ -35,9 +35,9 @@
     }
   },
   "stats": {
-    "projects": "Projects Analyzed",
-    "aiModelsSuffix": "",
-    "aiModels": "AI Models Supported",
+    "projects": "Projects Connected",
+    "aiModelsSuffix": "+",
+    "aiModels": "Tech Concepts Covered",
     "modules": "Learning Modules Created"
   },
   "painPoint": {
@@ -47,19 +47,19 @@
       "suffix": "?"
     },
     "problem": {
-      "label": "Problem",
-      "title": "Error pops up — back to asking AI again",
-      "description": "You built the app with Cursor, but you have no idea why useEffect runs twice. Copy-pasting error messages to AI is all you can do."
+      "label": "Sound familiar?",
+      "title": "You built it, but you don't know why it works",
+      "description": "\"What is RLS? AI added it, so I guess it's fine...\" Error → copy-paste → AI → another error. The same mistakes on repeat."
     },
     "solution": {
-      "label": "Solution",
-      "title": "It starts from your package.json",
-      "description": "Next.js 15, Supabase, Tailwind — we analyze your actual tech stack and build a personalized roadmap showing what each technology does in your project."
+      "label": "How VibeUniv helps",
+      "title": "We read your code and explain it line by line",
+      "description": "We look at your Supabase files and tell you \"RLS does this in your code.\" Not abstract docs — your code is the textbook."
     },
     "outcome": {
-      "label": "Outcome",
-      "title": "Errors don't scare you anymore",
-      "description": "You understand why your code works that way, so you can fix errors yourself. The AI tutor explains everything in the context of your own code."
+      "label": "The result",
+      "title": "You read error messages and fix them yourself",
+      "description": "Once you understand React hooks, you check the dependency array yourself when useEffect errors pop up. You solve half the issues without AI."
     }
   },
   "how": {
@@ -89,34 +89,34 @@
   },
   "features": {
     "0": {
-      "title": "One-Click Project Sync",
-      "description": "Set up once in Claude Code, Cursor, etc. Auto-connected via MCP."
+      "title": "Your Code Is Your Textbook",
+      "description": "Instead of abstract tutorials, learn from the code you built. We show you exactly why useEffect runs twice — in your code."
     },
     "1": {
-      "title": "11 AI Providers Supported",
-      "description": "Choose from 11 providers including Anthropic, OpenAI, Google, and more."
+      "title": "Skip What You Already Know",
+      "description": "Out of 300+ tech concepts, we auto-skip what you've mastered. Focus only on weak spots — no wasted time."
     },
     "2": {
-      "title": "Your Code Is Your Textbook",
-      "description": "Instead of abstract tutorials, learn from the code you built. Real understanding."
+      "title": "AI Tutor By Your Side",
+      "description": "Select any code and ask 'what is this?' — get instant answers. Not StackOverflow copy-paste, but explanations in your code context."
     },
     "3": {
-      "title": "AI Tutor",
-      "description": "Ask anything. Get explanations in the context of your own code."
+      "title": "Personal Knowledge Graph",
+      "description": "A visual map of mastered, in-progress, and unlearned concepts. See where you are and what to learn next at a glance."
     },
     "4": {
-      "title": "AES-256 Encryption",
-      "description": "All API keys and code data are encrypted with AES-256-GCM for security."
+      "title": "Reminds You Before You Forget",
+      "description": "Tracks your forgetting curve to time reviews perfectly. When a concept starts fading, we suggest a review so learning sticks."
     },
     "5": {
-      "title": "BYOK (Bring Your Own Key)",
-      "description": "Register your own API key on any plan and unlock all features for free — unlimited."
+      "title": "Learn One, Unlock Related Tech",
+      "description": "Learn React and your Next.js readiness auto-updates. Cross-tech connections multiply your learning efficiency."
     },
     "title": {
-      "prefix": "Key ",
-      "highlight": "Features"
+      "prefix": "What You ",
+      "highlight": "Can Do"
     },
-    "subtitle": "An all-in-one learning platform for vibe coders"
+    "subtitle": "Learning from your own code — not available in generic courses"
   },
   "pricing": {
     "title": {
@@ -142,6 +142,7 @@
     "pro": {
       "description": "Level up your learning",
       "price": "$19",
+      "annualNote": "or $190/year — save $38",
       "cta": "Start Pro",
       "features": {
         "0": "Unlimited projects",
@@ -154,12 +155,12 @@
     "team": {
       "description": "Learn together as a team",
       "price": "$45",
-      "cta": "Start Team",
+      "cta": "Coming Soon",
       "features": {
         "0": "All Pro features",
-        "1": "Team project sharing",
-        "2": "Team learning dashboard",
-        "3": "Priority support"
+        "1": "Team project sharing (coming soon)",
+        "2": "Team learning dashboard (coming soon)",
+        "3": "Priority support (coming soon)"
       }
     }
   },
@@ -205,8 +206,14 @@
   "footer": {
     "copyright": "© 2026 VibeUniv. All rights reserved.",
     "company": "Company: VibeUniv.Inc | CEO: Jaehyung Choi | Business Reg. No.: 257-37-01450",
+    "about": "About",
+    "guide": "Guide",
+    "blog": "Blog",
+    "technology": "Technology",
+    "contact": "Contact",
     "privacy": "Privacy Policy",
-    "terms": "Terms of Service"
+    "terms": "Terms of Service",
+    "github": "GitHub"
   },
   "jsonLd": {
     "faq": {
@@ -233,6 +240,32 @@
       "5": {
         "question": "What is BYOK (Bring Your Own Key)?",
         "answer": "BYOK lets you register your own LLM API keys for use on the platform. Available on Pro plan and above. Go to Settings > LLM Keys, select your provider, enter your API key, and start using it right away."
+      }
+    }
+  },
+  "testimonials": {
+    "title": "Loved by ",
+    "titleHighlight": "Vibe Coders",
+    "items": {
+      "0": {
+        "name": "Alex K.",
+        "role": "Indie Developer",
+        "text": "I built a full SaaS with Cursor but had no idea how my auth system actually worked. VibeUniv broke it down module by module — now I can debug auth issues myself."
+      },
+      "1": {
+        "name": "Minjun P.",
+        "role": "Side Project Builder",
+        "text": "The AI tutor is incredible. It explains MY code, not some generic textbook example. I finally understand why my Next.js app uses server components."
+      },
+      "2": {
+        "name": "Sarah L.",
+        "role": "Career Switcher",
+        "text": "Went from 'I just vibe code' to actually understanding React hooks and Supabase RLS. The learning path felt like it was written just for my project."
+      },
+      "3": {
+        "name": "Yuki T.",
+        "role": "Startup Founder",
+        "text": "Connected my Claude Code project via MCP in 30 seconds. Got a complete tech stack analysis and a learning roadmap instantly. This is the future of dev education."
       }
     }
   }

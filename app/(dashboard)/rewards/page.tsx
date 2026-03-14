@@ -32,18 +32,12 @@ export default async function RewardsPage() {
 
   const transactions = txResult.success ? (txResult.data ?? []) : [];
 
-  // Transaction type labels
-  const TX_LABELS: Record<string, { ko: string; en: string }> = {
-    module_complete: { ko: "모듈 완료", en: "Module complete" },
-    quiz_perfect: { ko: "퀴즈 만점", en: "Perfect quiz" },
-    quiz_high_score: { ko: "퀴즈 고득점", en: "High quiz score" },
-    streak_milestone: { ko: "스트릭 달성", en: "Streak milestone" },
-    badge_earned: { ko: "배지 획득", en: "Badge earned" },
-    arch_challenge: { ko: "아키텍처 챌린지", en: "Architecture challenge" },
-    refactor_challenge: { ko: "리팩토링 챌린지", en: "Refactoring challenge" },
-    reward_purchase: { ko: "보상 구매", en: "Reward purchase" },
-    reward_refund: { ko: "보상 환불", en: "Reward refund" },
-  };
+  // Transaction type label keys (mapped to Dashboard.points.tx.*)
+  const TX_KEYS = [
+    "module_complete", "quiz_perfect", "quiz_high_score",
+    "streak_milestone", "badge_earned", "arch_challenge",
+    "refactor_challenge", "reward_purchase", "reward_refund",
+  ] as const;
 
   return (
     <div className="space-y-6">
@@ -80,9 +74,9 @@ export default async function RewardsPage() {
         {transactions.length > 0 ? (
           <div className="space-y-2">
             {transactions.map((tx) => {
-              const label = TX_LABELS[tx.transactionType];
-              const displayLabel = label
-                ? (t("points.locale") === "ko" ? label.ko : label.en)
+              const isTxKey = TX_KEYS.includes(tx.transactionType as typeof TX_KEYS[number]);
+              const displayLabel = isTxKey
+                ? t(`points.tx.${tx.transactionType}`)
                 : tx.description ?? tx.transactionType;
 
               return (
