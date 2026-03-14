@@ -7,7 +7,6 @@ import { GraduationCap, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LearningPathCard } from "@/components/features/learning-path-card";
 import { LearningGenerator } from "@/components/features/learning-generator";
-import { GeoAd } from "@/components/features/geo-ad";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
 import type { LearningPathsData } from "@/app/api/learning-paths/route";
 
@@ -99,7 +98,6 @@ export function LearningContent() {
       <LearningGenerator hasExistingPaths={paths.length > 0} />
 
       {/* Ad Banner */}
-      <GeoAd planType={planType} />
 
       {/* Knowledge Graph link */}
       {paths.length > 0 && (
@@ -107,8 +105,8 @@ export function LearningContent() {
           href="/learning/knowledge-map"
           className="flex items-center gap-3 rounded-2xl border border-border-default bg-bg-surface p-4 hover:border-violet-500/40 transition-colors group"
         >
-          <div className="rounded-xl bg-violet-500/10 p-2.5 group-hover:bg-violet-500/20 transition-colors">
-            <Network className="h-5 w-5 text-violet-400" />
+          <div className="rounded-xl bg-emerald-500/10 p-2.5 group-hover:bg-emerald-500/20 transition-colors">
+            <Network className="h-5 w-5 text-emerald-400" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-text-primary">
