@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Mail, MessageSquare, Clock } from "lucide-react";
 import { getLocale } from "next-intl/server";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 export const metadata: Metadata = {
-  title: "Contact | VibeUniv",
+  title: "Contact",
   description: "VibeUniv에 문의하세요. 서비스 이용, 결제, 기술 지원 등 무엇이든 도와드립니다.",
 };
 
@@ -12,8 +13,35 @@ export default async function ContactPage() {
   const locale = await getLocale();
   const isKo = locale === "ko";
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "name": "Contact VibeUniv",
+    "description": "VibeUniv에 문의하세요.",
+    "url": "https://vibeuniv.com/contact",
+    "mainEntity": {
+      "@type": "Organization",
+      "name": "VibeUniv",
+      "url": "https://vibeuniv.com",
+      "email": "support@vibeuniv.com",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "support@vibeuniv.com",
+        "contactType": "customer support",
+        "availableLanguage": ["Korean", "English"],
+      },
+    },
+  };
+
   return (
     <div className="max-w-[800px] mx-auto px-8 max-md:px-4 py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: isKo ? "Contact" : "Contact" },
+        ]}
+      />
       <div className="text-center mb-12">
         <h1 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">
           {isKo ? "문의하기" : "Contact Us"}
@@ -66,24 +94,24 @@ export default async function ContactPage() {
       <div className="rounded-2xl border border-border-default bg-bg-primary p-8">
         <MessageSquare className="h-6 w-6 text-violet-400 mb-4" />
         <h3 className="text-lg font-semibold text-text-primary mb-2">
-          {isKo ? "자주 묻는 질문" : "Frequently Asked Questions"}
+          {isKo ? "문의 전 확인해주세요" : "Before You Contact Us"}
         </h3>
 
         <div className="space-y-4 mt-4">
           {(isKo
             ? [
-                { q: "무료 플랜으로 뭘 할 수 있나요?", a: "3개 프로젝트 분석, 월 1회 학습 로드맵 생성, 월 20회 AI 튜터 대화를 무료로 이용할 수 있습니다." },
-                { q: "MCP 연동은 어떻게 하나요?", a: "Claude Code에서 한 줄 명령으로 연동할 수 있습니다. 자세한 방법은 가이드 페이지를 참고하세요." },
-                { q: "내 코드가 서버에 저장되나요?", a: "MCP 연동 시 Local-First 아키텍처로 분석은 로컬에서 수행됩니다. 서버에는 분석 결과만 저장됩니다." },
-                { q: "결제는 어떻게 처리되나요?", a: "Stripe를 통해 안전하게 결제됩니다. 구독 관리와 취소는 Stripe Customer Portal에서 직접 할 수 있습니다." },
-                { q: "환불 정책은 어떻게 되나요?", a: "결제 후 7일 이내 무조건 환불 가능합니다. 7일 이후에는 잔여 기간에 대한 일할 환불이 적용됩니다." },
+                { q: "비밀번호를 잊어버렸어요", a: "로그인 페이지에서 '비밀번호 찾기'를 클릭하면 등록된 이메일로 재설정 링크가 발송됩니다." },
+                { q: "구독을 취소하고 싶어요", a: "설정 > 구독 & 결제에서 Stripe Customer Portal로 이동해 직접 구독을 관리할 수 있습니다. 취소 후에도 결제 기간 동안은 계속 이용 가능합니다." },
+                { q: "MCP 연동이 안 돼요", a: "API 키가 올바르게 설정되었는지 확인해주세요. 가이드 페이지에서 단계별 설정 방법을 확인할 수 있습니다. 그래도 안 되면 support@vibeuniv.com으로 문의해주세요." },
+                { q: "AI 분석이 실패했어요", a: "파일 크기가 너무 크거나 지원하지 않는 파일 형식일 수 있습니다. 최대 50개 파일, 파일당 100KB 이하를 권장합니다. 지속적인 오류는 이메일로 문의해주세요." },
+                { q: "환불은 어떻게 받나요?", a: "결제 후 7일 이내 전액 환불 가능합니다. support@vibeuniv.com으로 환불 요청을 보내주시면 3영업일 이내 처리됩니다." },
               ]
             : [
-                { q: "What can I do with the Free plan?", a: "You can analyze 3 projects, generate 1 learning roadmap per month, and have 20 AI tutor conversations per month for free." },
-                { q: "How do I connect via MCP?", a: "You can connect with a single command in Claude Code. See the Guide page for detailed instructions." },
-                { q: "Is my code stored on the server?", a: "With MCP integration, analysis is performed locally using Local-First architecture. Only analysis results are stored on the server." },
-                { q: "How is payment processed?", a: "Payments are securely processed through Stripe. Subscription management and cancellation can be done directly in the Stripe Customer Portal." },
-                { q: "What is the refund policy?", a: "Full refund available within 7 days of payment. After 7 days, pro-rata refund for the remaining period applies." },
+                { q: "I forgot my password", a: "Click 'Forgot Password' on the login page to receive a reset link via your registered email." },
+                { q: "I want to cancel my subscription", a: "Go to Settings > Subscription & Billing and access the Stripe Customer Portal to manage your subscription. You can continue using the service until the end of your billing period." },
+                { q: "MCP integration isn't working", a: "Make sure your API key is correctly configured. Check the Guide page for step-by-step setup instructions. If it still doesn't work, contact support@vibeuniv.com." },
+                { q: "AI analysis failed", a: "Files may be too large or in an unsupported format. We recommend max 50 files, under 100KB each. For persistent errors, please contact us via email." },
+                { q: "How do I get a refund?", a: "Full refund available within 7 days of payment. Send a refund request to support@vibeuniv.com and it will be processed within 3 business days." },
               ]
           ).map(({ q, a }) => (
             <div key={q} className="border-b border-border-default pb-3 last:border-0 last:pb-0">

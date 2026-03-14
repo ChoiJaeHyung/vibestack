@@ -14,7 +14,7 @@ interface LegalSection {
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Legal");
   return {
-    title: `${t("privacy.title")} | VibeUniv`,
+    title: t("privacy.title"),
     description: t("privacy.intro").slice(0, 160),
   };
 }

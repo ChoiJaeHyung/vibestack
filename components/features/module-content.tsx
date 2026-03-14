@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import dynamic from "next/dynamic";
 import {
   CheckCircle2,
   XCircle,
@@ -336,12 +335,60 @@ function highlightCode(code: string): string {
   }
 }
 
-const LazyEditor = dynamic(() => import("react-simple-code-editor"), {
-  ssr: false,
-  loading: () => (
-    <pre className="min-h-[120px] bg-zinc-900 p-4 font-mono text-sm text-zinc-100" />
-  ),
-});
+// ─── Fill-in-the-blank helpers ───────────────────────────────────
+
+interface CodeSegment { type: "code"; text: string }
+interface BlankSegment { type: "blank"; id: string }
+type ChallengeSegment = CodeSegment | BlankSegment;
+
+function parseChallengeParts(code: string): ChallengeSegment[] {
+  const parts: ChallengeSegment[] = [];
+  const pattern = /___BLANK_?(\d*)___/g;
+  let lastIndex = 0;
+  let blankCount = 0;
+  let match;
+  while ((match = pattern.exec(code)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ type: "code", text: code.slice(lastIndex, match.index) });
+    }
+    blankCount++;
+    parts.push({ type: "blank", id: match[1] || String(blankCount) });
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < code.length) {
+    parts.push({ type: "code", text: code.slice(lastIndex) });
+  }
+  return parts;
+}
+
+function extractBlankAnswers(starter: string, answer: string): Record<string, string> {
+  if (!starter || !answer) return {};
+  const result: Record<string, string> = {};
+  const sLines = starter.split("\n");
+  const aLines = answer.split("\n");
+  let blankCount = 0;
+
+  for (let si = 0, ai = 0; si < sLines.length && ai < aLines.length; si++, ai++) {
+    const match = sLines[si].match(/___BLANK_?(\d*)___/);
+    if (!match || match.index === undefined) continue;
+    blankCount++;
+    const id = match[1] || String(blankCount);
+    const before = sLines[si].substring(0, match.index);
+    const after = sLines[si].substring(match.index + match[0].length);
+    let extracted = aLines[ai];
+    if (before && extracted.startsWith(before)) {
+      extracted = extracted.substring(before.length);
+    }
+    if (after) {
+      const idx = extracted.lastIndexOf(after);
+      if (idx >= 0) extracted = extracted.substring(0, idx);
+    }
+    result[id] = extracted.trim();
+  }
+  return result;
+}
+
+// ─── Challenge Section Component (Fill-in-the-blank) ─────────────
 
 function ChallengeSection({
   section,
@@ -352,49 +399,58 @@ function ChallengeSection({
   moduleId: string;
   sectionIndex: number;
 }) {
-  const t = useTranslations('Learning');
-  const storageKey = `challenge-code-${moduleId}-${sectionIndex}`;
+  const t = useTranslations("Learning");
+  const storageKey = `challenge-blanks-${moduleId}-${sectionIndex}`;
   const [completed, setCompleted] = useState(false);
-  const [code, setCode] = useState(() => {
-    if (typeof window === "undefined") return section.challenge_starter_code ?? "";
+
+  const starterCode = section.challenge_starter_code ?? "";
+  const answerCode = section.challenge_answer_code ?? section.code ?? "";
+
+  const parts = useMemo(() => parseChallengeParts(starterCode), [starterCode]);
+  const correctAnswers = useMemo(
+    () => extractBlankAnswers(starterCode, answerCode),
+    [starterCode, answerCode],
+  );
+
+  const [blanks, setBlanks] = useState<Record<string, string>>(() => {
+    if (typeof window === "undefined") return {};
     try {
       const saved = localStorage.getItem(storageKey);
-      return saved ?? section.challenge_starter_code ?? "";
+      return saved ? JSON.parse(saved) : {};
     } catch {
-      return section.challenge_starter_code ?? "";
+      return {};
     }
   });
-  const [showAnswer, setShowAnswer] = useState(false);
-  const answerCode =
-    section.challenge_answer_code ?? section.code ?? "";
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Debounced localStorage save
-  const handleCodeChange = useCallback(
-    (newCode: string) => {
-      setCode(newCode);
-      if (saveTimerRef.current) {
-        clearTimeout(saveTimerRef.current);
-      }
-      saveTimerRef.current = setTimeout(() => {
-        try {
-          localStorage.setItem(storageKey, newCode);
-        } catch {
-          // Ignore localStorage errors (quota exceeded, etc.)
-        }
-      }, 500);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleBlankChange = useCallback(
+    (id: string, value: string) => {
+      setBlanks((prev) => {
+        const next = { ...prev, [id]: value };
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = setTimeout(() => {
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(next));
+          } catch { /* ignore */ }
+        }, 500);
+        return next;
+      });
     },
     [storageKey],
   );
 
-  // Cleanup timer on unmount
   useEffect(() => {
     return () => {
-      if (saveTimerRef.current) {
-        clearTimeout(saveTimerRef.current);
-      }
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
   }, []);
+
+  // Count how many blanks the user got right
+  const blankIds = parts.filter((p): p is BlankSegment => p.type === "blank").map((p) => p.id);
+  const filledCorrectly = blankIds.filter(
+    (id) => blanks[id] && correctAnswers[id] && blanks[id].trim() === correctAnswers[id],
+  ).length;
+  const allCorrect = blankIds.length > 0 && filledCorrectly === blankIds.length;
 
   return (
     <div className="space-y-4">
@@ -404,53 +460,56 @@ function ChallengeSection({
         </ReactMarkdown>
       </div>
 
-      {/* Code Editor */}
+      {/* Fill-in-the-blank code */}
       <div className="overflow-hidden rounded-xl border border-zinc-700">
         <div className="flex items-center justify-between bg-zinc-800 px-4 py-2">
-          <span className="text-xs font-medium text-zinc-400">
-            {t('challenge.codeEditor')}
+          <span className="text-xs font-medium text-violet-300">
+            {t("challenge.fillBlanks")}
           </span>
-          {answerCode && (
-            <button
-              type="button"
-              onClick={() => setShowAnswer(!showAnswer)}
-              className="flex items-center gap-1.5 rounded-lg bg-zinc-700 px-2.5 py-1 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-600 hover:text-zinc-100"
-            >
-              <Eye className="h-3.5 w-3.5" />
-              {showAnswer ? t('challenge.hideAnswer') : t('challenge.showAnswer')}
-            </button>
+          {blankIds.length > 0 && (
+            <span className={`text-[11px] font-medium ${allCorrect ? "text-green-400" : "text-zinc-500"}`}>
+              {filledCorrectly}/{blankIds.length}
+            </span>
           )}
         </div>
-        <LazyEditor
-          value={code}
-          onValueChange={handleCodeChange}
-          highlight={(c: string) => highlightCode(c)}
-          padding={16}
-          className="min-h-[120px] bg-zinc-900 font-mono text-sm text-zinc-100"
-          style={{
-            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-          }}
-        />
+        <div className="overflow-x-auto bg-zinc-900 p-4">
+          <pre className="text-sm leading-relaxed whitespace-pre-wrap break-words" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
+            {parts.map((part, i) => {
+              if (part.type === "code") {
+                return <span key={i} className="text-zinc-300">{part.text}</span>;
+              }
+              const value = blanks[part.id] ?? "";
+              const answer = correctAnswers[part.id] ?? "";
+              const isCorrect = value.trim() === answer && answer !== "";
+              const charWidth = Math.max(answer.length, 8) + 2;
+              return (
+                <input
+                  key={i}
+                  type="text"
+                  value={value}
+                  onChange={(e) => handleBlankChange(part.id, e.target.value)}
+                  placeholder={answer || `BLANK_${part.id}`}
+                  className={`inline-block border-b-2 border-dashed font-mono text-sm outline-none transition-colors px-1 rounded-sm ${
+                    isCorrect
+                      ? "border-green-500/60 bg-green-500/15 text-green-300 placeholder:text-green-500/30"
+                      : "border-violet-500/50 bg-violet-500/15 text-violet-200 placeholder:text-violet-400/30 focus:border-violet-400 focus:bg-violet-500/25"
+                  }`}
+                  style={{
+                    width: `${charWidth}ch`,
+                    fontFamily: "inherit",
+                  }}
+                />
+              );
+            })}
+          </pre>
+        </div>
       </div>
 
-      {/* Answer panel */}
-      {showAnswer && answerCode && (
-        <div className="overflow-hidden rounded-xl border border-zinc-700">
-          <div className="bg-zinc-800 px-4 py-2">
-            <span className="text-xs font-medium text-zinc-400">
-              {t('challenge.answerCode')}
-            </span>
-          </div>
-          <div className="overflow-x-auto bg-zinc-900 p-4">
-            <pre className="text-sm">
-              <code
-                className="hljs text-zinc-100"
-                dangerouslySetInnerHTML={{
-                  __html: highlightCode(answerCode),
-                }}
-              />
-            </pre>
-          </div>
+      {/* All correct feedback */}
+      {allCorrect && (
+        <div className="flex items-center gap-2 rounded-lg bg-green-500/10 border border-green-500/20 px-3 py-2">
+          <CheckCircle2 className="h-3.5 w-3.5 text-green-400 shrink-0" />
+          <span className="text-xs text-green-300">{t("quiz.correct")}</span>
         </div>
       )}
 
@@ -462,7 +521,7 @@ function ChallengeSection({
           className="h-4 w-4 rounded border-zinc-600 text-violet-500 focus:ring-violet-500/50"
         />
         <span className="text-sm text-text-tertiary">
-          {t('challenge.completed')}
+          {t("challenge.completed")}
         </span>
       </label>
     </div>
@@ -804,19 +863,6 @@ export function ModuleContent({
     if (text.length < 5) {
       setTooltip(null);
       return;
-    }
-
-    // Skip selections inside code editors (react-simple-code-editor)
-    const anchorNode = selection.anchorNode;
-    if (anchorNode) {
-      let node: Node | null = anchorNode;
-      while (node) {
-        if (node instanceof HTMLElement && node.classList.contains("npm__react-simple-code-editor__textarea")) {
-          setTooltip(null);
-          return;
-        }
-        node = node.parentNode;
-      }
     }
 
     const range = selection.getRangeAt(0);

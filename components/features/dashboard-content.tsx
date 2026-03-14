@@ -21,7 +21,10 @@ import {
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
 import { BadgeGrid } from "@/components/features/badge-grid";
 import { StreakWidget } from "@/components/features/streak-widget";
-import { GeoAd } from "@/components/features/geo-ad";
+import { GrowthSection } from "@/components/features/growth-section";
+import { OnboardingBanner } from "@/components/features/onboarding-banner";
+import { RecommendedConcepts } from "@/components/features/recommended-concepts";
+import { TechProgress } from "@/components/features/tech-progress";
 import type { DashboardData } from "@/app/api/dashboard/route";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -169,24 +172,41 @@ function DashboardSkeleton() {
 
 // ─── Stat Card ────────────────────────────────────────────────────────
 
+const STAT_COLORS = {
+  blue: { bg: "bg-blue-500/10", text: "text-blue-400", hover: "from-blue-500/[0.03] to-cyan-500/[0.03]" },
+  violet: { bg: "bg-violet-500/10", text: "text-violet-400", hover: "from-violet-500/[0.03] to-fuchsia-500/[0.03]" },
+  emerald: { bg: "bg-emerald-500/10", text: "text-emerald-400", hover: "from-emerald-500/[0.03] to-teal-500/[0.03]" },
+  amber: { bg: "bg-amber-500/10", text: "text-amber-400", hover: "from-amber-500/[0.03] to-orange-500/[0.03]" },
+  indigo: { bg: "bg-indigo-500/10", text: "text-indigo-400", hover: "from-indigo-500/[0.03] to-violet-500/[0.03]" },
+} as const;
+
 function StatCard({
   icon: Icon,
   label,
   value,
   suffix,
+  color = "violet",
+  highlight,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: number;
   suffix?: string;
+  color?: keyof typeof STAT_COLORS;
+  highlight?: boolean;
 }) {
+  const c = STAT_COLORS[color];
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-border-default bg-bg-surface p-5 hover:border-border-hover transition-all duration-300">
+    <div className={`group relative overflow-hidden rounded-2xl border p-5 transition-all duration-300 ${
+      highlight
+        ? "border-violet-500/20 bg-gradient-to-br from-violet-500/[0.04] to-bg-surface hover:border-violet-500/30"
+        : "border-border-default bg-bg-surface hover:border-border-hover"
+    }`}>
       {/* Hover gradient overlay */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.03] to-cyan-500/[0.03] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${c.hover} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
       <div className="relative flex items-center gap-3">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-violet-500/10">
-          <Icon className="h-5 w-5 text-violet-400" />
+        <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${c.bg}`}>
+          <Icon className={`h-5 w-5 ${c.text}`} />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-3xl font-bold text-text-primary tracking-tight tabular-nums">
@@ -207,12 +227,14 @@ function CompactProjectRow({
   status,
   updatedAt,
   formatRelativeTime,
+  statusLabel,
 }: {
   id: string;
   name: string;
   status: string;
   updatedAt: string;
   formatRelativeTime: (dateStr: string) => string;
+  statusLabel: string;
 }) {
   const statusStyles: Record<string, string> = {
     analyzed: "bg-green-500/10 text-green-400",
@@ -221,20 +243,13 @@ function CompactProjectRow({
     created: "bg-zinc-500/10 text-text-muted",
     error: "bg-red-500/10 text-red-400",
   };
-  const statusLabels: Record<string, string> = {
-    analyzed: "Analyzed",
-    analyzing: "Analyzing",
-    uploaded: "Uploaded",
-    created: "Created",
-    error: "Error",
-  };
 
   return (
     <Link href={`/projects/${id}`}>
       <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-bg-surface transition-colors group">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-500/10">
-            <FolderOpen className="h-4 w-4 text-violet-400" />
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+            <FolderOpen className="h-4 w-4 text-blue-400" />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-medium text-text-secondary truncate group-hover:text-white transition-colors">
@@ -244,7 +259,7 @@ function CompactProjectRow({
           </div>
         </div>
         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${statusStyles[status] ?? statusStyles.created}`}>
-          {statusLabels[status] ?? status}
+          {statusLabel}
         </span>
       </div>
     </Link>
@@ -256,6 +271,7 @@ function CompactProjectRow({
 export function DashboardContent() {
   const t = useTranslations("Dashboard");
   const tc = useTranslations("Common");
+  const tp = useTranslations("Projects");
   const { data, isLoading } = useCachedFetch<DashboardData>(
     "/api/dashboard",
     fetchDashboard,
@@ -297,7 +313,7 @@ export function DashboardContent() {
 
   // Show nudge banner when user has learning paths but hasn't studied today
   const learnedToday = stats?.learnedToday ?? false;
-  const showNudgeBanner =
+  const canShowNudge =
     !nudgeDismissed &&
     !learnedToday &&
     stats?.currentLearning != null;
@@ -308,7 +324,17 @@ export function DashboardContent() {
   ) ?? false;
   const hasNoLearningPaths =
     (stats?.learningProgress.total ?? 0) === 0 && !stats?.currentLearning;
-  const showLearningCTA = hasAnalyzedProjects && hasNoLearningPaths;
+  const canShowLearningCTA = hasAnalyzedProjects && hasNoLearningPaths;
+
+  // Banner priority merging: only show 1 banner at a time
+  // Priority: onboarding > nudge > learningCTA > upgrade
+  // OnboardingBanner manages its own visibility internally, so we track others
+  const activeBanner = (() => {
+    if (canShowNudge) return "nudge" as const;
+    if (canShowLearningCTA) return "learningCTA" as const;
+    // upgrade banner manages its own localStorage visibility
+    return "upgrade" as const;
+  })();
 
   return (
     <div className="space-y-6">
@@ -322,13 +348,45 @@ export function DashboardContent() {
         </p>
       </div>
 
-      {/* Upgrade Banner */}
-      {usageData && (
-        <DashboardUpgradeBanner planType={usageData.planType} />
+      {/* Onboarding Banner (first visit only — manages own visibility via localStorage) */}
+      <OnboardingBanner
+        totalProjects={totalProjects}
+        hasAnalyzedProject={hasAnalyzedProjects}
+        hasLearningPath={(stats?.learningProgress.total ?? 0) > 0}
+        hasCompletedModule={(stats?.learningProgress.completed ?? 0) > 0}
+      />
+
+      {/* Priority-based single banner: nudge > learningCTA > upgrade */}
+      {activeBanner === "nudge" && stats?.currentLearning && (
+        <div className="relative rounded-xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/15">
+              <Flame className="h-5 w-5 text-amber-400" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-text-primary">
+                {t("nudge.title")}
+              </p>
+              <Link
+                href={`/learning/${stats.currentLearning.pathId}/${stats.currentLearning.moduleId}`}
+                className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-amber-400 transition-colors hover:text-amber-300"
+              >
+                {t("nudge.continueLearning")}
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+            <button
+              type="button"
+              onClick={() => setNudgeDismissed(true)}
+              className="shrink-0 rounded-lg p-1 text-text-muted transition-colors hover:text-text-primary"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       )}
 
-      {/* Learning CTA — shown when user has analyzed projects but no learning paths */}
-      {showLearningCTA && (
+      {activeBanner === "learningCTA" && (
         <div className="rounded-2xl border border-violet-500/20 bg-violet-500/[0.04] p-5">
           <div className="flex items-center gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10">
@@ -352,42 +410,16 @@ export function DashboardContent() {
         </div>
       )}
 
-      {/* Today Learning Nudge Banner */}
-      {showNudgeBanner && stats?.currentLearning && (
-        <div className="relative rounded-xl border border-violet-500/20 bg-violet-500/10 p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/20">
-              <Flame className="h-5 w-5 text-violet-400" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-text-primary">
-                {t("nudge.title")}
-              </p>
-              <Link
-                href={`/learning/${stats.currentLearning.pathId}/${stats.currentLearning.moduleId}`}
-                className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-violet-400 transition-colors hover:text-violet-300"
-              >
-                {t("nudge.continueLearning")}
-                <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-            <button
-              type="button"
-              onClick={() => setNudgeDismissed(true)}
-              className="shrink-0 rounded-lg p-1 text-text-muted transition-colors hover:text-text-primary"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
+      {activeBanner === "upgrade" && usageData && (
+        <DashboardUpgradeBanner planType={usageData.planType} />
       )}
 
       {/* 4 Stat Cards */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={FolderOpen} label={t("stats.totalProjects")} value={totalProjects} />
-        <StatCard icon={Code} label={t("stats.detectedTech")} value={uniqueTech} />
-        <StatCard icon={GraduationCap} label={t("stats.learningProgress")} value={learningPercent} suffix="%" />
-        <StatCard icon={MessageCircle} label={t("stats.aiChats")} value={monthlyChats} />
+        <StatCard icon={FolderOpen} label={t("stats.totalProjects")} value={totalProjects} color="blue" />
+        <StatCard icon={Code} label={t("stats.detectedTech")} value={uniqueTech} color="blue" />
+        <StatCard icon={GraduationCap} label={t("stats.learningProgress")} value={learningPercent} suffix="%" color="violet" highlight />
+        <StatCard icon={MessageCircle} label={t("stats.aiChats")} value={monthlyChats} color="indigo" />
       </div>
 
       {/* Streak Widget */}
@@ -406,10 +438,21 @@ export function DashboardContent() {
         />
       )}
 
-      {/* Bento Grid Row 1: Continue Learning + Usage */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Continue Learning */}
-        <div className="rounded-2xl border border-border-default bg-bg-surface p-5">
+      {/* Growth Section */}
+      <GrowthSection />
+
+      {/* Recommended Concepts + Tech Progress */}
+      {stats?.recentProjects.some((p) => p.status === "analyzed") && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <RecommendedConcepts projectId={stats.recentProjects.find((p) => p.status === "analyzed")!.id} />
+          <TechProgress projectId={stats.recentProjects.find((p) => p.status === "analyzed")!.id} />
+        </div>
+      )}
+
+      {/* Bento Grid Row 1: Continue Learning (Hero, 2/3) + Usage (1/3) */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Continue Learning — Hero card */}
+        <div className="lg:col-span-2 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/[0.04] to-bg-surface p-5">
           <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">
             {t("section.learningStatus")}
           </h2>
@@ -484,6 +527,15 @@ export function DashboardContent() {
                 limit={usageData.aiChats.limit}
                 unlimitedLabel={t("usage.unlimited")}
               />
+              {usageData.tokenBudget && (
+                <ProgressRing
+                  label={t("usage.tokenBudget")}
+                  percent={usageData.tokenBudget.limit ? Math.min((usageData.tokenBudget.used / usageData.tokenBudget.limit) * 100, 100) : 0}
+                  used={usageData.tokenBudget.used}
+                  limit={usageData.tokenBudget.limit}
+                  unlimitedLabel={t("usage.unlimited")}
+                />
+              )}
             </div>
           </div>
         ) : (
@@ -519,6 +571,7 @@ export function DashboardContent() {
                   status={project.status}
                   updatedAt={project.updated_at}
                   formatRelativeTime={formatRelativeTime}
+                  statusLabel={tp(`detail.status.${project.status}` as Parameters<typeof tp>[0])}
                 />
               ))}
             </div>
@@ -527,16 +580,16 @@ export function DashboardContent() {
           )}
         </div>
 
-        {/* Tech Distribution (inline — TechChart replaced later) */}
+        {/* Tech Distribution — Secondary card */}
         {stats && stats.techDistribution.length > 0 ? (
-          <div className="rounded-2xl border border-border-default bg-bg-surface p-5">
+          <div className="rounded-2xl border border-border-default/60 bg-bg-surface/80 p-5">
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-3">
               {t("section.techDistribution")}
             </h2>
             <TechDistributionInline data={stats.techDistribution} />
           </div>
         ) : (
-          <div className="rounded-2xl border border-border-default bg-bg-surface p-5">
+          <div className="rounded-2xl border border-border-default/60 bg-bg-surface/80 p-5">
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-3">
               {t("section.techDistribution")}
             </h2>
@@ -545,11 +598,11 @@ export function DashboardContent() {
         )}
       </div>
 
-      {/* Badge Grid */}
+      {/* Badge Grid — Secondary card */}
       {stats?.badges && stats.badges.all.length > 0 && (
-        <div className="rounded-2xl border border-border-default bg-bg-surface p-5">
+        <div className="rounded-2xl border border-border-default/60 bg-bg-surface/80 p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Trophy className="h-4 w-4 text-violet-400" />
+            <Trophy className="h-4 w-4 text-amber-400" />
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider">
               {t("section.myBadges")}
             </h2>
@@ -565,7 +618,6 @@ export function DashboardContent() {
       )}
 
       {/* Ad Banner */}
-      <GeoAd planType={usageData?.planType} className="mt-2" />
     </div>
   );
 }
@@ -586,7 +638,7 @@ function EmptyDashboard() {
         return (
           <Link key={idx} href={step.href}>
             <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-bg-surface transition-colors group">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10 text-xs font-bold text-violet-400 shrink-0">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-xs font-bold text-blue-400 shrink-0">
                 {idx + 1}
               </div>
               <div className="min-w-0 flex-1">
@@ -682,7 +734,7 @@ function TechDistributionInline({ data }: { data: Array<{ category: string; coun
           <path key={idx} d={seg.path} fill={seg.color} opacity={0.85} />
         ))}
         {/* Center text */}
-        <text x={cx} y={cy - 4} textAnchor="middle" className="fill-zinc-100 text-lg font-bold" style={{ fontSize: 18 }}>
+        <text x={cx} y={cy - 4} textAnchor="middle" className="fill-text-primary text-lg font-bold" style={{ fontSize: 18 }}>
           {total}
         </text>
         <text x={cx} y={cy + 12} textAnchor="middle" className="fill-zinc-500" style={{ fontSize: 10 }}>

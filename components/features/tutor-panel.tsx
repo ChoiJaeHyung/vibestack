@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { X, MessageCircle, Search } from "lucide-react";
+import { X, MessageCircle, Search, BookOpen } from "lucide-react";
 import { useTutorPanel } from "@/components/features/tutor-panel-context";
 import { TutorChat } from "@/components/features/tutor-chat";
 import { TutorSearch } from "@/components/features/tutor-search";
@@ -104,10 +104,25 @@ export function TutorPanel() {
                 selectedText={selectedText ?? undefined}
               />
             ) : (
-              <div className="flex h-full items-center justify-center">
-                <p className="text-sm text-text-muted">
-                  {t("panel.selectModule")}
-                </p>
+              <div className="flex h-full flex-col">
+                <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/10 ring-1 ring-violet-500/20">
+                    <BookOpen className="h-6 w-6 text-violet-400" />
+                  </div>
+                  <p className="mt-3 text-sm font-medium text-text-secondary">
+                    {t("panel.selectModule")}
+                  </p>
+                  <p className="mt-1 text-xs text-text-faint">
+                    {t("panel.selectModuleHint")}
+                  </p>
+                </div>
+                <div className="border-t border-border-default p-3">
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1 rounded-xl border border-border-default bg-bg-input px-3 py-2 text-sm text-text-faint cursor-not-allowed">
+                      {t("panel.selectModulePlaceholder")}
+                    </div>
+                  </div>
+                </div>
               </div>
             )
           ) : (

@@ -29,9 +29,10 @@ import {
   FileCode,
 } from "lucide-react";
 import { getLocale } from "next-intl/server";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 export const metadata: Metadata = {
-  title: "Features Guide | VibeUniv",
+  title: "Features Guide",
   description: "VibeUniv의 메뉴별 기능을 상세히 알아보세요. 대시보드, 프로젝트, 학습, 설정, 리워드까지 모든 기능을 안내합니다.",
 };
 
@@ -330,6 +331,13 @@ export default async function FeaturesGuidePage() {
 
   return (
     <div className="max-w-[900px] mx-auto px-8 max-md:px-4 py-12">
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Guide", href: "/guide" },
+          { label: isKo ? "Features" : "Features" },
+        ]}
+      />
       {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">

@@ -1,0 +1,6 @@
+*.jpeg
+*.dmg
+.bkit/
+.claude/
+.playwright-mcp/
+docs/

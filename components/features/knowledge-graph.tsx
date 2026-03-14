@@ -6,6 +6,7 @@ import {
   Background,
   Controls,
   MiniMap,
+  Panel,
   useNodesState,
   useEdgesState,
   type Node,
@@ -135,6 +136,19 @@ export function KnowledgeGraph({ initialData, projectId }: KnowledgeGraphProps) 
     null,
   );
 
+  // Compute progress stats
+  const stats = useMemo(() => {
+    const total = graphData.nodes.length;
+    const mastered = graphData.nodes.filter(
+      (n) => n.masteryLevel >= MASTERY.MASTERED_THRESHOLD,
+    ).length;
+    const inProgress = graphData.nodes.filter(
+      (n) => n.masteryLevel > 0 && n.masteryLevel < MASTERY.MASTERED_THRESHOLD,
+    ).length;
+    const notStarted = total - mastered - inProgress;
+    return { total, mastered, inProgress, notStarted };
+  }, [graphData.nodes]);
+
   const flowNodes = useMemo(
     () => buildFlowNodes(graphData.nodes, graphData.technologies),
     [graphData],
@@ -195,6 +209,42 @@ export function KnowledgeGraph({ initialData, projectId }: KnowledgeGraphProps) 
         proOptions={{ hideAttribution: true }}
         className="[&_.react-flow__background]:!bg-transparent"
       >
+        {/* Progress summary + guide */}
+        <Panel position="top-left" className="!m-3">
+          <div className="rounded-lg bg-bg-elevated/90 px-4 py-3 shadow-sm backdrop-blur-sm border border-border-default">
+            <div className="flex items-center gap-4 text-xs flex-wrap">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-green-500" />
+                <span className="text-text-muted">{t("knowledgeMap.legend.mastered")}</span>
+                <span className="font-semibold text-text-primary">{stats.mastered}</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-blue-500" />
+                <span className="text-text-muted">{t("knowledgeMap.legend.inProgress")}</span>
+                <span className="font-semibold text-text-primary">{stats.inProgress}</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-zinc-500" />
+                <span className="text-text-muted">{t("knowledgeMap.legend.notStarted")}</span>
+                <span className="font-semibold text-text-primary">{stats.notStarted}</span>
+              </span>
+            </div>
+            <div className="mt-2 flex items-center gap-4 text-xs">
+              <span className="flex items-center gap-1.5">
+                <span className="h-px w-4 bg-border-default" />
+                <span className="text-text-muted">{t("knowledgeMap.legend.sameTechEdge")}</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-px w-4 bg-violet-500 border-t border-dashed border-violet-500" />
+                <span className="text-text-muted">{t("knowledgeMap.legend.crossTechEdge")}</span>
+              </span>
+            </div>
+            <p className="mt-1.5 text-[11px] text-text-faint">
+              {t("knowledgeMap.guide")}
+            </p>
+          </div>
+        </Panel>
+
         <Background
           variant={BackgroundVariant.Dots}
           gap={20}
@@ -217,22 +267,6 @@ export function KnowledgeGraph({ initialData, projectId }: KnowledgeGraphProps) 
           maskColor="rgba(0,0,0,0.1)"
         />
       </ReactFlow>
-
-      {/* Legend */}
-      <div className="absolute bottom-4 left-4 z-10 flex gap-3 rounded-lg bg-bg-elevated/90 px-3 py-2 text-[10px] text-text-faint backdrop-blur-sm">
-        <span className="flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-green-500" />
-          {t("knowledgeMap.legend.mastered")}
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-blue-500" />
-          {t("knowledgeMap.legend.inProgress")}
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-zinc-500" />
-          {t("knowledgeMap.legend.notStarted")}
-        </span>
-      </div>
 
       {/* Detail panel */}
       {selectedNode && (

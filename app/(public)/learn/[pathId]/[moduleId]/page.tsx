@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Lock, ArrowRight } from "lucide-react";
+import { Lock, ArrowRight } from "lucide-react";
 import { getPublicModuleContent, getPublicLearningPathDetail } from "@/server/actions/public-learning";
 import { PublicModuleContent } from "@/components/features/public-module-content";
 import { getLocale } from "next-intl/server";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 interface Props {
   params: Promise<{ pathId: string; moduleId: string }>;
@@ -15,8 +16,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const mod = await getPublicModuleContent(pathId, moduleId);
   if (!mod) return { title: "Not Found" };
   return {
-    title: `${mod.title} | VibeUniv`,
+    title: mod.title,
     description: mod.description ?? undefined,
+    alternates: {
+      canonical: `https://vibeuniv.com/learn/${pathId}/${moduleId}`,
+    },
   };
 }
 
@@ -34,17 +38,20 @@ export default async function PublicModulePage({ params }: Props) {
   const currentIdx = modules.findIndex((m) => m.id === moduleId);
   const nextModule = currentIdx >= 0 && currentIdx < 1 ? modules[currentIdx + 1] : null;
 
+  const pathTitle = pathData?.path.title ?? "";
+
+  const breadcrumbItems = [
+    { label: "Home", href: "/" },
+    { label: "Learn", href: "/learn" },
+    { label: pathTitle, href: `/learn/${pathId}` },
+    { label: mod.title },
+  ];
+
   // No content = locked module
   if (!mod.content) {
     return (
       <div className="max-w-[800px] mx-auto px-8 max-md:px-4 py-12">
-        <Link
-          href={`/learn/${pathId}`}
-          className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text-primary transition-colors mb-8"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {isKo ? "커리큘럼으로" : "Back to curriculum"}
-        </Link>
+        <Breadcrumb items={breadcrumbItems} />
         <div className="text-center py-20">
           <Lock className="h-12 w-12 text-text-muted mx-auto mb-4" />
           <h2 className="text-xl font-bold text-text-primary mb-2">{mod.title}</h2>
@@ -68,14 +75,7 @@ export default async function PublicModulePage({ params }: Props) {
 
   return (
     <div className="max-w-[800px] mx-auto px-8 max-md:px-4 py-12">
-      {/* Back */}
-      <Link
-        href={`/learn/${pathId}`}
-        className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text-primary transition-colors mb-8"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        {isKo ? "커리큘럼으로" : "Back to curriculum"}
-      </Link>
+      <Breadcrumb items={breadcrumbItems} />
 
       {/* Module Header */}
       <div className="mb-8">

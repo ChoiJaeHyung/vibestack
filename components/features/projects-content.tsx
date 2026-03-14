@@ -3,23 +3,17 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Plus, FolderOpen, BookOpen, Settings, Zap } from "lucide-react";
+import { Plus, FolderOpen, BookOpen, Settings, Zap, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/features/project-card";
 import { UpgradeModal } from "@/components/features/upgrade-modal";
-import { GeoAd } from "@/components/features/geo-ad";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
 import type { ProjectsListData } from "@/app/api/projects-list/route";
 import type { UsageData } from "@/server/actions/usage";
 
 type FilterType = "all" | "analyzed" | "analyzing" | "uploaded";
 
-const FILTER_LABELS: Record<FilterType, string> = {
-  all: "All",
-  analyzed: "Analyzed",
-  analyzing: "Analyzing",
-  uploaded: "Uploaded",
-};
+const FILTER_KEYS: FilterType[] = ["all", "analyzed", "analyzing", "uploaded"];
 
 function extractTechNames(techSummary: unknown): string[] {
   if (!techSummary || typeof techSummary !== "object") return [];
@@ -135,7 +129,7 @@ export function ProjectsContent() {
           {/* Status filter chips */}
           {allProjects.length > 0 && (
             <div className="hidden sm:flex items-center gap-1 rounded-xl border border-border-default bg-bg-surface p-1">
-              {(Object.keys(FILTER_LABELS) as FilterType[]).map((filter) => (
+              {FILTER_KEYS.map((filter) => (
                 <button
                   key={filter}
                   onClick={() => setActiveFilter(filter)}
@@ -145,15 +139,15 @@ export function ProjectsContent() {
                       : "text-text-faint hover:text-text-tertiary"
                   }`}
                 >
-                  {FILTER_LABELS[filter]}
+                  {t(`filter.${filter}`)}
                 </button>
               ))}
             </div>
           )}
           {isAtLimit ? (
             <Button onClick={() => setShowUpgradeModal(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              {t('list.newProject')}
+              <Sparkles className="mr-2 h-4 w-4" />
+              {t('list.upgrade')}
             </Button>
           ) : (
             <Link href="/guide">
@@ -253,7 +247,6 @@ export function ProjectsContent() {
       )}
 
       {/* Ad Banner */}
-      <GeoAd planType={planType} className="mt-2" />
 
       <UpgradeModal
         isOpen={showUpgradeModal}
