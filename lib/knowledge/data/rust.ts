@@ -89,7 +89,7 @@ export const RUST_KNOWLEDGE: TechKnowledge = {
       concept_key: "structs-enums-rust",
       concept_name: "구조체와 열거형으로 타입 정의하기",
       difficulty_tier: "intermediate",
-      category: "types",
+      category: "type-system",
       key_points: [
         "struct로 관련 데이터를 하나로 묶고, impl 블록에서 메서드를 정의해요",
         "enum의 각 variant에 다른 타입의 데이터를 담을 수 있어요 (연관 데이터)",
@@ -163,7 +163,7 @@ export const RUST_KNOWLEDGE: TechKnowledge = {
       concept_key: "traits",
       concept_name: "트레이트로 공유 동작 정의하기",
       difficulty_tier: "intermediate",
-      category: "types",
+      category: "type-system",
       key_points: [
         "트레이트는 타입이 구현해야 할 메서드 시그니처의 집합이에요",
         "impl Trait for Type 문법으로 타입에 트레이트를 구현해요",
@@ -190,7 +190,7 @@ export const RUST_KNOWLEDGE: TechKnowledge = {
       concept_key: "generics-rust",
       concept_name: "제네릭으로 범용 코드 작성하기",
       difficulty_tier: "intermediate",
-      category: "types",
+      category: "type-system",
       key_points: [
         "제네릭(<T>)으로 타입에 독립적인 함수, 구조체, 열거형을 만들어요",
         "트레이트 바운드로 제네릭 타입이 특정 동작을 보장하도록 제약해요",
@@ -217,7 +217,7 @@ export const RUST_KNOWLEDGE: TechKnowledge = {
       concept_key: "collections-rust",
       concept_name: "컬렉션 타입 활용하기 (Vec, HashMap, Iterator)",
       difficulty_tier: "intermediate",
-      category: "types",
+      category: "type-system",
       key_points: [
         "Vec<T>는 가변 길이 배열로, push/pop으로 요소를 추가/제거해요",
         "HashMap<K, V>은 key-value 저장소로, entry API로 효율적으로 접근해요",

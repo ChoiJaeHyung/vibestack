@@ -86,7 +86,7 @@ export const REACT_KNOWLEDGE: TechKnowledge = {
       concept_key: "hooks-useState",
       concept_name: "useState로 상태 관리하기",
       difficulty_tier: "beginner",
-      category: "hooks",
+      category: "state-management",
       key_points: [
         "useState는 컴포넌트에 변경 가능한 상태를 추가하는 Hook이에요",
         "const [value, setValue] = useState(초기값) 패턴으로 사용해요",
@@ -112,7 +112,7 @@ export const REACT_KNOWLEDGE: TechKnowledge = {
       concept_key: "hooks-useEffect",
       concept_name: "useEffect로 사이드 이펙트 처리하기",
       difficulty_tier: "intermediate",
-      category: "hooks",
+      category: "state-management",
       key_points: [
         "useEffect는 컴포넌트 외부와 상호작용하는 코드를 실행해요",
         "API 호출, 이벤트 리스너 등록, 타이머 설정 등에 사용해요",
@@ -138,7 +138,7 @@ export const REACT_KNOWLEDGE: TechKnowledge = {
       concept_key: "hooks-useRef",
       concept_name: "useRef로 DOM 접근과 값 유지하기",
       difficulty_tier: "intermediate",
-      category: "hooks",
+      category: "state-management",
       key_points: [
         "useRef는 리렌더링 없이 값을 유지할 수 있는 Hook이에요",
         "ref.current로 DOM 요소에 직접 접근해요 (input focus, 스크롤 등)",
@@ -164,7 +164,7 @@ export const REACT_KNOWLEDGE: TechKnowledge = {
       concept_key: "hooks-useMemo",
       concept_name: "useMemo와 useCallback으로 성능 최적화하기",
       difficulty_tier: "intermediate",
-      category: "hooks",
+      category: "state-management",
       key_points: [
         "useMemo는 계산 비용이 큰 값을 메모이제이션해서 불필요한 재계산을 방지해요",
         "useCallback은 함수를 메모이제이션해서 자식 컴포넌트의 불필요한 리렌더링을 방지해요",
@@ -190,7 +190,7 @@ export const REACT_KNOWLEDGE: TechKnowledge = {
       concept_key: "hooks-custom",
       concept_name: "커스텀 Hook으로 로직 재사용하기",
       difficulty_tier: "intermediate",
-      category: "hooks",
+      category: "state-management",
       key_points: [
         "커스텀 Hook은 use로 시작하는 함수로, 여러 Hook을 조합한 재사용 로직이에요",
         "컴포넌트에서 반복되는 상태 로직을 추출해서 공유할 수 있어요",

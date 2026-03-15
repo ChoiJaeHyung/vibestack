@@ -29,7 +29,7 @@ export const NESTJS_KNOWLEDGE: TechKnowledge = {
       concept_key: "nestjs-modules",
       concept_name: "모듈로 앱 구조화하기",
       difficulty_tier: "beginner",
-      category: "architecture",
+      category: "patterns",
       key_points: [
         "@Module() 데코레이터로 관련 컨트롤러, 서비스, 임포트를 하나의 단위로 묶어요",
         "AppModule이 루트 모듈이고 다른 모듈들을 imports 배열에 등록해요",
@@ -52,7 +52,7 @@ export const NESTJS_KNOWLEDGE: TechKnowledge = {
       concept_key: "nestjs-controllers",
       concept_name: "컨트롤러로 요청 라우팅하기",
       difficulty_tier: "beginner",
-      category: "web",
+      category: "middleware",
       key_points: [
         "@Controller('users')로 기본 경로를 설정하고 @Get(), @Post() 등으로 핸들러를 매핑해요",
         "@Param(), @Query(), @Body()로 요청 데이터를 추출해요",
@@ -75,7 +75,7 @@ export const NESTJS_KNOWLEDGE: TechKnowledge = {
       concept_key: "nestjs-providers",
       concept_name: "Provider와 서비스 이해하기",
       difficulty_tier: "intermediate",
-      category: "architecture",
+      category: "patterns",
       key_points: [
         "@Injectable() 데코레이터로 DI 컨테이너에 등록되는 클래스를 만들어요",
         "서비스, 리포지토리, 팩토리, 헬퍼 등 다양한 역할의 provider가 있어요",
@@ -95,7 +95,7 @@ export const NESTJS_KNOWLEDGE: TechKnowledge = {
       concept_key: "nestjs-dependency-injection",
       concept_name: "의존성 주입 패턴 활용하기",
       difficulty_tier: "intermediate",
-      category: "architecture",
+      category: "patterns",
       key_points: [
         "생성자 주입으로 의존성을 자동으로 받아요 (constructor(private service: MyService))",
         "DI 컨테이너가 의존성 그래프를 자동으로 해결해요",
@@ -118,7 +118,7 @@ export const NESTJS_KNOWLEDGE: TechKnowledge = {
       concept_key: "nestjs-pipes",
       concept_name: "Pipe로 데이터 변환과 검증하기",
       difficulty_tier: "intermediate",
-      category: "data",
+      category: "data-access",
       key_points: [
         "Pipe는 핸들러에 전달되기 전에 데이터를 변환하거나 검증하는 역할이에요",
         "ValidationPipe + class-validator로 DTO 기반 자동 유효성 검증을 해요",
@@ -161,7 +161,7 @@ export const NESTJS_KNOWLEDGE: TechKnowledge = {
       concept_key: "nestjs-interceptors",
       concept_name: "Interceptor로 요청/응답 변환하기",
       difficulty_tier: "advanced",
-      category: "architecture",
+      category: "patterns",
       key_points: [
         "Interceptor는 요청 전후를 모두 가로채서 변환, 로깅, 캐싱 등을 수행해요",
         "NestInterceptor 인터페이스와 intercept() 메서드를 구현해요",
@@ -181,7 +181,7 @@ export const NESTJS_KNOWLEDGE: TechKnowledge = {
       concept_key: "nestjs-middleware",
       concept_name: "미들웨어로 요청 파이프라인 확장하기",
       difficulty_tier: "intermediate",
-      category: "web",
+      category: "middleware",
       key_points: [
         "NestJS 미들웨어는 Express 미들웨어와 동일한 (req, res, next) 시그니처예요",
         "NestMiddleware 인터페이스를 구현하거나 함수형 미들웨어를 만들어요",
@@ -201,7 +201,7 @@ export const NESTJS_KNOWLEDGE: TechKnowledge = {
       concept_key: "nestjs-typeorm",
       concept_name: "TypeORM으로 데이터베이스 연동하기",
       difficulty_tier: "intermediate",
-      category: "data",
+      category: "data-access",
       key_points: [
         "@nestjs/typeorm 패키지로 TypeORM을 NestJS와 통합해요",
         "TypeOrmModule.forRoot()로 DB 연결을 설정하고 forFeature()로 엔티티를 등록해요",

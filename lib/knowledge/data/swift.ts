@@ -96,7 +96,7 @@ export const SWIFT_KNOWLEDGE: TechKnowledge = {
       concept_key: "classes-structs-swift",
       concept_name: "클래스와 구조체의 차이 이해하기",
       difficulty_tier: "intermediate",
-      category: "types",
+      category: "type-system",
       key_points: [
         "구조체(struct)는 값 타입이고, 클래스(class)는 참조 타입이에요",
         "구조체는 복사 시 독립적인 사본이 생기고, 클래스는 같은 인스턴스를 공유해요",
@@ -116,7 +116,7 @@ export const SWIFT_KNOWLEDGE: TechKnowledge = {
       concept_key: "protocols",
       concept_name: "프로토콜로 인터페이스 정의하기",
       difficulty_tier: "intermediate",
-      category: "types",
+      category: "type-system",
       key_points: [
         "프로토콜은 타입이 구현해야 할 메서드와 프로퍼티의 청사진이에요",
         "구조체, 클래스, 열거형 모두 프로토콜을 채택(conform)할 수 있어요",
@@ -143,7 +143,7 @@ export const SWIFT_KNOWLEDGE: TechKnowledge = {
       concept_key: "enums-swift",
       concept_name: "열거형과 연관값 활용하기",
       difficulty_tier: "intermediate",
-      category: "types",
+      category: "type-system",
       key_points: [
         "enum은 관련된 값들의 그룹을 타입 안전하게 정의해요",
         "연관값(associated value)으로 각 케이스에 추가 데이터를 저장해요",
@@ -270,7 +270,7 @@ export const SWIFT_KNOWLEDGE: TechKnowledge = {
       concept_key: "swiftui-basics",
       concept_name: "SwiftUI 기초와 선언적 UI 이해하기",
       difficulty_tier: "advanced",
-      category: "ui",
+      category: "rendering",
       key_points: [
         "SwiftUI는 선언적 문법으로 UI를 구성해요 (body 프로퍼티에 뷰를 반환)",
         "@State로 뷰의 로컬 상태를 관리하고, 변경 시 자동으로 UI가 업데이트돼요",

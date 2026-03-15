@@ -9,6 +9,7 @@ import { MASTERY } from "./mastery-constants";
 import { checkAndAwardBadges } from "./badges";
 import type { ConceptHint, CrossTechLink, DifficultyTier } from "@/lib/knowledge/types";
 import { getKBHints } from "@/lib/knowledge";
+import { getRelationsFrom } from "@/lib/knowledge/tech-relations";
 import {
   hasConceptMatches,
   computeAndStoreConceptMatches,
@@ -411,8 +412,9 @@ async function buildGraphStructure(
     }
   }
 
-  // ── Phase 4: Fallback cross_tech edges (technology prerequisites) ──
-  // Only if no explicit cross_tech_links exist between two technologies
+  // ── Phase 4: Fallback cross_tech edges (from tech-relations matrix) ──
+  // Uses Level 1 tech relations to create exit→root edges for tech pairs
+  // that don't already have explicit cross_tech_links (Phase 3).
   const explicitCrossEdgePairs = new Set(
     edges
       .filter((e) => e.edgeType === "cross_tech")
@@ -420,48 +422,56 @@ async function buildGraphStructure(
         const sNode = nodes.find((n) => n.conceptKey === e.source);
         const tNode = nodes.find((n) => n.conceptKey === e.target);
         return sNode && tNode
-          ? `${sNode.technologyNameNormalized}→${tNode.technologyNameNormalized}`
+          ? [sNode.technologyNameNormalized, tNode.technologyNameNormalized].sort().join("↔")
           : "";
       }),
   );
 
+  // For each tech in the graph, check tech-relations for connected techs
+  const processedFallbackPairs = new Set<string>();
   for (const row of knowledgeRows) {
-    const prereqs = (row.prerequisites as string[] | null) ?? [];
-    for (const prereqNormalized of prereqs) {
-      // Skip if we already have explicit cross-tech edges between these techs
-      if (explicitCrossEdgePairs.has(`${prereqNormalized}→${row.technology_name_normalized}`)) {
-        continue;
-      }
+    const techNorm = row.technology_name_normalized as string;
+    const relations = getRelationsFrom(techNorm);
 
-      const prereqRow = techRowMap.get(prereqNormalized);
-      if (!prereqRow) continue;
+    for (const rel of relations) {
+      // Only foundation/extends create directional fallback edges
+      if (rel.relation !== "foundation" && rel.relation !== "extends") continue;
 
-      const prereqConcepts = prereqRow.concepts as ConceptHint[];
-      const currentConcepts = row.concepts as ConceptHint[];
+      const pairKey = [rel.source, rel.target].sort().join("↔");
+      if (processedFallbackPairs.has(pairKey)) continue;
+      if (explicitCrossEdgePairs.has(pairKey)) continue;
+      processedFallbackPairs.add(pairKey);
 
-      // Root concepts: no intra-tech prerequisites
-      const rootConcepts = currentConcepts.filter(
+      const sourceRow = techRowMap.get(rel.source);
+      const targetRow = techRowMap.get(rel.target);
+      if (!sourceRow || !targetRow) continue;
+
+      const sourceConcepts = sourceRow.concepts as ConceptHint[];
+      const targetConcepts = targetRow.concepts as ConceptHint[];
+
+      // Root concepts of target: no intra-tech prerequisites
+      const rootConcepts = targetConcepts.filter(
         (c) =>
           c.prerequisite_concepts.length === 0 ||
           c.prerequisite_concepts.every(
-            (p) => !currentConcepts.some((cc) => cc.concept_key === p),
+            (p) => !targetConcepts.some((cc) => cc.concept_key === p),
           ),
       );
 
-      // Exit concepts: nothing depends on them within their tech
+      // Exit concepts of source: nothing depends on them within their tech
       const depTargets = new Set(
-        prereqConcepts.flatMap((c) => c.prerequisite_concepts),
+        sourceConcepts.flatMap((c) => c.prerequisite_concepts),
       );
-      const exitConcepts = prereqConcepts.filter(
+      const exitConcepts = sourceConcepts.filter(
         (c) => !depTargets.has(c.concept_key),
       );
 
-      const sourceConcepts =
-        exitConcepts.length > 0 ? exitConcepts : prereqConcepts.slice(-1);
+      const fromConcepts =
+        exitConcepts.length > 0 ? exitConcepts : sourceConcepts.slice(-1);
 
       // Limit: max 3 fallback cross-tech edges per tech pair
       let count = 0;
-      for (const source of sourceConcepts) {
+      for (const source of fromConcepts) {
         if (count >= 3) break;
         for (const target of rootConcepts) {
           if (count >= 3) break;
@@ -471,7 +481,7 @@ async function buildGraphStructure(
               source: source.concept_key,
               target: target.concept_key,
               edgeType: "cross_tech",
-              relation: "foundation",
+              relation: rel.relation === "extends" ? "extends" : "foundation",
             });
             count++;
           }

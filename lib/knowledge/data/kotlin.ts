@@ -76,7 +76,7 @@ export const KOTLIN_KNOWLEDGE: TechKnowledge = {
       concept_key: "collections-kotlin",
       concept_name: "Kotlin 컬렉션과 함수형 연산 다루기",
       difficulty_tier: "beginner",
-      category: "data-structures",
+      category: "fundamentals",
       key_points: [
         "불변 컬렉션(listOf, mapOf)과 가변 컬렉션(mutableListOf, mutableMapOf)을 구분해요",
         "map, filter, flatMap, groupBy 등 풍부한 컬렉션 연산 함수가 내장돼 있어요",
@@ -156,7 +156,7 @@ export const KOTLIN_KNOWLEDGE: TechKnowledge = {
       concept_key: "extension-functions",
       concept_name: "확장 함수로 기존 클래스에 기능 추가하기",
       difficulty_tier: "intermediate",
-      category: "advanced-functions",
+      category: "patterns",
       key_points: [
         "기존 클래스를 수정하지 않고 새 함수를 추가할 수 있어요 (fun String.hello())",
         "확장 함수는 실제로 정적 메서드로 컴파일돼서 원래 클래스를 변경하지 않아요",
@@ -203,7 +203,7 @@ export const KOTLIN_KNOWLEDGE: TechKnowledge = {
       concept_key: "kotlin-scope-functions",
       concept_name: "스코프 함수(let, apply, run, also, with) 활용하기",
       difficulty_tier: "intermediate",
-      category: "idioms",
+      category: "patterns",
       key_points: [
         "let은 null 체크와 함께 사용하고 it으로 객체를 참조해요 (?.let { })",
         "apply는 객체 초기화/설정에 사용하고 this로 참조하며 객체 자체를 반환해요",
@@ -243,7 +243,7 @@ export const KOTLIN_KNOWLEDGE: TechKnowledge = {
       concept_key: "kotlin-dsl",
       concept_name: "Kotlin DSL로 선언적 코드 작성하기",
       difficulty_tier: "advanced",
-      category: "advanced-functions",
+      category: "patterns",
       key_points: [
         "수신 객체가 있는 람다(lambda with receiver)로 DSL 빌더를 만들어요",
         "Gradle Kotlin DSL(build.gradle.kts)이 대표적인 활용 사례예요",
@@ -263,7 +263,7 @@ export const KOTLIN_KNOWLEDGE: TechKnowledge = {
       concept_key: "kotlin-multiplatform",
       concept_name: "Kotlin Multiplatform으로 코드 공유하기",
       difficulty_tier: "advanced",
-      category: "platform",
+      category: "deployment",
       key_points: [
         "공통 코드(commonMain)를 작성하고 플랫폼별 구현(expect/actual)으로 분리해요",
         "Android, iOS, JVM, JS, Native 등 다양한 플랫폼을 하나의 코드베이스로 지원해요",
@@ -283,7 +283,7 @@ export const KOTLIN_KNOWLEDGE: TechKnowledge = {
       concept_key: "kotlin-interop",
       concept_name: "Java 상호 운용성 이해하기",
       difficulty_tier: "advanced",
-      category: "interop",
+      category: "patterns",
       key_points: [
         "Kotlin에서 Java 코드를 직접 호출할 수 있고 대부분 원활하게 동작해요",
         "Java에서 Kotlin 코드를 호출할 때는 @JvmStatic, @JvmField 등 어노테이션이 필요해요",

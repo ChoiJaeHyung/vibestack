@@ -109,7 +109,7 @@ export const PYTHON_KNOWLEDGE: TechKnowledge = {
       concept_key: "modules-packages",
       concept_name: "모듈과 패키지로 코드 구조화하기",
       difficulty_tier: "intermediate",
-      category: "project-structure",
+      category: "deployment",
       key_points: [
         "import문으로 다른 모듈의 함수/클래스를 가져와 사용해요",
         "from module import name으로 특정 이름만 가져올 수 있어요",
@@ -149,7 +149,7 @@ export const PYTHON_KNOWLEDGE: TechKnowledge = {
       concept_key: "file-io",
       concept_name: "파일 읽기/쓰기 다루기",
       difficulty_tier: "intermediate",
-      category: "io",
+      category: "fundamentals",
       key_points: [
         "open() 함수로 파일을 열고 read()/write()로 내용을 읽고 써요",
         "with문을 사용하면 파일을 자동으로 닫아줘서 리소스 누수를 방지해요",
@@ -169,7 +169,7 @@ export const PYTHON_KNOWLEDGE: TechKnowledge = {
       concept_key: "list-comprehensions",
       concept_name: "리스트 컴프리헨션으로 간결하게 작성하기",
       difficulty_tier: "intermediate",
-      category: "pythonic",
+      category: "patterns",
       key_points: [
         "[표현식 for 변수 in 반복가능] 형태로 리스트를 한 줄에 생성해요",
         "조건을 추가해서 필터링할 수 있어요 ([x for x in range(10) if x % 2 == 0])",
@@ -189,7 +189,7 @@ export const PYTHON_KNOWLEDGE: TechKnowledge = {
       concept_key: "decorators",
       concept_name: "데코레이터로 함수 기능 확장하기",
       difficulty_tier: "intermediate",
-      category: "advanced-functions",
+      category: "patterns",
       key_points: [
         "데코레이터는 함수를 감싸서 실행 전후에 추가 동작을 수행하는 패턴이에요",
         "@decorator 문법으로 간편하게 적용할 수 있어요",
@@ -209,7 +209,7 @@ export const PYTHON_KNOWLEDGE: TechKnowledge = {
       concept_key: "generators-iterators",
       concept_name: "제너레이터와 이터레이터 이해하기",
       difficulty_tier: "intermediate",
-      category: "advanced-functions",
+      category: "patterns",
       key_points: [
         "이터레이터는 __iter__와 __next__ 메서드를 구현한 객체예요",
         "제너레이터는 yield 키워드로 값을 하나씩 생성하는 특별한 함수예요",
@@ -249,7 +249,7 @@ export const PYTHON_KNOWLEDGE: TechKnowledge = {
       concept_key: "type-hints",
       concept_name: "타입 힌트로 안전한 코드 작성하기",
       difficulty_tier: "advanced",
-      category: "typing",
+      category: "type-system",
       key_points: [
         "함수 매개변수와 반환값에 타입을 명시해요 (def add(a: int, b: int) -> int)",
         "typing 모듈에서 List, Dict, Optional, Union 등 복합 타입을 사용해요",
@@ -276,7 +276,7 @@ export const PYTHON_KNOWLEDGE: TechKnowledge = {
       concept_key: "context-managers",
       concept_name: "컨텍스트 매니저로 리소스 안전하게 관리하기",
       difficulty_tier: "advanced",
-      category: "resource-management",
+      category: "patterns",
       key_points: [
         "with문과 함께 사용해서 리소스의 획득과 해제를 자동으로 처리해요",
         "__enter__와 __exit__ 메서드를 구현해서 커스텀 컨텍스트 매니저를 만들어요",
@@ -296,7 +296,7 @@ export const PYTHON_KNOWLEDGE: TechKnowledge = {
       concept_key: "virtual-environments",
       concept_name: "가상환경으로 프로젝트 의존성 격리하기",
       difficulty_tier: "advanced",
-      category: "project-structure",
+      category: "deployment",
       key_points: [
         "venv 모듈로 프로젝트별 독립된 Python 환경을 만들어요",
         "가상환경은 패키지 버전 충돌을 방지하고 프로젝트 간 격리를 보장해요",

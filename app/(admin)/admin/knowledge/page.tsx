@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useEffect, useRef, useCallback } from "react";
-import { RefreshCw, X, Database, BookOpen, Code, AlertTriangle, Loader2 } from "lucide-react";
+import { RefreshCw, X, Database, BookOpen, Code, AlertTriangle, Loader2, Link2 } from "lucide-react";
 import {
   getKBList,
   regenerateKB,
@@ -10,6 +10,10 @@ import {
   type RegenerationResult,
   type RegenerationImpact,
 } from "@/server/actions/admin-knowledge";
+import {
+  generateAndPersistCrossTechLinks,
+  getCrossTechStats,
+} from "@/server/actions/cross-tech-generation";
 
 type LocaleFilter = "all" | "ko" | "en";
 
@@ -62,14 +66,36 @@ export default function AdminKnowledgePage() {
   const [regenerating, setRegenerating] = useState<string | null>(null); // kb id being regenerated
   const [regenResult, setRegenResult] = useState<RegenerationResult | null>(null);
 
+  // Cross-tech generation state
+  const [crossTechGenerating, setCrossTechGenerating] = useState(false);
+  const [crossTechStats, setCrossTechStats] = useState<{
+    totalLinks: number;
+    byRelation: Record<string, number>;
+    byTechPair: Array<{ pair: string; count: number }>;
+  } | null>(null);
+
   const fetchedRef = useRef(false);
 
   const fetchData = useCallback(() => {
     startTransition(async () => {
-      const result = await getKBList();
+      const [result, koStats, enStats] = await Promise.all([
+        getKBList(),
+        getCrossTechStats("ko"),
+        getCrossTechStats("en"),
+      ]);
       if (result.success && result.data) {
         setItems(result.data);
       }
+      // Merge stats from both locales
+      const merged = {
+        totalLinks: koStats.totalLinks + enStats.totalLinks,
+        byRelation: { ...koStats.byRelation },
+        byTechPair: [...koStats.byTechPair],
+      };
+      for (const [rel, count] of Object.entries(enStats.byRelation)) {
+        merged.byRelation[rel] = (merged.byRelation[rel] ?? 0) + count;
+      }
+      setCrossTechStats(merged);
       setLoaded(true);
     });
   }, []);
@@ -124,6 +150,33 @@ export default function AdminKnowledgePage() {
     setRegenerating(null);
   }
 
+  async function handleGenerateCrossTech() {
+    setCrossTechGenerating(true);
+    try {
+      // Generate for both locales
+      const [koResult, enResult] = await Promise.all([
+        generateAndPersistCrossTechLinks("ko"),
+        generateAndPersistCrossTechLinks("en"),
+      ]);
+      const totalAdded = (koResult.added ?? 0) + (enResult.added ?? 0);
+      const anyError = !koResult.success ? koResult.error : !enResult.success ? enResult.error : null;
+
+      if (anyError) {
+        setMessage({ type: "error", text: anyError });
+      } else {
+        setMessage({
+          type: "success",
+          text: `Cross-tech links generated: ${totalAdded} new links added (ko: ${koResult.added}, en: ${enResult.added})`,
+        });
+      }
+      // Refresh data
+      fetchData();
+    } catch {
+      setMessage({ type: "error", text: "Unexpected error during cross-tech generation" });
+    }
+    setCrossTechGenerating(false);
+  }
+
   function closeModal() {
     setModalTarget(null);
     setImpact(null);
@@ -150,7 +203,7 @@ export default function AdminKnowledgePage() {
       )}
 
       {/* Summary Stats */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-4">
         <div className="rounded-2xl border border-border-default bg-bg-surface p-4">
           <div className="flex items-center gap-2 text-text-muted">
             <Database className="h-4 w-4" />
@@ -172,6 +225,54 @@ export default function AdminKnowledgePage() {
           </div>
           <p className="mt-1 text-2xl font-bold text-text-primary">{overallCoverage}%</p>
         </div>
+        <div className="rounded-2xl border border-border-default bg-bg-surface p-4">
+          <div className="flex items-center gap-2 text-text-muted">
+            <Link2 className="h-4 w-4" />
+            <span className="text-xs font-medium uppercase">Cross-Tech Links</span>
+          </div>
+          <p className="mt-1 text-2xl font-bold text-text-primary">{crossTechStats?.totalLinks ?? 0}</p>
+          {crossTechStats && crossTechStats.totalLinks > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1">
+              {Object.entries(crossTechStats.byRelation).map(([rel, count]) => (
+                <span key={rel} className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-600 dark:text-violet-400">
+                  {rel}: {count}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Cross-Tech Generation */}
+      <div className="mb-6 flex items-center gap-4 rounded-2xl border border-border-default bg-bg-surface p-4">
+        <div className="flex-1">
+          <h3 className="text-sm font-semibold text-text-primary">Cross-Tech Link Generation</h3>
+          <p className="mt-0.5 text-xs text-text-muted">
+            LLM이 기술 간 개념 연결을 분석하여 cross-tech 링크를 자동 생성합니다.
+            {crossTechStats && crossTechStats.byTechPair.length > 0 && (
+              <span className="ml-1">
+                Top: {crossTechStats.byTechPair.slice(0, 3).map(p => `${p.pair} (${p.count})`).join(", ")}
+              </span>
+            )}
+          </p>
+        </div>
+        <button
+          onClick={handleGenerateCrossTech}
+          disabled={crossTechGenerating || regenerating !== null}
+          className="inline-flex items-center gap-2 rounded-xl bg-violet-500 px-4 py-2 text-sm font-medium text-white hover:bg-violet-600 disabled:opacity-50 transition-colors shrink-0"
+        >
+          {crossTechGenerating ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Generating...
+            </>
+          ) : (
+            <>
+              <Link2 className="h-4 w-4" />
+              Generate Cross-Tech Links
+            </>
+          )}
+        </button>
       </div>
 
       {/* Locale Filter */}

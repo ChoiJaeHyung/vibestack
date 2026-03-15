@@ -49,7 +49,7 @@ export const SPRING_BOOT_KNOWLEDGE: TechKnowledge = {
       concept_key: "spring-controllers",
       concept_name: "컨트롤러로 HTTP 요청 처리하기",
       difficulty_tier: "beginner",
-      category: "web",
+      category: "middleware",
       key_points: [
         "@RestController는 @Controller + @ResponseBody를 합친 것으로 JSON 응답에 사용해요",
         "@GetMapping, @PostMapping, @PutMapping, @DeleteMapping으로 HTTP 메서드별 핸들러를 매핑해요",
@@ -72,7 +72,7 @@ export const SPRING_BOOT_KNOWLEDGE: TechKnowledge = {
       concept_key: "spring-services",
       concept_name: "서비스 계층으로 비즈니스 로직 분리하기",
       difficulty_tier: "intermediate",
-      category: "architecture",
+      category: "patterns",
       key_points: [
         "@Service 클래스에 비즈니스 로직을 집중시켜서 컨트롤러를 가볍게 유지해요",
         "인터페이스와 구현체를 분리하면 테스트와 교체가 쉬워져요",
@@ -92,7 +92,7 @@ export const SPRING_BOOT_KNOWLEDGE: TechKnowledge = {
       concept_key: "spring-repositories",
       concept_name: "리포지토리로 데이터 접근하기",
       difficulty_tier: "intermediate",
-      category: "data",
+      category: "data-access",
       key_points: [
         "JpaRepository 인터페이스를 상속하면 기본 CRUD 메서드가 자동 제공돼요",
         "메서드 이름 규칙(findByName, findByAgeGreaterThan)으로 쿼리가 자동 생성돼요",
@@ -112,7 +112,7 @@ export const SPRING_BOOT_KNOWLEDGE: TechKnowledge = {
       concept_key: "spring-jpa",
       concept_name: "JPA로 엔티티 매핑하기",
       difficulty_tier: "intermediate",
-      category: "data",
+      category: "data-access",
       key_points: [
         "@Entity 클래스가 데이터베이스 테이블과 매핑돼요",
         "@Id와 @GeneratedValue로 기본키 생성 전략을 설정해요",
@@ -158,7 +158,7 @@ export const SPRING_BOOT_KNOWLEDGE: TechKnowledge = {
       concept_key: "spring-validation",
       concept_name: "Bean Validation으로 입력 검증하기",
       difficulty_tier: "intermediate",
-      category: "web",
+      category: "middleware",
       key_points: [
         "@Valid와 @Validated로 요청 데이터의 유효성 검증을 트리거해요",
         "@NotNull, @Size, @Email, @Pattern 등 표준 검증 어노테이션을 사용해요",
@@ -178,7 +178,7 @@ export const SPRING_BOOT_KNOWLEDGE: TechKnowledge = {
       concept_key: "spring-rest-api",
       concept_name: "RESTful API 설계 패턴 익히기",
       difficulty_tier: "intermediate",
-      category: "api",
+      category: "middleware",
       key_points: [
         "REST 리소스 중심 URL 설계로 일관된 API를 만들어요 (/api/users, /api/users/{id})",
         "DTO(Data Transfer Object)로 엔티티를 직접 노출하지 않고 필요한 데이터만 전달해요",
@@ -198,7 +198,7 @@ export const SPRING_BOOT_KNOWLEDGE: TechKnowledge = {
       concept_key: "spring-dependency-injection",
       concept_name: "의존성 주입(DI) 원리 이해하기",
       difficulty_tier: "intermediate",
-      category: "architecture",
+      category: "patterns",
       key_points: [
         "DI는 객체가 직접 의존성을 생성하지 않고 외부에서 주입받는 설계 원칙이에요",
         "IoC(Inversion of Control) 컨테이너가 빈의 생성과 생명주기를 관리해요",
@@ -221,7 +221,7 @@ export const SPRING_BOOT_KNOWLEDGE: TechKnowledge = {
       concept_key: "spring-aop",
       concept_name: "AOP로 횡단 관심사 분리하기",
       difficulty_tier: "advanced",
-      category: "architecture",
+      category: "patterns",
       key_points: [
         "AOP(Aspect-Oriented Programming)는 로깅, 트랜잭션 등 횡단 관심사를 분리하는 기법이에요",
         "@Aspect 클래스에 @Before, @After, @Around 등 어드바이스를 정의해요",
@@ -261,7 +261,7 @@ export const SPRING_BOOT_KNOWLEDGE: TechKnowledge = {
       concept_key: "spring-actuator",
       concept_name: "Actuator로 애플리케이션 모니터링하기",
       difficulty_tier: "advanced",
-      category: "operations",
+      category: "deployment",
       key_points: [
         "Spring Boot Actuator는 /actuator 엔드포인트로 앱 상태 정보를 제공해요",
         "/health, /info, /metrics, /env 등 프로덕션 운영에 유용한 엔드포인트가 있어요",

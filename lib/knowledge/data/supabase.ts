@@ -9,7 +9,7 @@ export const SUPABASE_KNOWLEDGE: TechKnowledge = {
       concept_key: "supabase-client",
       concept_name: "Supabase 클라이언트 설정과 사용",
       difficulty_tier: "beginner",
-      category: "setup",
+      category: "fundamentals",
       key_points: [
         "서버용(createClient)과 클라이언트용(createBrowserClient) 분리",
         "NEXT_PUBLIC_SUPABASE_URL과 ANON_KEY로 초기화",
@@ -90,7 +90,7 @@ export const SUPABASE_KNOWLEDGE: TechKnowledge = {
       concept_key: "supabase-queries",
       concept_name: "데이터 조회와 변경 (CRUD)",
       difficulty_tier: "beginner",
-      category: "queries",
+      category: "data-access",
       key_points: [
         "select(), insert(), update(), delete()로 CRUD 작업",
         "single()로 단일 행 반환, order()로 정렬",
@@ -116,7 +116,7 @@ export const SUPABASE_KNOWLEDGE: TechKnowledge = {
       concept_key: "supabase-filters",
       concept_name: "쿼리 필터와 조건 조합하기",
       difficulty_tier: "intermediate",
-      category: "queries",
+      category: "data-access",
       key_points: [
         "eq(), neq(), gt(), lt(), gte(), lte()로 비교 필터링",
         "in()으로 여러 값 매칭, like()/ilike()로 패턴 검색",
@@ -222,7 +222,7 @@ export const SUPABASE_KNOWLEDGE: TechKnowledge = {
       concept_key: "supabase-functions",
       concept_name: "Edge Functions와 Database Functions 활용하기",
       difficulty_tier: "advanced",
-      category: "functions",
+      category: "middleware",
       cross_tech_links: [
         { tech: "typescript", concept_key: "async-types", relation: "foundation" },
       ],
@@ -251,7 +251,7 @@ export const SUPABASE_KNOWLEDGE: TechKnowledge = {
       concept_key: "supabase-migrations",
       concept_name: "데이터베이스 마이그레이션과 스키마 관리",
       difficulty_tier: "intermediate",
-      category: "schema",
+      category: "data-access",
       key_points: [
         "supabase migration new로 SQL 마이그레이션 파일 생성",
         "CREATE TABLE, ALTER TABLE로 스키마 변경 기록",
@@ -277,7 +277,7 @@ export const SUPABASE_KNOWLEDGE: TechKnowledge = {
       concept_key: "supabase-types",
       concept_name: "타입 생성과 타입 안전한 쿼리 작성",
       difficulty_tier: "intermediate",
-      category: "schema",
+      category: "data-access",
       cross_tech_links: [
         { tech: "typescript", concept_key: "generics", relation: "foundation" },
         { tech: "typescript", concept_key: "interfaces-types", relation: "foundation" },
@@ -307,7 +307,7 @@ export const SUPABASE_KNOWLEDGE: TechKnowledge = {
       concept_key: "supabase-joins",
       concept_name: "외래 키 조인과 중첩 셀렉트",
       difficulty_tier: "intermediate",
-      category: "queries",
+      category: "data-access",
       key_points: [
         "select('*, profiles(*)')로 외래 키 기반 자동 조인",
         "다대다(many-to-many) 관계도 중간 테이블을 통해 중첩 셀렉트",

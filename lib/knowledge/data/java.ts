@@ -196,7 +196,7 @@ export const JAVA_KNOWLEDGE: TechKnowledge = {
       concept_key: "collections-framework",
       concept_name: "컬렉션 프레임워크 활용하기",
       difficulty_tier: "intermediate",
-      category: "data-structures",
+      category: "fundamentals",
       key_points: [
         "List(ArrayList, LinkedList), Set(HashSet, TreeSet), Map(HashMap, TreeMap)이 핵심이에요",
         "ArrayList는 인덱스 접근이 빠르고 LinkedList는 삽입/삭제가 빠라요",
@@ -243,7 +243,7 @@ export const JAVA_KNOWLEDGE: TechKnowledge = {
       concept_key: "streams-lambdas",
       concept_name: "스트림과 람다로 함수형 프로그래밍하기",
       difficulty_tier: "advanced",
-      category: "functional",
+      category: "patterns",
       key_points: [
         "람다 표현식((a, b) -> a + b)으로 익명 함수를 간결하게 작성해요",
         "함수형 인터페이스(Predicate, Function, Consumer 등)가 람다의 타입이에요",
@@ -283,7 +283,7 @@ export const JAVA_KNOWLEDGE: TechKnowledge = {
       concept_key: "java-modules",
       concept_name: "모듈 시스템으로 프로젝트 구조화하기",
       difficulty_tier: "advanced",
-      category: "project-structure",
+      category: "deployment",
       key_points: [
         "Java 9 모듈 시스템(JPMS)으로 패키지를 더 큰 단위로 캡슐화해요",
         "module-info.java에서 requires(의존성)와 exports(공개 패키지)를 선언해요",
@@ -303,7 +303,7 @@ export const JAVA_KNOWLEDGE: TechKnowledge = {
       concept_key: "spring-basics",
       concept_name: "Spring Boot로 웹 애플리케이션 시작하기",
       difficulty_tier: "advanced",
-      category: "framework",
+      category: "patterns",
       key_points: [
         "Spring Boot는 설정을 최소화하고 빠르게 프로덕션 수준 앱을 만들 수 있어요",
         "IoC/DI(제어의 역전/의존성 주입)로 객체 간 결합도를 낮춰요",

@@ -52,7 +52,7 @@ export const FLUTTER_KNOWLEDGE: TechKnowledge = {
       concept_key: "flutter-layout",
       concept_name: "레이아웃과 배치 시스템 익히기",
       difficulty_tier: "beginner",
-      category: "layout",
+      category: "styling",
       key_points: [
         "Row는 가로, Column은 세로로 위젯을 배치해요",
         "MainAxisAlignment와 CrossAxisAlignment로 정렬을 조절해요",
@@ -95,7 +95,7 @@ export const FLUTTER_KNOWLEDGE: TechKnowledge = {
       concept_key: "flutter-navigation",
       concept_name: "화면 전환과 라우팅 구현하기",
       difficulty_tier: "intermediate",
-      category: "navigation",
+      category: "routing",
       key_points: [
         "Navigator.push/pop으로 화면 스택을 관리해요",
         "MaterialPageRoute로 새 화면을 push하고, pop으로 돌아가요",
@@ -161,7 +161,7 @@ export const FLUTTER_KNOWLEDGE: TechKnowledge = {
       concept_key: "flutter-async",
       concept_name: "비동기 처리와 API 호출하기",
       difficulty_tier: "intermediate",
-      category: "data",
+      category: "async",
       key_points: [
         "Dart의 async/await로 비동기 작업을 순차적으로 처리해요",
         "Future는 나중에 완료되는 비동기 작업의 결과를 나타내요",
@@ -184,7 +184,7 @@ export const FLUTTER_KNOWLEDGE: TechKnowledge = {
       concept_key: "flutter-forms",
       concept_name: "폼 입력과 유효성 검증 구현하기",
       difficulty_tier: "intermediate",
-      category: "ui",
+      category: "styling",
       key_points: [
         "Form 위젯과 GlobalKey<FormState>로 폼 상태를 관리해요",
         "TextFormField의 validator로 유효성 검증 로직을 작성해요",
@@ -207,7 +207,7 @@ export const FLUTTER_KNOWLEDGE: TechKnowledge = {
       concept_key: "flutter-lists",
       concept_name: "리스트와 그리드 구현하기",
       difficulty_tier: "intermediate",
-      category: "ui",
+      category: "styling",
       key_points: [
         "ListView.builder로 대량 데이터를 효율적으로 스크롤 표시해요 (lazy rendering)",
         "GridView.builder로 격자 형태 레이아웃을 구현해요",
@@ -230,7 +230,7 @@ export const FLUTTER_KNOWLEDGE: TechKnowledge = {
       concept_key: "flutter-theming",
       concept_name: "테마와 스타일링 관리하기",
       difficulty_tier: "intermediate",
-      category: "ui",
+      category: "styling",
       key_points: [
         "ThemeData로 앱 전체의 색상, 폰트, 스타일을 일관되게 관리해요",
         "ColorScheme으로 Material 3 색상 시스템을 적용해요",
@@ -253,7 +253,7 @@ export const FLUTTER_KNOWLEDGE: TechKnowledge = {
       concept_key: "flutter-platform",
       concept_name: "플랫폼별 기능과 패키지 활용하기",
       difficulty_tier: "advanced",
-      category: "platform",
+      category: "deployment",
       key_points: [
         "pub.dev에서 커뮤니티 패키지를 검색하고 pubspec.yaml에 추가해요",
         "Platform.isAndroid/isIOS로 플랫폼별 분기 처리를 해요",

@@ -86,7 +86,7 @@ export const TAILWIND_KNOWLEDGE: TechKnowledge = {
       concept_key: "responsive-design",
       concept_name: "반응형 디자인 구현하기",
       difficulty_tier: "beginner",
-      category: "layout",
+      category: "styling",
       key_points: [
         "sm:, md:, lg:, xl: 접두사로 브레이크포인트별 스타일",
         "모바일 퍼스트 접근: 기본이 모바일, sm부터 데스크톱",
@@ -111,7 +111,7 @@ export const TAILWIND_KNOWLEDGE: TechKnowledge = {
       concept_key: "flexbox-grid",
       concept_name: "Flexbox와 Grid 레이아웃",
       difficulty_tier: "intermediate",
-      category: "layout",
+      category: "styling",
       key_points: [
         "flex: 1차원 레이아웃 (행 또는 열)",
         "grid: 2차원 레이아웃 (행과 열 동시)",
@@ -137,7 +137,7 @@ export const TAILWIND_KNOWLEDGE: TechKnowledge = {
       concept_key: "pseudo-classes",
       concept_name: "상태 변형과 의사 클래스 활용하기",
       difficulty_tier: "intermediate",
-      category: "interactivity",
+      category: "styling",
       key_points: [
         "hover:, focus:, active:로 인터랙션 상태 스타일링",
         "group-hover:, peer-checked:로 부모/형제 상태 기반 스타일링",
@@ -163,7 +163,7 @@ export const TAILWIND_KNOWLEDGE: TechKnowledge = {
       concept_key: "dark-mode",
       concept_name: "다크 모드 구현하기",
       difficulty_tier: "intermediate",
-      category: "theming",
+      category: "styling",
       key_points: [
         "dark: 접두사로 다크 모드 스타일 지정",
         "bg-white dark:bg-zinc-900 패턴으로 색상 전환",
@@ -188,7 +188,7 @@ export const TAILWIND_KNOWLEDGE: TechKnowledge = {
       concept_key: "transitions-animations",
       concept_name: "트랜지션과 애니메이션 적용하기",
       difficulty_tier: "intermediate",
-      category: "interactivity",
+      category: "styling",
       key_points: [
         "transition-all, transition-colors로 CSS 트랜지션 활성화",
         "duration-300, ease-in-out으로 트랜지션 속도/타이밍 제어",
@@ -214,7 +214,7 @@ export const TAILWIND_KNOWLEDGE: TechKnowledge = {
       concept_key: "tailwind-customization",
       concept_name: "커스터마이징과 확장",
       difficulty_tier: "intermediate",
-      category: "configuration",
+      category: "deployment",
       key_points: [
         "tailwind.config에서 테마 확장 (colors, spacing, fonts)",
         "커스텀 유틸리티 클래스 추가 (@layer utilities)",

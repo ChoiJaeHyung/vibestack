@@ -89,7 +89,7 @@ export const GO_KNOWLEDGE: TechKnowledge = {
       concept_key: "structs-methods",
       concept_name: "구조체와 메서드로 데이터 모델링하기",
       difficulty_tier: "intermediate",
-      category: "types",
+      category: "type-system",
       key_points: [
         "struct는 관련 데이터를 하나로 묶는 사용자 정의 타입이에요",
         "메서드는 리시버(receiver)를 가진 함수로, 특정 타입에 동작을 추가해요",
@@ -109,7 +109,7 @@ export const GO_KNOWLEDGE: TechKnowledge = {
       concept_key: "interfaces-go",
       concept_name: "인터페이스로 다형성 구현하기",
       difficulty_tier: "intermediate",
-      category: "types",
+      category: "type-system",
       key_points: [
         "인터페이스는 메서드 시그니처의 집합으로, 암묵적으로 구현돼요 (implements 키워드 없음)",
         "빈 인터페이스 any(interface{})는 모든 타입을 받을 수 있어요",
@@ -210,7 +210,7 @@ export const GO_KNOWLEDGE: TechKnowledge = {
       concept_key: "slices-maps",
       concept_name: "슬라이스와 맵 활용하기",
       difficulty_tier: "intermediate",
-      category: "types",
+      category: "type-system",
       key_points: [
         "슬라이스는 배열의 동적 뷰로, 길이(len)와 용량(cap)을 가져요",
         "append()로 슬라이스에 요소를 추가하고, 용량 초과 시 자동으로 확장돼요",
@@ -250,7 +250,7 @@ export const GO_KNOWLEDGE: TechKnowledge = {
       concept_key: "go-modules",
       concept_name: "Go 모듈로 의존성 관리하기",
       difficulty_tier: "advanced",
-      category: "tooling",
+      category: "deployment",
       key_points: [
         "go mod init으로 모듈을 초기화하고, go.mod 파일에 의존성을 관리해요",
         "go get으로 패키지를 추가하고, go mod tidy로 불필요한 의존성을 정리해요",
@@ -270,7 +270,7 @@ export const GO_KNOWLEDGE: TechKnowledge = {
       concept_key: "testing-go",
       concept_name: "테스트 작성과 벤치마크 활용하기",
       difficulty_tier: "advanced",
-      category: "tooling",
+      category: "deployment",
       key_points: [
         "_test.go 파일에 Test로 시작하는 함수를 작성하면 go test가 자동 실행해요",
         "t.Error(), t.Fatal(), t.Run()으로 테스트 결과를 보고하고 서브테스트를 구성해요",

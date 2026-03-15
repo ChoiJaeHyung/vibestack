@@ -29,6 +29,49 @@ export interface ConceptHint {
 
 export type TechCategory = "language" | "frontend" | "backend" | "database" | "css" | "mobile" | "devops";
 
+/**
+ * Standardized concept domain — cross-tech matching uses this to find
+ * concept pairs that play the same "role" across different technologies.
+ */
+export type ConceptDomain =
+  | "fundamentals"        // core syntax, project structure, getting started
+  | "state-management"    // local/global state, reactivity
+  | "routing"             // URL routing, navigation
+  | "data-access"         // DB queries, ORM, API calls
+  | "auth"                // authentication, authorization, permissions
+  | "rendering"           // view rendering, templates, SSR/CSR
+  | "middleware"          // request pipeline, interceptors, guards
+  | "type-system"         // types, interfaces, generics
+  | "async"               // async/await, concurrency, promises
+  | "testing"             // unit/integration/e2e tests
+  | "styling"             // CSS, theming, layout
+  | "deployment"          // build, deploy, CI/CD, config
+  | "error-handling"      // try/catch, error boundaries, result types
+  | "patterns"            // design patterns, architecture patterns
+  | "security"            // CSRF, XSS, RLS, encryption
+  | "realtime"            // websockets, subscriptions, SSE
+  | "oop"                 // classes, inheritance, polymorphism
+  | "memory"              // ownership, borrowing, GC (language-specific)
+  | "concurrency"         // threads, goroutines, channels
+  | "forms"               // form handling, validation
+  | "storage"             // file storage, blob, CDN
+  ;
+
+/**
+ * Technology-level relationship — Level 1 of the 3-layer cross-tech model.
+ * Defines how two technologies relate to each other structurally.
+ */
+export interface TechRelation {
+  source: string;                  // normalized tech name
+  target: string;                  // normalized tech name
+  relation:
+    | "foundation"                 // source is prerequisite knowledge for target
+    | "alternative"                // same role, interchangeable
+    | "extends"                    // target builds on top of source
+    | "complement";                // commonly used together
+  strength: number;                // 0-1 how strongly related
+}
+
 export interface TechKnowledge {
   technology_name: string;    // "Next.js"
   version: string;            // "15"

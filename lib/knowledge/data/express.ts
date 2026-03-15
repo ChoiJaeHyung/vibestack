@@ -115,7 +115,7 @@ export const EXPRESS_KNOWLEDGE: TechKnowledge = {
       concept_key: "express-error-handling",
       concept_name: "에러 처리 전략 세우기",
       difficulty_tier: "intermediate",
-      category: "reliability",
+      category: "error-handling",
       key_points: [
         "에러 처리 미들웨어는 (err, req, res, next) 4개 인자를 받아요",
         "next(err)로 에러를 다음 에러 핸들러로 전파해요",
@@ -155,7 +155,7 @@ export const EXPRESS_KNOWLEDGE: TechKnowledge = {
       concept_key: "express-rest-api",
       concept_name: "RESTful API 설계하기",
       difficulty_tier: "intermediate",
-      category: "api",
+      category: "middleware",
       key_points: [
         "리소스 중심 URL (/api/users, /api/posts/:id)과 HTTP 메서드로 CRUD를 표현해요",
         "일관된 응답 형식({ success, data, error })으로 클라이언트 처리를 쉽게 해요",
@@ -198,7 +198,7 @@ export const EXPRESS_KNOWLEDGE: TechKnowledge = {
       concept_key: "express-database",
       concept_name: "데이터베이스 연동하기",
       difficulty_tier: "intermediate",
-      category: "data",
+      category: "data-access",
       key_points: [
         "Mongoose(MongoDB), Sequelize(SQL), Prisma 등 ORM/ODM으로 DB를 연동해요",
         "커넥션 풀로 DB 연결을 효율적으로 관리해요",
@@ -218,7 +218,7 @@ export const EXPRESS_KNOWLEDGE: TechKnowledge = {
       concept_key: "express-validation",
       concept_name: "입력 데이터 유효성 검증하기",
       difficulty_tier: "intermediate",
-      category: "reliability",
+      category: "error-handling",
       key_points: [
         "express-validator 미들웨어로 요청 데이터의 유효성을 체계적으로 검증해요",
         "body(), param(), query() 체인으로 검증 규칙을 선언적으로 정의해요",

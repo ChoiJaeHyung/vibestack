@@ -95,7 +95,7 @@ export const VUE_KNOWLEDGE: TechKnowledge = {
       concept_key: "vue-computed-watchers",
       concept_name: "computed와 watch로 파생 상태 관리하기",
       difficulty_tier: "intermediate",
-      category: "reactivity",
+      category: "state-management",
       key_points: [
         "computed()는 반응형 데이터에서 자동으로 계산되는 파생 값을 만들어요",
         "computed는 의존성이 변경될 때만 재계산하고, 결과를 캐싱해요",
@@ -281,7 +281,7 @@ export const VUE_KNOWLEDGE: TechKnowledge = {
       concept_key: "vue-typescript",
       concept_name: "Vue에서 TypeScript 활용하기",
       difficulty_tier: "advanced",
-      category: "tooling",
+      category: "deployment",
       key_points: [
         "<script setup lang=\"ts\">로 SFC에서 TypeScript를 바로 사용해요",
         "defineProps<{ title: string }>() 제네릭 문법으로 props 타입을 선언해요",

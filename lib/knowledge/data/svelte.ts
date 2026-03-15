@@ -158,7 +158,7 @@ export const SVELTE_KNOWLEDGE: TechKnowledge = {
       concept_key: "svelte-transitions",
       concept_name: "트랜지션과 애니메이션 적용하기",
       difficulty_tier: "intermediate",
-      category: "animation",
+      category: "styling",
       key_points: [
         "transition: 디렉티브로 요소가 나타나고 사라질 때 애니메이션을 적용해요",
         "fade, fly, slide, scale 등 내장 트랜지션 함수가 있어요",
@@ -238,7 +238,7 @@ export const SVELTE_KNOWLEDGE: TechKnowledge = {
       concept_key: "sveltekit-basics",
       concept_name: "SvelteKit으로 풀스택 앱 만들기",
       difficulty_tier: "advanced",
-      category: "framework",
+      category: "deployment",
       key_points: [
         "SvelteKit은 Svelte의 풀스택 프레임워크로, Next.js와 비슷한 역할이에요",
         "src/routes/ 폴더 기반 파일 시스템 라우팅을 사용해요 (+page.svelte, +layout.svelte)",

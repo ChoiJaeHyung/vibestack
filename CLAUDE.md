@@ -167,9 +167,10 @@ NEXT_PUBLIC_APP_URL=
 | **튜터 피드백** | `server/actions/tutor-feedback.ts` | 메시지별 피드백 UPSERT/삭제/조회 |
 | **LLM 메트릭** | `lib/utils/llm-metrics.ts` | 구조화 JSON 로깅 (Vercel log drain) |
 | **게이미피케이션** | `components/features/celebration-modal.tsx`, `streak-widget.tsx`, `badge-*.tsx`, `server/actions/streak.ts`, `server/actions/badges.ts` | 모듈 완료 축하(confetti), 학습 스트릭(주간 캘린더), 배지/업적, 넛지 배너 |
-| **KB 시스템** | `lib/knowledge/` | 3-Tier 지식 베이스 (20기술, 329개념, 64 cross-tech 링크), DB 자동 동기화(`syncAllSeedsToDB`), Lazy sync on fallback, CodeSignature 코드 매칭 |
+| **KB 시스템** | `lib/knowledge/` | 3-Tier 지식 베이스 (20기술, 329개념), 3-Layer Cross-Tech(TechRelation→ConceptDomain→LLM 생성), DB 자동 동기화(`syncAllSeedsToDB`), Lazy sync on fallback, CodeSignature 코드 매칭 |
+| **Cross-Tech 모델** | `lib/knowledge/tech-relations.ts`, `cross-tech-inference.ts`, `server/actions/cross-tech-generation.ts` | Level 1: ~35 기술 관계 매트릭스, Level 2: 21 ConceptDomain 표준화, Level 3: LLM 배치 생성+DB 머지(어드민) |
 | **코드 매칭** | `lib/knowledge/code-matcher.ts`, `server/actions/concept-matches.ts` | CodeSignature 기반 프로젝트→개념 매칭, 3-Phase(path→config→content), DB upsert 캐시(`project_concept_matches`) |
-| **어드민 KB 관리** | `server/actions/admin-knowledge.ts`, `app/(admin)/admin/knowledge/page.tsx` | KB 목록 조회, 안전한 KB 재생성(UPDATE only, knowledge_id 보존, 동시성 잠금, concept_key 안정성 유도), 재생성 영향도 분석 |
+| **어드민 KB 관리** | `server/actions/admin-knowledge.ts`, `app/(admin)/admin/knowledge/page.tsx` | KB 목록 조회, 안전한 KB 재생성(UPDATE only, knowledge_id 보존, 동시성 잠금, concept_key 안정성 유도), 재생성 영향도 분석, Cross-Tech 링크 LLM 생성 |
 | **온톨로지 그래프** | `server/actions/knowledge-graph.ts` | 5-Phase 그래프 빌드, 4 엣지 타입, 망각 곡선 감쇠, 적응형 추천, 기술별 진행률, 코드 매칭 relevanceScore, 복습 필요 개념(`getReviewNeededConcepts`), 모듈별 코드 매칭(`getConceptMatchesForModule`) |
 | **대시보드 위젯** | `components/features/recommended-concepts.tsx`, `tech-progress.tsx`, `review-needed.tsx` | 추천 학습 개념(코드 매칭 배지), 기술별 진행률, 복습 필요(Ebbinghaus 감쇠 시각화) |
 | **프롬프트** | `lib/prompts/` | LLM 프롬프트 템플릿 |
@@ -380,3 +381,4 @@ Anthropic, OpenAI, Google, Groq, Mistral, DeepSeek, Cohere, Together, Fireworks,
 - [x] 어드민 KB 관리: KB 목록 조회(개념수/code_signature 비율/상태), 안전한 KB 재생성(UPDATE only — knowledge_id 보존, 기존 concept_key LLM 프롬프트 주입, 동시성 잠금 optimistic lock, 실패 시 rollback), 재생성 영향도 분석(연결된 mastery/프로젝트), 재생성 후 project_concept_matches 자동 무효화
 - [x] 온톨로지 UX 고도화 — 코드 매칭+망각 곡선 사용자 노출: 학습 모듈 코드 매칭 배너(`getConceptMatchesForModule` — concept_keys→파일 매핑 표시), 대시보드 복습 필요 위젯(`ReviewNeeded` — Ebbinghaus 감쇠로 rawMastery≥80% but effectiveMastery<80% 개념 표시, dual-bar 시각화), 추천 개념 코드 매칭 배지(`matchedFileCount`), 지식그래프 노드 파일 수 표시
 - [x] 온톨로지 백엔드 고도화 4-Phase: (1) 5-Tier 숙련도 분류(Expert 90+/NearMastery 70+/Learning 40+/Beginner 10+/New 0-9) — 커리큘럼 구조+콘텐츠+튜터 프로필 전체 적용, (2) 프로젝트 관련도 기반 학습 우선순위(CodeSignature 매칭 점수→커리큘럼 구조 프롬프트 주입, [used in N files] 태그), (3) 적응형 망각 곡선(review_count 기반 반감기 연장, `adaptiveLambda()`, migration 029), (4) 다차원 숙련도 LLM 평가(`evaluateMasteryWithLLM` — 퀴즈+시간+튜터대화+코드매칭+시도횟수 시그널 수집, 백그라운드 LLM 판단으로 -10~+10 조정)
+- [x] 3-Layer Cross-Tech 모델: Level 1 TechRelation 매트릭스(~35 기술 쌍, foundation/extends/alternative/complement), Level 2 ConceptDomain 21개 표준화(20개 시드 정규화), Level 3 LLM 배치 cross-tech 생성(`cross-tech-inference.ts`, DB 머지), knowledge-graph.ts Phase 4를 tech-relations 기반으로 개선, 어드민 KB 페이지에 생성 버튼+통계 표시

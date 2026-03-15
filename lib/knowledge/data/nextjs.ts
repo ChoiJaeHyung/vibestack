@@ -121,7 +121,7 @@ export const NEXTJS_KNOWLEDGE: TechKnowledge = {
       concept_key: "server-actions",
       concept_name: "Server Actions으로 데이터 변경하기",
       difficulty_tier: "intermediate",
-      category: "data",
+      category: "data-access",
       key_points: [
         "'use server' 지시어로 서버 액션 정의 — 클라이언트에서 직접 호출하는 RPC 패턴",
         "form action 속성에 바로 연결하여 progressive enhancement 지원",
@@ -147,7 +147,7 @@ export const NEXTJS_KNOWLEDGE: TechKnowledge = {
       concept_key: "api-routes",
       concept_name: "API Route 만들기",
       difficulty_tier: "intermediate",
-      category: "data",
+      category: "data-access",
       key_points: [
         "app/api/ 디렉토리의 route.ts 파일로 RESTful API 엔드포인트 생성",
         "GET, POST, PUT, PATCH, DELETE 등 HTTP 메서드별 함수 export",
@@ -173,7 +173,7 @@ export const NEXTJS_KNOWLEDGE: TechKnowledge = {
       concept_key: "middleware",
       concept_name: "미들웨어로 요청 제어하기",
       difficulty_tier: "advanced",
-      category: "data",
+      category: "data-access",
       key_points: [
         "프로젝트 루트의 middleware.ts에서 모든 요청을 라우팅 전에 인터셉트",
         "인증 체크, 리다이렉트, 헤더/쿠키 조작, A/B 테스트 등에 활용",
@@ -199,7 +199,7 @@ export const NEXTJS_KNOWLEDGE: TechKnowledge = {
       concept_key: "data-fetching",
       concept_name: "서버 컴포넌트에서 데이터 가져오기",
       difficulty_tier: "intermediate",
-      category: "data",
+      category: "data-access",
       key_points: [
         "서버 컴포넌트에서 async/await로 직접 fetch 호출 — useEffect 불필요",
         "fetch 결과는 기본적으로 캐시됨 (Next.js가 확장한 fetch API)",
@@ -254,7 +254,7 @@ export const NEXTJS_KNOWLEDGE: TechKnowledge = {
       concept_key: "image-font-optimization",
       concept_name: "이미지와 폰트 최적화",
       difficulty_tier: "beginner",
-      category: "optimization",
+      category: "deployment",
       key_points: [
         "next/image의 Image 컴포넌트로 자동 크기 조정, 포맷 변환(WebP/AVIF), 지연 로딩",
         "width/height 또는 fill 속성 필수 — CLS(레이아웃 시프트) 방지",
@@ -280,7 +280,7 @@ export const NEXTJS_KNOWLEDGE: TechKnowledge = {
       concept_key: "metadata-seo",
       concept_name: "메타데이터와 SEO 최적화",
       difficulty_tier: "intermediate",
-      category: "optimization",
+      category: "deployment",
       key_points: [
         "metadata 객체 export로 정적 메타데이터 설정 (title, description, openGraph 등)",
         "generateMetadata() 함수로 동적 메타데이터 생성 (DB 데이터 기반 제목/설명)",
@@ -306,7 +306,7 @@ export const NEXTJS_KNOWLEDGE: TechKnowledge = {
       concept_key: "environment-config",
       concept_name: "환경변수와 프로젝트 설정",
       difficulty_tier: "beginner",
-      category: "configuration",
+      category: "deployment",
       key_points: [
         ".env.local 파일에 환경변수 정의 — Git에 커밋하지 않는 비밀 값 관리",
         "NEXT_PUBLIC_ 접두사가 있는 변수만 브라우저에 노출 — 없으면 서버 전용",
@@ -358,7 +358,7 @@ export const NEXTJS_KNOWLEDGE: TechKnowledge = {
       concept_key: "caching-revalidation",
       concept_name: "캐싱과 재검증 전략",
       difficulty_tier: "advanced",
-      category: "optimization",
+      category: "deployment",
       key_points: [
         "Next.js는 4단계 캐시 레이어 보유: Request Memoization, Data Cache, Full Route Cache, Router Cache",
         "revalidatePath('/path')로 특정 경로의 캐시를 온디맨드 무효화",

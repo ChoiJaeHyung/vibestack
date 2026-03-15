@@ -29,7 +29,7 @@ export const DJANGO_KNOWLEDGE: TechKnowledge = {
       concept_key: "django-models",
       concept_name: "모델로 데이터 구조 정의하기",
       difficulty_tier: "beginner",
-      category: "data",
+      category: "data-access",
       key_points: [
         "모델 클래스는 데이터베이스 테이블과 1:1로 매핑되는 파이썬 클래스예요",
         "CharField, IntegerField, ForeignKey 등 다양한 필드 타입으로 컬럼을 정의해요",
@@ -109,7 +109,7 @@ export const DJANGO_KNOWLEDGE: TechKnowledge = {
       concept_key: "django-forms",
       concept_name: "폼으로 사용자 입력 처리하기",
       difficulty_tier: "intermediate",
-      category: "data",
+      category: "data-access",
       key_points: [
         "Form 클래스로 입력 필드와 유효성 검증 규칙을 정의해요",
         "ModelForm은 모델 필드를 자동으로 폼 필드로 변환해서 CRUD를 간편하게 만들어요",
@@ -149,7 +149,7 @@ export const DJANGO_KNOWLEDGE: TechKnowledge = {
       concept_key: "django-orm",
       concept_name: "ORM으로 데이터베이스 쿼리하기",
       difficulty_tier: "intermediate",
-      category: "data",
+      category: "data-access",
       key_points: [
         "QuerySet API로 SQL 없이 파이썬 코드로 데이터를 조회, 생성, 수정, 삭제해요",
         "filter(), exclude(), get() 등 메서드 체이닝으로 쿼리를 조합해요",
@@ -195,7 +195,7 @@ export const DJANGO_KNOWLEDGE: TechKnowledge = {
       concept_key: "django-middleware",
       concept_name: "미들웨어로 요청/응답 가로채기",
       difficulty_tier: "intermediate",
-      category: "architecture",
+      category: "middleware",
       key_points: [
         "미들웨어는 요청과 응답을 가로채서 공통 로직을 실행하는 훅이에요",
         "MIDDLEWARE 리스트의 순서가 중요해요 — 요청은 위에서 아래로, 응답은 아래에서 위로 처리돼요",
@@ -218,7 +218,7 @@ export const DJANGO_KNOWLEDGE: TechKnowledge = {
       concept_key: "django-rest",
       concept_name: "Django REST Framework로 API 만들기",
       difficulty_tier: "advanced",
-      category: "api",
+      category: "middleware",
       key_points: [
         "DRF(Django REST Framework)는 RESTful API를 빠르게 만들 수 있는 확장 패키지예요",
         "Serializer로 모델 데이터를 JSON으로 변환하고 입력 유효성 검증을 해요",

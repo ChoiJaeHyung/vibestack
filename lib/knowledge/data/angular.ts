@@ -92,7 +92,7 @@ export const ANGULAR_KNOWLEDGE: TechKnowledge = {
       concept_key: "angular-directives",
       concept_name: "디렉티브로 DOM 동작 확장하기",
       difficulty_tier: "intermediate",
-      category: "templates",
+      category: "rendering",
       key_points: [
         "구조 디렉티브(@if, @for)는 DOM 요소를 추가/제거해서 구조를 변경해요",
         "속성 디렉티브(ngClass, ngStyle)는 기존 요소의 모양이나 동작을 변경해요",
@@ -112,7 +112,7 @@ export const ANGULAR_KNOWLEDGE: TechKnowledge = {
       concept_key: "angular-services",
       concept_name: "서비스로 비즈니스 로직 분리하기",
       difficulty_tier: "intermediate",
-      category: "architecture",
+      category: "patterns",
       key_points: [
         "@Injectable 데코레이터로 서비스 클래스를 정의해요",
         "서비스는 컴포넌트에서 비즈니스 로직과 데이터 접근을 분리하는 역할이에요",
@@ -135,7 +135,7 @@ export const ANGULAR_KNOWLEDGE: TechKnowledge = {
       concept_key: "angular-di",
       concept_name: "의존성 주입(DI) 시스템 이해하기",
       difficulty_tier: "intermediate",
-      category: "architecture",
+      category: "patterns",
       key_points: [
         "DI는 클래스가 필요한 의존성을 직접 생성하지 않고 외부에서 주입받는 패턴이에요",
         "생성자 매개변수에 타입을 선언하면 Angular가 자동으로 인스턴스를 주입해요",
@@ -201,7 +201,7 @@ export const ANGULAR_KNOWLEDGE: TechKnowledge = {
       concept_key: "angular-pipes",
       concept_name: "파이프로 데이터 변환하기",
       difficulty_tier: "intermediate",
-      category: "templates",
+      category: "rendering",
       key_points: [
         "파이프(|)는 템플릿에서 데이터를 표시 형식으로 변환해요",
         "내장 파이프: date, currency, uppercase, lowercase, json, async 등이 있어요",
@@ -221,7 +221,7 @@ export const ANGULAR_KNOWLEDGE: TechKnowledge = {
       concept_key: "angular-rxjs",
       concept_name: "RxJS와 Observable로 비동기 처리하기",
       difficulty_tier: "advanced",
-      category: "reactive-programming",
+      category: "async",
       key_points: [
         "Observable은 시간에 따라 여러 값을 발생시키는 데이터 스트림이에요",
         "subscribe()로 Observable을 구독하고, 반드시 unsubscribe로 정리해요",
@@ -241,7 +241,7 @@ export const ANGULAR_KNOWLEDGE: TechKnowledge = {
       concept_key: "angular-signals",
       concept_name: "Signals로 반응형 상태 관리하기",
       difficulty_tier: "advanced",
-      category: "reactivity",
+      category: "state-management",
       key_points: [
         "signal()은 Angular의 새로운 반응형 기본형으로, 동기적이고 간단해요 (v16+)",
         "computed()로 signal에서 파생되는 값을 자동 계산해요",
@@ -281,7 +281,7 @@ export const ANGULAR_KNOWLEDGE: TechKnowledge = {
       concept_key: "angular-standalone",
       concept_name: "Standalone 컴포넌트로 모듈 없이 개발하기",
       difficulty_tier: "advanced",
-      category: "architecture",
+      category: "patterns",
       key_points: [
         "standalone: true 옵션으로 NgModule 없이 독립적인 컴포넌트를 만들어요 (v14+)",
         "imports 배열에 필요한 디렉티브/파이프/컴포넌트를 직접 선언해요",

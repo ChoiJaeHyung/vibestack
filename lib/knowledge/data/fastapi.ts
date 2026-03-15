@@ -69,7 +69,7 @@ export const FASTAPI_KNOWLEDGE: TechKnowledge = {
       concept_key: "fastapi-dependency-injection",
       concept_name: "의존성 주입 시스템 활용하기",
       difficulty_tier: "intermediate",
-      category: "architecture",
+      category: "patterns",
       key_points: [
         "Depends()로 함수나 클래스를 의존성으로 주입해요",
         "공통 로직(인증 체크, DB 세션 관리 등)을 의존성으로 추출해서 재사용해요",
@@ -92,7 +92,7 @@ export const FASTAPI_KNOWLEDGE: TechKnowledge = {
       concept_key: "fastapi-models-pydantic",
       concept_name: "Pydantic으로 데이터 모델링하기",
       difficulty_tier: "intermediate",
-      category: "data",
+      category: "data-access",
       key_points: [
         "Pydantic은 파이썬 타입 힌트를 활용한 데이터 검증 라이브러리예요",
         "BaseModel을 상속받아서 스키마를 정의하면 자동 검증, 직렬화가 돼요",
@@ -135,7 +135,7 @@ export const FASTAPI_KNOWLEDGE: TechKnowledge = {
       concept_key: "fastapi-middleware",
       concept_name: "미들웨어로 요청/응답 처리하기",
       difficulty_tier: "intermediate",
-      category: "architecture",
+      category: "patterns",
       key_points: [
         "@app.middleware('http')로 모든 요청/응답을 가로채는 미들웨어를 등록해요",
         "CORSMiddleware로 Cross-Origin 요청을 허용하는 설정을 해요",
@@ -158,7 +158,7 @@ export const FASTAPI_KNOWLEDGE: TechKnowledge = {
       concept_key: "fastapi-database",
       concept_name: "데이터베이스 연동하기",
       difficulty_tier: "intermediate",
-      category: "data",
+      category: "data-access",
       key_points: [
         "SQLAlchemy를 ORM으로 사용해서 모델을 정의하고 쿼리해요",
         "Depends()로 DB 세션을 의존성 주입하고 yield로 자동 정리해요",
@@ -178,7 +178,7 @@ export const FASTAPI_KNOWLEDGE: TechKnowledge = {
       concept_key: "fastapi-background-tasks",
       concept_name: "백그라운드 작업 처리하기",
       difficulty_tier: "intermediate",
-      category: "architecture",
+      category: "patterns",
       key_points: [
         "BackgroundTasks로 응답 반환 후 실행되는 비동기 작업을 등록해요",
         "이메일 발송, 로그 기록, 알림 전송 등 시간이 걸리는 작업에 활용해요",

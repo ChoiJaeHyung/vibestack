@@ -237,7 +237,7 @@ export const TYPESCRIPT_KNOWLEDGE: TechKnowledge = {
       concept_key: "module-types",
       concept_name: "모듈 시스템과 타입 선언 파일",
       difficulty_tier: "intermediate",
-      category: "modules",
+      category: "fundamentals",
       key_points: [
         "import type / export type으로 타입만 가져오기/내보내기",
         ".d.ts 선언 파일로 JS 라이브러리에 타입 입히기",
@@ -263,7 +263,7 @@ export const TYPESCRIPT_KNOWLEDGE: TechKnowledge = {
       concept_key: "react-typescript",
       concept_name: "React에서 TypeScript 활용하기",
       difficulty_tier: "intermediate",
-      category: "integration",
+      category: "patterns",
       cross_tech_links: [
         { tech: "react", concept_key: "react-components", relation: "extends" },
         { tech: "react", concept_key: "hooks-useState", relation: "extends" },
@@ -293,7 +293,7 @@ export const TYPESCRIPT_KNOWLEDGE: TechKnowledge = {
       concept_key: "strict-mode",
       concept_name: "strict 모드와 컴파일러 설정",
       difficulty_tier: "intermediate",
-      category: "configuration",
+      category: "deployment",
       key_points: [
         "strict: true는 7가지 엄격 옵션을 한번에 켠다",
         "strictNullChecks로 null/undefined 실수를 방지",
