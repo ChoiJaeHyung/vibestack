@@ -17,7 +17,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useTranslations } from "next-intl";
-import { Code2, ArrowRight, Sparkles, RotateCcw } from "lucide-react";
+import { Code2, ArrowRight, Sparkles, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
 import { ConceptNode, type ConceptNodeType } from "./concept-node";
 import { ConceptDetailPanel } from "./concept-detail-panel";
 import type {
@@ -299,6 +299,7 @@ export function KnowledgeGraph({ initialData, projectId }: KnowledgeGraphProps) 
   const t = useTranslations("Learning");
   const [graphData, setGraphData] = useState(initialData);
   const [selectedNode, setSelectedNode] = useState<ConceptGraphNode | null>(null);
+  const [statsExpanded, setStatsExpanded] = useState(false);
 
   const stats = useMemo(() => {
     const total = graphData.nodes.length;
@@ -380,66 +381,92 @@ export function KnowledgeGraph({ initialData, projectId }: KnowledgeGraphProps) 
         proOptions={{ hideAttribution: true }}
         className="[&_.react-flow__background]:!bg-transparent [&_.react-flow__node-default]:!rounded-none [&_.react-flow__node-default]:!shadow-none [&_.react-flow__node-default_.react-flow__handle]:!hidden"
       >
-        {/* ── Stats Panel ── */}
+        {/* ── Stats Panel (collapsible) ── */}
         <Panel position="top-left" className="!m-3">
-          <div className="rounded-xl bg-bg-elevated/80 backdrop-blur-md px-4 py-3 shadow-lg border border-border-default/50">
-            <div className="flex items-center gap-4">
-              {/* Donut chart */}
+          <div className="rounded-xl bg-bg-elevated/80 backdrop-blur-md shadow-lg border border-border-default/50 overflow-hidden">
+            {/* Collapsed: compact summary bar */}
+            <button
+              onClick={() => setStatsExpanded((prev) => !prev)}
+              className="flex items-center gap-3 w-full px-3 py-2 hover:bg-bg-surface-hover/50 transition-colors cursor-pointer"
+            >
               <StatsDonut
                 mastered={stats.mastered}
                 inProgress={stats.inProgress}
                 notStarted={stats.notStarted}
               />
-
-              {/* Stats breakdown */}
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="h-2.5 w-2.5 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.4)]" />
-                  <span className="text-text-muted">{t("knowledgeMap.legend.mastered")}</span>
-                  <span className="ml-auto font-bold text-text-primary tabular-nums">{stats.mastered}</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="h-2.5 w-2.5 rounded-full bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.4)]" />
-                  <span className="text-text-muted">{t("knowledgeMap.legend.inProgress")}</span>
-                  <span className="ml-auto font-bold text-text-primary tabular-nums">{stats.inProgress}</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="h-2.5 w-2.5 rounded-full bg-zinc-400 dark:bg-zinc-600" />
-                  <span className="text-text-muted">{t("knowledgeMap.legend.notStarted")}</span>
-                  <span className="ml-auto font-bold text-text-primary tabular-nums">{stats.notStarted}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Edge legend + code match — compact */}
-            <div className="mt-3 pt-2.5 border-t border-border-default/50 space-y-1.5">
-              <div className="flex items-center gap-3 text-[10px] text-text-faint flex-wrap">
+              <div className="flex items-center gap-2 text-xs text-text-muted">
                 <span className="flex items-center gap-1">
-                  <ArrowRight className="h-3 w-3 text-text-faint/60" />
-                  {t("knowledgeMap.legend.sameTechEdge")}
+                  <span className="h-2 w-2 rounded-full bg-green-500" />
+                  {stats.mastered}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Sparkles className="h-3 w-3 text-violet-400" />
-                  {t("knowledgeMap.legend.crossTechEdge")}
+                  <span className="h-2 w-2 rounded-full bg-blue-500" />
+                  {stats.inProgress}
                 </span>
                 <span className="flex items-center gap-1">
-                  <RotateCcw className="h-3 w-3 text-blue-400" />
-                  Related
+                  <span className="h-2 w-2 rounded-full bg-zinc-400 dark:bg-zinc-600" />
+                  {stats.notStarted}
                 </span>
               </div>
-              {stats.foundInProject > 0 && (
-                <div className="flex items-center gap-1 text-[10px]">
-                  <Code2 className="h-3 w-3 text-amber-400" />
-                  <span className="text-amber-500 dark:text-amber-400 font-medium">
-                    {t("knowledgeMap.legend.foundInProject", { count: stats.foundInProject })}
-                  </span>
-                </div>
+              {statsExpanded ? (
+                <ChevronUp className="h-3.5 w-3.5 text-text-faint ml-auto" />
+              ) : (
+                <ChevronDown className="h-3.5 w-3.5 text-text-faint ml-auto" />
               )}
-            </div>
+            </button>
 
-            <p className="mt-2 text-[10px] text-text-faint leading-relaxed">
-              {t("knowledgeMap.guide")}
-            </p>
+            {/* Expanded: full details */}
+            {statsExpanded && (
+              <div className="px-4 pb-3 border-t border-border-default/50">
+                <div className="space-y-1.5 pt-2.5">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="h-2.5 w-2.5 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.4)]" />
+                    <span className="text-text-muted">{t("knowledgeMap.legend.mastered")}</span>
+                    <span className="ml-auto font-bold text-text-primary tabular-nums">{stats.mastered}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="h-2.5 w-2.5 rounded-full bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.4)]" />
+                    <span className="text-text-muted">{t("knowledgeMap.legend.inProgress")}</span>
+                    <span className="ml-auto font-bold text-text-primary tabular-nums">{stats.inProgress}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="h-2.5 w-2.5 rounded-full bg-zinc-400 dark:bg-zinc-600" />
+                    <span className="text-text-muted">{t("knowledgeMap.legend.notStarted")}</span>
+                    <span className="ml-auto font-bold text-text-primary tabular-nums">{stats.notStarted}</span>
+                  </div>
+                </div>
+
+                {/* Edge legend + code match */}
+                <div className="mt-3 pt-2.5 border-t border-border-default/50 space-y-1.5">
+                  <div className="flex items-center gap-3 text-[10px] text-text-faint flex-wrap">
+                    <span className="flex items-center gap-1">
+                      <ArrowRight className="h-3 w-3 text-text-faint/60" />
+                      {t("knowledgeMap.legend.sameTechEdge")}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Sparkles className="h-3 w-3 text-violet-400" />
+                      {t("knowledgeMap.legend.crossTechEdge")}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <RotateCcw className="h-3 w-3 text-blue-400" />
+                      Related
+                    </span>
+                  </div>
+                  {stats.foundInProject > 0 && (
+                    <div className="flex items-center gap-1 text-[10px]">
+                      <Code2 className="h-3 w-3 text-amber-400" />
+                      <span className="text-amber-500 dark:text-amber-400 font-medium">
+                        {t("knowledgeMap.legend.foundInProject", { count: stats.foundInProject })}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <p className="mt-2 text-[10px] text-text-faint leading-relaxed">
+                  {t("knowledgeMap.guide")}
+                </p>
+              </div>
+            )}
           </div>
         </Panel>
 

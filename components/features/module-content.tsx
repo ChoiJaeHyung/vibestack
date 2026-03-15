@@ -617,10 +617,14 @@ export function ModuleContent({
     startTimeRef.current = Date.now();
   }, [moduleId]);
 
-  // Set panel props when module changes
+  // Set panel props and auto-open tutor when entering learning module page
   useEffect(() => {
     setPanelProps({ projectId, projectName, learningPathId, moduleId, moduleName: title });
-  }, [projectId, projectName, learningPathId, moduleId, title, setPanelProps]);
+    openTutor();
+    return () => {
+      setPanelProps(null);
+    };
+  }, [projectId, projectName, learningPathId, moduleId, title, setPanelProps, openTutor]);
 
   // On-demand content generation state
   const [localSections, setLocalSections] = useState<ContentSection[]>(sections ?? []);

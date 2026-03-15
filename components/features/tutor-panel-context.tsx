@@ -30,7 +30,7 @@ interface TutorPanelContextValue {
 const TutorPanelContext = createContext<TutorPanelContextValue | null>(null);
 
 export function TutorPanelProvider({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [panelProps, setPanelProps] = useState<TutorPanelProps | null>(null);
   const [selectedText, setSelectedText] = useState<string | null>(null);
 
