@@ -127,7 +127,7 @@ export async function GET() {
         .from("learning_paths")
         .select("id, title, total_modules")
         .eq("user_id", authUser.id)
-        .eq("status", "active"),
+        .in("status", ["active", "draft"]),
       supabase
         .from("ai_conversations")
         .select("id", { count: "exact", head: true })
@@ -222,13 +222,24 @@ export async function GET() {
       (p) => p.status === "in_progress" && moduleIdSet.has(p.module_id),
     )?.module_id;
 
-    const currentModule = inProgressModuleId
-      ? modules.find((m) => m.id === inProgressModuleId)
-      : hasLearningPaths
-        ? modules
-            .filter((m) => m.learning_path_id === learningPaths[0].id)
-            .sort((a, b) => a.module_order - b.module_order)[0]
-        : undefined;
+    let currentModule: (typeof modules)[number] | undefined;
+    if (inProgressModuleId) {
+      currentModule = modules.find((m) => m.id === inProgressModuleId);
+    } else if (hasLearningPaths) {
+      // Find the first uncompleted module across all paths
+      const completedModuleIds = new Set(
+        progressData
+          .filter((p) => p.status === "completed")
+          .map((p) => p.module_id),
+      );
+      const firstPath = learningPaths[0];
+      const pathModules = modules
+        .filter((m) => m.learning_path_id === firstPath.id)
+        .sort((a, b) => a.module_order - b.module_order);
+      currentModule =
+        pathModules.find((m) => !completedModuleIds.has(m.id)) ??
+        pathModules[0];
+    }
 
     if (currentModule) {
       const path = (learningPaths ?? []).find(

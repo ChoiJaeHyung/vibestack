@@ -80,7 +80,7 @@ export function OnboardingBanner({
       icon: GraduationCap,
       label: t("onboarding.completeModule.label"),
       desc: t("onboarding.completeModule.desc"),
-      href: hasLearningPath ? "/learning" : "/projects",
+      href: "/learning",
       done: hasCompletedModule,
     },
   ];

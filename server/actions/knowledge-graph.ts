@@ -793,10 +793,59 @@ export async function updateMasteryFromModuleCompletion(
         : MASTERY.INCREMENT_BASE)
       : MASTERY.INCREMENT_BASE;
 
-    const conceptKeys = (moduleData.concept_keys as string[] | null) ?? [];
+    let conceptKeys = (moduleData.concept_keys as string[] | null) ?? [];
     const knowledgeIds = knowledgeRows.map((r) => r.id);
 
     if (conceptKeys.length > 0) {
+      // ── Fuzzy fallback: if module concept_keys don't match DB KB, try fuzzy matching ──
+      const kbCheckClient = createKBServiceClient();
+      const { data: kbConcepts } = await kbCheckClient
+        .from("technology_knowledge")
+        .select("concepts")
+        .in("id", knowledgeIds);
+
+      if (kbConcepts && kbConcepts.length > 0) {
+        const allDbKeys = new Set<string>();
+        for (const row of kbConcepts) {
+          const concepts = row.concepts as Array<{ concept_key?: string }> | null;
+          if (concepts) {
+            for (const c of concepts) {
+              if (c.concept_key) allDbKeys.add(c.concept_key);
+            }
+          }
+        }
+
+        // Check how many module keys exist in DB
+        const missingKeys = conceptKeys.filter((k) => !allDbKeys.has(k));
+        if (missingKeys.length > 0 && allDbKeys.size > 0) {
+          // Fuzzy match: find best DB key for each missing module key
+          const remapped = conceptKeys.map((k) => {
+            if (allDbKeys.has(k)) return k;
+            // Try substring match: module key is substring of DB key or vice versa
+            const dbKeysArr = Array.from(allDbKeys);
+            const substringMatch = dbKeysArr.find(
+              (dbk) => dbk.includes(k) || k.includes(dbk),
+            );
+            if (substringMatch) return substringMatch;
+            // Try word overlap: split by '-' and find best overlap
+            const kWords = new Set(k.split("-"));
+            let bestMatch = "";
+            let bestOverlap = 0;
+            for (const dbk of dbKeysArr) {
+              const dbWords = dbk.split("-");
+              const overlap = dbWords.filter((w) => kWords.has(w)).length;
+              if (overlap > bestOverlap) {
+                bestOverlap = overlap;
+                bestMatch = dbk;
+              }
+            }
+            return bestOverlap > 0 ? bestMatch : k;
+          });
+          // Deduplicate: multiple module keys could map to the same DB key
+          conceptKeys = [...new Set(remapped)];
+        }
+      }
+
       // ── Batch approach: 1 SELECT → compute diffs → batch INSERT + batch UPDATE ──
 
       // 1. Batch SELECT: get all existing mastery rows for these knowledge_ids + concept_keys
@@ -858,28 +907,17 @@ export async function updateMasteryFromModuleCompletion(
         }
       }
 
-      // 3. Batch INSERT + individual UPDATEs (Supabase doesn't support batch update by different IDs)
-      const promises: Promise<unknown>[] = [];
-
-      if (toInsert.length > 0) {
-        promises.push(
-          Promise.resolve(masteryClient.from("user_concept_mastery").insert(toInsert)),
-        );
-      }
-
-      // Group updates — each needs its own .eq("id") but we can run them in parallel
-      for (const upd of toUpdate) {
-        promises.push(
-          Promise.resolve(
-            masteryClient
-              .from("user_concept_mastery")
-              .update({ mastery_level: upd.mastery_level, updated_at: upd.updated_at, last_reviewed_at: upd.last_reviewed_at, review_count: upd.review_count })
-              .eq("id", upd.id),
-          ),
-        );
-      }
-
-      await Promise.all(promises);
+      // 3. Batch INSERTs + batch UPDATEs via Promise.allSettled
+      const insertPromises = toInsert.map((row) =>
+        masteryClient.from("user_concept_mastery").insert(row),
+      );
+      const updatePromises = toUpdate.map((upd) =>
+        masteryClient
+          .from("user_concept_mastery")
+          .update({ mastery_level: upd.mastery_level, updated_at: upd.updated_at, last_reviewed_at: upd.last_reviewed_at, review_count: upd.review_count })
+          .eq("id", upd.id),
+      );
+      await Promise.allSettled([...insertPromises, ...updatePromises]);
     } else {
       // Legacy: tech-level mastery (no concept_keys on module)
       // Use untyped client since review_count is not in Database types
@@ -928,8 +966,9 @@ export async function updateMasteryFromModuleCompletion(
         console.error("[knowledge-graph] LLM mastery eval failed:", err instanceof Error ? err.message : err);
       });
     }
-  } catch {
+  } catch (err) {
     // Non-blocking — mastery update failure should not affect module completion
+    console.error("[knowledge-graph] updateMasteryFromModuleCompletion failed:", err instanceof Error ? err.message : err, err instanceof Error ? err.stack : "");
   }
 }
 

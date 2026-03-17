@@ -23,6 +23,7 @@ import { withRetry } from "@/lib/utils/retry";
 import { checkAndAwardBadges } from "@/server/actions/badges";
 import type { NewlyEarnedBadge } from "@/server/actions/badges";
 import { updateStreak } from "@/server/actions/streak";
+import { updateMasteryFromModuleCompletion } from "@/server/actions/knowledge-graph";
 import { sendCurriculumReadyEmail } from "@/server/actions/email-notifications";
 import { after } from "next/server";
 import type { Database, Json, Locale } from "@/types/database";
@@ -1697,13 +1698,18 @@ export async function updateLearningProgress(
       }
     }
 
-    // ── Streak + Badge check on module completion ──────────────────────
+    // ── Streak + Mastery + Badge check on module completion ──────────
     if (status === "completed") {
-      // Non-blocking streak update with error logging
-      try {
-        await updateStreak(user.id);
-      } catch (err) {
-        console.error("[learning] Streak update failed:", err instanceof Error ? err.message : err);
+      // Non-blocking streak + mastery updates
+      const [streakResult, masteryResult] = await Promise.allSettled([
+        updateStreak(user.id),
+        updateMasteryFromModuleCompletion(user.id, moduleId, score),
+      ]);
+      if (streakResult.status === "rejected") {
+        console.error("[learning] Streak update failed:", streakResult.reason);
+      }
+      if (masteryResult.status === "rejected") {
+        console.error("[learning] Mastery update failed:", masteryResult.reason);
       }
 
       try {

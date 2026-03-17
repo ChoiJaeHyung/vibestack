@@ -53,6 +53,15 @@
     "quiz": "Quiz",
     "project_walkthrough": "Walkthrough"
   },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "learning": "Learning",
+    "settings": "Settings",
+    "admin": "Admin",
+    "home": "Home",
+    "guide": "Guide"
+  },
   "cookieConsent": {
     "message": "This website uses cookies to improve your experience. Essential cookies are used for login and language settings. Analytics cookies help us improve the service.",
     "accept": "Accept All",
