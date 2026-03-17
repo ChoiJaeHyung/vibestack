@@ -4,6 +4,7 @@ import { Clock, ArrowRight, Lightbulb, BookOpen, Compass, Cpu } from "lucide-rea
 import { getAllPosts } from "@/lib/blog/posts";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { AdSlot } from "@/components/ui/ad-slot";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Public");
@@ -80,6 +81,9 @@ export default async function BlogPage() {
           );
         })}
       </div>
+
+      {/* Ad */}
+      <AdSlot className="mt-8" />
     </div>
   );
 }
