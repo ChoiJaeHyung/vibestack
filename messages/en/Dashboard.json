@@ -38,6 +38,7 @@
     "projects": "Projects",
     "learningPaths": "Learning Paths (this month)",
     "aiChats": "AI Chats (this month)",
+    "tokenBudget": "Token Usage",
     "unlimited": "Unlimited",
     "loading": "Loading data..."
   },
@@ -50,7 +51,12 @@
   "onboarding": {
     "mcpSetup": { "label": "MCP Setup", "desc": "Connect from Claude Code or Cursor" },
     "syncProject": { "label": "Sync Project", "desc": "Auto-collect & analyze files" },
-    "startLearning": { "label": "Start Learning", "desc": "AI-powered custom curriculum" }
+    "startLearning": { "label": "Start Learning", "desc": "AI-powered custom curriculum" },
+    "completeModule": { "label": "Complete a Module", "desc": "Finish your first learning module" }
+  },
+  "onboardingBanner": {
+    "title": "Welcome to VibeUniv!",
+    "progress": "{completed} / {total} steps completed"
   },
   "category": {
     "framework": "Framework",
@@ -89,9 +95,62 @@
   "badge": {
     "earned": "New badge earned!"
   },
+  "growth": {
+    "title": "My Growth",
+    "conceptsMastered": "Concepts Mastered",
+    "conceptsSubtitle": "Mastery ≥ 80%",
+    "avgQuizScore": "Avg Quiz Score",
+    "quizSubtitle": "{count} attempts total",
+    "modulesCompleted": "Modules Completed",
+    "monthlySubtitle": "{count} completed this month"
+  },
+  "points": {
+    "backToDashboard": "Back to Dashboard",
+    "shopTitle": "Reward Shop",
+    "shopDescription": "Spend your learning points (VP) on rewards",
+    "history": "Point History",
+    "noHistory": "No point history yet",
+    "locale": "en",
+    "tx": {
+      "module_complete": "Module complete",
+      "quiz_perfect": "Perfect quiz",
+      "quiz_high_score": "High quiz score",
+      "streak_milestone": "Streak milestone",
+      "badge_earned": "Badge earned",
+      "arch_challenge": "Architecture challenge",
+      "refactor_challenge": "Refactoring challenge",
+      "reward_purchase": "Reward purchase",
+      "reward_refund": "Reward refund"
+    }
+  },
   "upgradeBanner": {
     "title": "Upgrade to Pro",
     "description": "Grow faster with unlimited project analysis, AI chats, and learning roadmaps",
     "cta": "Start Pro"
+  },
+  "reviewNeeded": {
+    "title": "Review Needed",
+    "subtitle": "Concepts fading from memory over time",
+    "viewMap": "Knowledge Map",
+    "daysAgo": "{days}d ago"
+  },
+  "recommendedConcepts": {
+    "title": "Recommended Concepts",
+    "subtitle": "Most effective concepts to learn right now",
+    "empty": "Analyze a project and start learning",
+    "mastery": "Mastery {level}%",
+    "readiness": "Readiness {score}%",
+    "startLearning": "Start Learning",
+    "viewMap": "View Knowledge Map",
+    "filesFound": "{count} files"
+  },
+  "techProgress": {
+    "title": "Tech Progress",
+    "subtitle": "Mastery status for your project tech stack",
+    "empty": "Analyze a project to see tech progress",
+    "mastered": "{count} mastered",
+    "avgMastery": "Avg mastery {level}%",
+    "crossTechReady": "{tech} readiness {percent}%",
+    "concepts": "{mastered}/{total} concepts"
   }
 }

@@ -19,7 +19,8 @@
   "list": {
     "title": "Projects",
     "projectCount": "{count} projects",
-    "newProject": "New Project"
+    "newProject": "New Project",
+    "upgrade": "Upgrade"
   },
   "limit": {
     "title": "Project limit reached",
@@ -33,6 +34,10 @@
     "mcpSetup": "MCP Setup"
   },
   "filter": {
+    "all": "All",
+    "analyzed": "Analyzed",
+    "analyzing": "Analyzing",
+    "uploaded": "Uploaded",
     "noResults": "No projects with this status",
     "showAll": "Show All"
   },

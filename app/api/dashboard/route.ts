@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAuthUser } from "@/lib/supabase/auth";
 import { getAllBadges, getUserBadges } from "@/server/actions/badges";
 import { getStreak } from "@/server/actions/streak";
+import { checkTokenBudget } from "@/lib/utils/usage-limits";
 import type { StreakData } from "@/server/actions/streak";
 import type { Json } from "@/types/database";
 
@@ -55,6 +56,7 @@ export interface DashboardData {
     projects: { used: number; limit: number | null };
     learningPaths: { used: number; limit: number | null };
     aiChats: { used: number; limit: number | null };
+    tokenBudget: { used: number; limit: number | null } | null;
     planType: "free" | "pro" | "team";
   };
   badges: {
@@ -125,7 +127,7 @@ export async function GET() {
         .from("learning_paths")
         .select("id, title, total_modules")
         .eq("user_id", authUser.id)
-        .eq("status", "active"),
+        .in("status", ["active", "draft"]),
       supabase
         .from("ai_conversations")
         .select("id", { count: "exact", head: true })
@@ -220,13 +222,24 @@ export async function GET() {
       (p) => p.status === "in_progress" && moduleIdSet.has(p.module_id),
     )?.module_id;
 
-    const currentModule = inProgressModuleId
-      ? modules.find((m) => m.id === inProgressModuleId)
-      : hasLearningPaths
-        ? modules
-            .filter((m) => m.learning_path_id === learningPaths[0].id)
-            .sort((a, b) => a.module_order - b.module_order)[0]
-        : undefined;
+    let currentModule: (typeof modules)[number] | undefined;
+    if (inProgressModuleId) {
+      currentModule = modules.find((m) => m.id === inProgressModuleId);
+    } else if (hasLearningPaths) {
+      // Find the first uncompleted module across all paths
+      const completedModuleIds = new Set(
+        progressData
+          .filter((p) => p.status === "completed")
+          .map((p) => p.module_id),
+      );
+      const firstPath = learningPaths[0];
+      const pathModules = modules
+        .filter((m) => m.learning_path_id === firstPath.id)
+        .sort((a, b) => a.module_order - b.module_order);
+      currentModule =
+        pathModules.find((m) => !completedModuleIds.has(m.id)) ??
+        pathModules[0];
+    }
 
     if (currentModule) {
       const path = (learningPaths ?? []).find(
@@ -278,6 +291,15 @@ export async function GET() {
       | "team";
     const isFree = planType === "free";
 
+    // Token budget for Free non-BYOK users
+    let tokenBudget: DashboardData["usage"]["tokenBudget"] = null;
+    if (isFree) {
+      const tb = await checkTokenBudget(authUser.id);
+      if (tb.budget !== null) {
+        tokenBudget = { used: tb.used, limit: tb.budget };
+      }
+    }
+
     const dashboardData: DashboardData = {
       totalProjects: totalProjects ?? 0,
       uniqueTechnologies,
@@ -305,6 +327,7 @@ export async function GET() {
           used: monthlyChats ?? 0,
           limit: isFree ? FREE_LIMITS.aiChats : null,
         },
+        tokenBudget,
         planType,
       },
       badges: badgesForDashboard,

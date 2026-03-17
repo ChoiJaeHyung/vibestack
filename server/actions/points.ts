@@ -5,9 +5,6 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { getSystemSetting } from "@/lib/utils/system-settings";
 import type { PointBalance, PointTransaction, RewardItem } from "./point-constants";
 
-// Re-export types for consumer convenience
-export type { PointBalance, PointTransaction, RewardItem };
-
 // ── Server Actions ──────────────────────────────────────────────────
 
 /**

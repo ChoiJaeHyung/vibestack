@@ -10,6 +10,10 @@
     "prerequisiteBanner": "이 모듈을 시작하기 전에 선수 모듈 완료를 권장합니다: {names}",
     "back": "뒤로"
   },
+  "feedbackAlert": {
+    "title": "콘텐츠 품질 알림",
+    "description": "이 학습 경로에서 부정적인 피드백이 {count}건 접수되었습니다. \"{module}\" 모듈의 콘텐츠 개선이 필요할 수 있습니다."
+  },
   "knowledgeMap": {
     "title": "지식 그래프",
     "description": "내가 배운 개념과 아직 모르는 개념을 한눈에 확인하세요",
@@ -20,6 +24,7 @@
     "markUnlearned": "다시 배울래요",
     "goToLearning": "학습 페이지로 이동",
     "learnConcept": "이 개념 배우기",
+    "selectProject": "프로젝트 선택",
     "noProject": "분석된 프로젝트가 없습니다",
     "goToProjects": "프로젝트 관리로 이동",
     "error": "지식 그래프를 불러올 수 없습니다",
@@ -30,8 +35,11 @@
       "inProgress": "학습 중",
       "notStarted": "미시작",
       "sameTechEdge": "같은 기술 내 연결",
-      "crossTechEdge": "기술 간 연결"
-    }
+      "crossTechEdge": "기술 간 연결",
+      "foundInProject": "프로젝트에서 발견 ({count})"
+    },
+    "matchedFiles": "프로젝트 내 사용처",
+    "moreFiles": "개 파일 더"
   },
   "moduleType": {
     "concept": "Concept",
@@ -74,6 +82,9 @@
     "notReady": "아직 학습 콘텐츠가 준비되지 않았습니다.",
     "defaultError": "콘텐츠 생성에 실패했습니다.",
     "unknownError": "콘텐츠 생성 중 오류가 발생했습니다."
+  },
+  "codeMatch": {
+    "title": "이 모듈의 개념이 내 프로젝트 {count}개 파일에서 발견되었어요"
   },
   "module": {
     "completed": "완료됨",
@@ -137,7 +148,15 @@
     "title": "축하해요!",
     "subtitle": "{name} 완료",
     "score": "퀴즈 점수: {score}점",
-    "nextModule": "다음 모듈로"
+    "nextModule": "다음 모듈로",
+    "share": "공유",
+    "copy": "복사",
+    "shareText": "VibeUniv에서 \"{module}\" 모듈을 완료했어요! 내 코드로 배우는 중.",
+    "shareTextWithScore": "VibeUniv에서 \"{module}\" 모듈을 {score}점으로 완료했어요!"
+  },
+  "public": {
+    "quizLogin": "로그인하면 퀴즈를 풀고 점수를 확인할 수 있어요",
+    "challengeLogin": "로그인하면 직접 코드를 작성하고 정답을 확인할 수 있어요"
   },
   "regenerate": {
     "button": "다시 생성",
@@ -151,5 +170,10 @@
     "cancel": "취소",
     "confirm": "다시 생성",
     "limitReachedPaid": "재생성 횟수를 모두 사용했습니다"
+  },
+  "weakConcepts": {
+    "title": "복습이 필요한 개념",
+    "description": "아래 개념들은 더 연습이 필요해요. 관련 모듈을 학습해서 숙련도를 높여보세요.",
+    "study": "학습하기"
   }
 }

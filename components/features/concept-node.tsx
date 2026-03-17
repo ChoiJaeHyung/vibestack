@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
+import { Code2 } from "lucide-react";
 import { MASTERY } from "@/server/actions/mastery-constants";
 
 export type ConceptNodeData = {
@@ -9,80 +10,165 @@ export type ConceptNodeData = {
   technologyName: string;
   masteryLevel: number; // 0-100
   conceptKey: string;
+  relevanceScore?: number; // 0-1, from code matching
+  matchedFileCount?: number;
+  techColor?: string; // hex color for technology group
 };
 
 export type ConceptNodeType = Node<ConceptNodeData, "concept">;
 
-// Mastery states: mastered (80+) = green, available (1-79) = blue+pulse, locked (0) = gray
-function getMasteryStyle(level: number) {
+// ── Donut ring SVG ──────────────────────────────────────────────
+
+const RING_SIZE = 52;
+const RING_STROKE = 4;
+const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
+function DonutRing({ level, color }: { level: number; color: string }) {
+  const offset = RING_CIRCUMFERENCE - (level / 100) * RING_CIRCUMFERENCE;
+
+  return (
+    <svg
+      width={RING_SIZE}
+      height={RING_SIZE}
+      className="absolute -top-1 -left-1 pointer-events-none"
+    >
+      {/* Track */}
+      <circle
+        cx={RING_SIZE / 2}
+        cy={RING_SIZE / 2}
+        r={RING_RADIUS}
+        fill="none"
+        stroke="var(--border-default)"
+        strokeWidth={RING_STROKE}
+        opacity={0.3}
+      />
+      {/* Progress arc */}
+      {level > 0 && (
+        <circle
+          cx={RING_SIZE / 2}
+          cy={RING_SIZE / 2}
+          r={RING_RADIUS}
+          fill="none"
+          stroke={color}
+          strokeWidth={RING_STROKE}
+          strokeDasharray={RING_CIRCUMFERENCE}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
+          className="transition-all duration-700 ease-out"
+        />
+      )}
+    </svg>
+  );
+}
+
+// ── Mastery style ───────────────────────────────────────────────
+
+function getMasteryConfig(level: number) {
   if (level >= MASTERY.MASTERED_THRESHOLD) {
     return {
-      bg: "bg-green-500/10",
-      border: "border-green-500/40",
-      text: "text-green-300",
-      ring: "ring-green-500/30",
-      dot: "bg-green-500",
+      ringColor: "#22c55e",
+      bgClass: "bg-green-500/8 dark:bg-green-500/12",
+      borderClass: "border-green-500/30",
+      textClass: "text-green-700 dark:text-green-300",
+      labelClass: "text-green-600 dark:text-green-400",
+      glowClass: "shadow-[0_0_16px_rgba(34,197,94,0.25)]",
+      statusLabel: "Mastered",
+      statusLabelKo: "완료",
     };
   }
   if (level > 0) {
     return {
-      bg: "bg-blue-500/10",
-      border: "border-blue-500/40",
-      text: "text-blue-300",
-      ring: "ring-blue-500/30",
-      dot: "bg-blue-500",
+      ringColor: "#3b82f6",
+      bgClass: "bg-blue-500/8 dark:bg-blue-500/12",
+      borderClass: "border-blue-500/30",
+      textClass: "text-blue-700 dark:text-blue-300",
+      labelClass: "text-blue-600 dark:text-blue-400",
+      glowClass: "",
+      statusLabel: "Learning",
+      statusLabelKo: "학습중",
     };
   }
   return {
-    bg: "bg-zinc-500/5",
-    border: "border-border-default",
-    text: "text-text-faint",
-    ring: "",
-    dot: "bg-zinc-500",
+    ringColor: "#a1a1aa",
+    bgClass: "bg-zinc-500/5 dark:bg-zinc-500/8",
+    borderClass: "border-border-default",
+    textClass: "text-text-faint",
+    labelClass: "text-text-faint",
+    glowClass: "",
+    statusLabel: "New",
+    statusLabelKo: "미학습",
   };
 }
 
+// ── Node Component ──────────────────────────────────────────────
+
 function ConceptNodeComponent({ data }: NodeProps<ConceptNodeType>) {
-  const style = getMasteryStyle(data.masteryLevel);
-  const isAvailable = data.masteryLevel > 0 && data.masteryLevel < MASTERY.MASTERED_THRESHOLD;
+  const config = getMasteryConfig(data.masteryLevel);
+  const hasRelevance = (data.relevanceScore ?? 0) > 0;
 
   return (
-    <div
-      className={`
-        relative rounded-xl border px-4 py-2.5
-        ${style.bg} ${style.border}
-        ${style.ring ? `ring-1 ${style.ring}` : ""}
-        ${isAvailable ? "animate-pulse" : ""}
-        transition-all hover:scale-105
-        min-w-[140px] max-w-[200px] cursor-pointer
-      `}
-    >
-      <Handle type="target" position={Position.Top} className="!bg-border-default !w-2 !h-2" />
+    <div className="relative flex flex-col items-center group">
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="!bg-transparent !border-0 !w-3 !h-3 !-top-1.5"
+      />
 
-      {/* Mastery indicator dot */}
-      <div className="flex items-center gap-2">
-        <span className={`h-2 w-2 shrink-0 rounded-full ${style.dot}`} />
-        <span className={`text-xs font-medium truncate ${style.text}`}>
+      {/* Donut ring container */}
+      <div
+        className={`
+          relative flex items-center justify-center
+          w-[50px] h-[50px] rounded-full
+          ${config.bgClass} border ${config.borderClass}
+          ${config.glowClass}
+          transition-all duration-300
+          group-hover:scale-110 group-hover:shadow-lg
+          cursor-pointer
+        `}
+      >
+        <DonutRing level={data.masteryLevel} color={config.ringColor} />
+
+        {/* Center: mastery % or icon */}
+        {data.masteryLevel > 0 ? (
+          <span className={`text-xs font-bold tabular-nums ${config.labelClass}`}>
+            {data.masteryLevel}
+          </span>
+        ) : (
+          <span className="text-[10px] text-text-faint font-medium">NEW</span>
+        )}
+
+        {/* Code match badge — top-right */}
+        {hasRelevance && (
+          <span className="absolute -top-1 -right-1 flex items-center gap-0.5 rounded-full bg-amber-500/90 px-1.5 py-0.5 shadow-sm">
+            <Code2 className="h-2.5 w-2.5 text-white" />
+            {(data.matchedFileCount ?? 0) > 0 && (
+              <span className="text-[8px] text-white font-bold tabular-nums leading-none">
+                {data.matchedFileCount}
+              </span>
+            )}
+          </span>
+        )}
+      </div>
+
+      {/* Label below the circle */}
+      <div className="mt-1.5 max-w-[120px] text-center">
+        <span className={`text-[11px] font-medium leading-tight line-clamp-2 ${config.textClass}`}>
           {data.label}
         </span>
       </div>
 
-      {/* Technology badge */}
-      <span className="mt-1 block text-[10px] text-text-faint truncate">
+      {/* Tech badge — only shown on hover */}
+      <span className="mt-0.5 text-[9px] text-text-faint opacity-0 group-hover:opacity-100 transition-opacity">
         {data.technologyName}
       </span>
 
-      {/* Mastery percentage */}
-      {data.masteryLevel > 0 && (
-        <div className="mt-1.5 h-1 w-full rounded-full bg-bg-surface-hover overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${data.masteryLevel >= MASTERY.MASTERED_THRESHOLD ? "bg-green-500" : "bg-blue-500"}`}
-            style={{ width: `${data.masteryLevel}%` }}
-          />
-        </div>
-      )}
-
-      <Handle type="source" position={Position.Bottom} className="!bg-border-default !w-2 !h-2" />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!bg-transparent !border-0 !w-3 !h-3 !-bottom-1.5"
+      />
     </div>
   );
 }

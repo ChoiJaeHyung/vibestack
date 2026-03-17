@@ -32,6 +32,40 @@ export function registerGenerateCurriculum(server: McpServer, client: VibeUnivCl
       try {
         console.error(`[vibeuniv] Generating curriculum instructions for project ${project_id}...`);
 
+        // ─── Try server-side Assembler first (prebuilt templates, AI $0) ─
+        try {
+          const assembleResult = await client.tryAssembleCurriculum(project_id, difficulty);
+          if (assembleResult && assembleResult.mode === "prebuilt" && assembleResult.learningPathId) {
+            console.error(`[vibeuniv] Prebuilt curriculum ready: ${assembleResult.moduleCount} modules`);
+            const locale = await client.getUserLocale();
+            const en = locale === "en";
+
+            const message = en
+              ? `Curriculum has been instantly generated from pre-built templates!\n\n` +
+                `- **${assembleResult.moduleCount} modules** ready to study\n` +
+                `- Learning Path ID: ${assembleResult.learningPathId}\n` +
+                `- No AI generation needed (instant, $0 cost)\n\n` +
+                `The student can start learning immediately at https://vibeuniv.com/learning/${assembleResult.learningPathId}`
+              : `프리빌트 템플릿으로 커리큘럼이 즉시 생성되었습니다!\n\n` +
+                `- **${assembleResult.moduleCount}개 모듈** 학습 준비 완료\n` +
+                `- Learning Path ID: ${assembleResult.learningPathId}\n` +
+                `- AI 생성 불필요 (즉시, 비용 $0)\n\n` +
+                `학생은 https://vibeuniv.com/learning/${assembleResult.learningPathId} 에서 바로 학습을 시작할 수 있습니다`;
+
+            return {
+              content: [{
+                type: "text" as const,
+                text: message,
+              }],
+            };
+          }
+        } catch (assemblerErr) {
+          console.error(`[vibeuniv] Assembler check failed (non-fatal): ${assemblerErr instanceof Error ? assemblerErr.message : assemblerErr}`);
+          // Fall through to instruction mode
+        }
+
+        // ─── Instruction mode (existing LLM-based flow) ────────────────
+
         // Fetch all curriculum context in a single API call
         const curriculumContext: CurriculumContext = await client.getCurriculumContext(project_id);
 

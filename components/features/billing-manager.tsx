@@ -35,6 +35,7 @@ export function BillingManager({ currentPlan, hasSubscription }: BillingManagerP
   const [error, setError] = useState<string | null>(null);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
 
   const isPaid = currentPlan === "pro" || currentPlan === "team";
 
@@ -56,7 +57,7 @@ export function BillingManager({ currentPlan, hasSubscription }: BillingManagerP
     }
   }
 
-  async function handleCheckout(plan: "pro" | "team") {
+  async function handleCheckout(plan: "pro" | "pro-annual" | "team") {
     setLoadingPlan(plan);
     setError(null);
 
@@ -133,6 +134,35 @@ export function BillingManager({ currentPlan, hasSubscription }: BillingManagerP
         </div>
       )}
 
+      {/* Billing Period Toggle */}
+      {currentPlan === "free" && (
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={() => setBillingPeriod("monthly")}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+              billingPeriod === "monthly"
+                ? "bg-violet-500/10 text-violet-400 border border-violet-500/30"
+                : "text-text-muted hover:text-text-primary"
+            }`}
+          >
+            {t("plan.monthly")}
+          </button>
+          <button
+            onClick={() => setBillingPeriod("annual")}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+              billingPeriod === "annual"
+                ? "bg-violet-500/10 text-violet-400 border border-violet-500/30"
+                : "text-text-muted hover:text-text-primary"
+            }`}
+          >
+            {t("plan.annual")}
+            <span className="text-[10px] font-bold text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded-full">
+              {t("plan.savePercent")}
+            </span>
+          </button>
+        </div>
+      )}
+
       {/* Plan Cards */}
       <div className="grid gap-6 md:grid-cols-3">
         {/* Free Plan */}
@@ -152,8 +182,8 @@ export function BillingManager({ currentPlan, hasSubscription }: BillingManagerP
         {/* Pro Plan */}
         <PlanCard
           name="Pro"
-          price="$19"
-          period={t("plan.perMonth")}
+          price={billingPeriod === "annual" ? "$190" : "$19"}
+          period={billingPeriod === "annual" ? t("plan.perYear") : t("plan.perMonth")}
           features={proFeatures}
           isCurrent={currentPlan === "pro"}
           isPopular
@@ -167,11 +197,12 @@ export function BillingManager({ currentPlan, hasSubscription }: BillingManagerP
                 : t("plan.pro.cta")
           }
           ctaDisabled={currentPlan === "pro"}
-          loading={loadingPlan === "pro"}
-          onCtaClick={() => handleCheckout("pro")}
+          loading={loadingPlan === "pro" || loadingPlan === "pro-annual"}
+          onCtaClick={() => handleCheckout(billingPeriod === "annual" ? "pro-annual" : "pro")}
+          annualNote={billingPeriod === "annual" ? t("plan.annualSaveNote") : undefined}
         />
 
-        {/* Team Plan */}
+        {/* Team Plan — Coming Soon */}
         <PlanCard
           name="Team"
           price="$45"
@@ -180,10 +211,9 @@ export function BillingManager({ currentPlan, hasSubscription }: BillingManagerP
           isCurrent={currentPlan === "team"}
           currentPlanLabel={t("plan.currentPlan")}
           popularLabel={t("plan.popular")}
-          ctaLabel={currentPlan === "team" ? t("plan.currentPlan") : t("plan.team.cta")}
-          ctaDisabled={currentPlan === "team"}
-          loading={loadingPlan === "team"}
-          onCtaClick={() => handleCheckout("team")}
+          ctaLabel={t("plan.team.cta")}
+          ctaDisabled
+          loading={false}
         />
       </div>
 
@@ -285,6 +315,7 @@ function PlanCard({
   onCtaClick,
   currentPlanLabel,
   popularLabel,
+  annualNote,
 }: {
   name: string;
   price: string;
@@ -298,6 +329,7 @@ function PlanCard({
   onCtaClick?: () => void;
   currentPlanLabel: string;
   popularLabel: string;
+  annualNote?: string;
 }) {
   return (
     <div
@@ -337,6 +369,9 @@ function PlanCard({
             {period}
           </span>
         </div>
+        {annualNote && (
+          <p className="mt-1 text-xs text-green-400 font-medium">{annualNote}</p>
+        )}
       </div>
 
       <ul className="mb-6 space-y-2">

@@ -8,6 +8,7 @@ import {
   Users,
   CreditCard,
   BookOpen,
+  Brain,
   Settings,
   Shield,
   ArrowLeft,
@@ -27,6 +28,7 @@ const adminNavItems = [
   { href: "/admin/users", icon: Users, label: "Users" },
   { href: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions" },
   { href: "/admin/content", icon: BookOpen, label: "Content" },
+  { href: "/admin/knowledge", icon: Brain, label: "Knowledge Base" },
   { href: "/admin/settings", icon: Settings, label: "Settings" },
   { href: "/admin/audit-log", icon: Shield, label: "Audit Log" },
 ];

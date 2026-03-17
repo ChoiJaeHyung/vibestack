@@ -15,6 +15,7 @@ import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { getLearningPathDetail } from "@/server/actions/learning";
 import { DIFFICULTY_STYLES } from "@/components/features/learning-path-card";
+import { ContentQualityAlert } from "@/components/features/content-quality-alert";
 
 const MODULE_TYPE_ICONS: Record<
   string,
@@ -144,6 +145,9 @@ export default async function LearningPathDetailPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+
+      {/* Content quality feedback alert */}
+      <ContentQualityAlert learningPathId={pathId} />
 
       {/* Timeline-style module list */}
       <div>

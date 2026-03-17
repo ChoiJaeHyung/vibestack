@@ -11,6 +11,7 @@ import { createLLMProvider } from "@/lib/llm/factory";
 import { buildDigestAnalysisPrompt } from "@/lib/prompts/tech-analysis";
 import { decryptContent } from "@/lib/utils/content-encryption";
 import { generateMissingKBs } from "@/server/actions/knowledge";
+import { computeAndStoreConceptMatches } from "@/server/actions/concept-matches";
 import { rateLimit } from "@/lib/utils/rate-limit";
 import type { Database } from "@/types/database";
 import type { TechHint, TechnologyResult } from "@/lib/llm/types";
@@ -132,7 +133,7 @@ export async function startAnalysis(
     }
 
     // Rate limit: 5 analysis requests per minute per user
-    const rl = rateLimit(`analysis:${user.id}`, 5);
+    const rl = await rateLimit(`analysis:${user.id}`, 5);
     if (!rl.success) {
       return { success: false, error: "Too many analysis requests. Please try again later." };
     }
@@ -184,9 +185,9 @@ export async function startAnalysis(
       return { success: false, error: "Failed to create analysis job" };
     }
 
-    // Fire-and-forget the actual analysis pipeline
-    runAnalysisPipeline(projectId, user.id, job.id).catch(() => {
-      // Error handling is done inside runAnalysisPipeline
+    // Background analysis pipeline (error handling inside runAnalysisPipeline)
+    runAnalysisPipeline(projectId, user.id, job.id).catch((err) => {
+      console.error("[projects] Analysis pipeline failed:", err instanceof Error ? err.message : err);
     });
 
     return { success: true, job_id: job.id };
@@ -416,7 +417,7 @@ async function runAnalysisPipeline(
 
     const analysisOutput = await provider.analyze(analysisInput);
 
-    for (const tech of analysisOutput.technologies) {
+    const techStackRows: TechStackInsert[] = analysisOutput.technologies.map((tech) => {
       const category = VALID_CATEGORIES.has(tech.category as TechCategory)
         ? (tech.category as TechCategory)
         : "other";
@@ -424,7 +425,7 @@ async function runAnalysisPipeline(
         ? (tech.importance as Importance)
         : "supporting";
 
-      const techStackData: TechStackInsert = {
+      return {
         project_id: projectId,
         technology_name: tech.name,
         category,
@@ -437,32 +438,12 @@ async function runAnalysisPipeline(
           ? (tech.relationships as unknown as TechStackInsert["relationships"])
           : null,
       };
+    });
 
-      const { data: existingTech } = await supabase
+    if (techStackRows.length > 0) {
+      await supabase
         .from("tech_stacks")
-        .select("id")
-        .eq("project_id", projectId)
-        .eq("technology_name", tech.name)
-        .single();
-
-      if (existingTech) {
-        await supabase
-          .from("tech_stacks")
-          .update({
-            category,
-            version: tech.version ?? null,
-            confidence_score: tech.confidence,
-            detected_from: getDetectedFromSources(tech, techHints),
-            description: tech.description,
-            importance,
-            relationships: tech.relationships
-              ? (tech.relationships as unknown as TechStackInsert["relationships"])
-              : null,
-          })
-          .eq("id", existingTech.id);
-      } else {
-        await supabase.from("tech_stacks").insert(techStackData);
-      }
+        .upsert(techStackRows, { onConflict: "project_id,technology_name" });
     }
 
     const techSummary = {
@@ -501,6 +482,14 @@ async function runAnalysisPipeline(
     } catch (kbErr) {
       console.error("[projects] KB generation failed:", kbErr);
       // Non-fatal — don't fail the analysis job for KB errors
+    }
+
+    // Compute concept-to-file matches using code_signatures from KB
+    try {
+      await computeAndStoreConceptMatches(projectId, decryptedFiles);
+    } catch (matchErr) {
+      console.error("[projects] Concept matching failed:", matchErr);
+      // Non-fatal — graph will still work without matches
     }
   } catch (error) {
     const errorMessage =

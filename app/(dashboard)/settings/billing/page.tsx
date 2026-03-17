@@ -133,6 +133,15 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
               limit={usageData.aiChats.limit}
               showUpgradeHint={usageData.planType === "free"}
             />
+            {usageData.tokenBudget && (
+              <UsageProgress
+                label={t("usageLabel.tokenBudget")}
+                used={usageData.tokenBudget.used}
+                limit={usageData.tokenBudget.limit}
+                showUpgradeHint
+                formatValue={(v) => v >= 1000 ? `${Math.round(v / 1000)}K` : String(v)}
+              />
+            )}
           </div>
         </div>
       )}

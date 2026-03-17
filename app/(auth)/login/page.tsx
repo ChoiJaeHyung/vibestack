@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
+import { analytics } from "@/lib/utils/analytics";
 
 export default function LoginPage() {
   return (
@@ -55,6 +56,7 @@ function LoginForm() {
       return;
     }
 
+    analytics.login();
     router.replace("/dashboard");
   };
 

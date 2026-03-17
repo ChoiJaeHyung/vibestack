@@ -32,6 +32,7 @@ import {
 } from "@/server/actions/tutor-feedback";
 import type { TutorFeedbackRating } from "@/types/database";
 import type { UsageData } from "@/server/actions/usage";
+import { analytics } from "@/lib/utils/analytics";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -267,6 +268,7 @@ export function TutorChat({
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: trimmed }]);
     setLoading(true);
+    analytics.tutorChat();
 
     try {
       const result = await sendTutorMessage(

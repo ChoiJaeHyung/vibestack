@@ -1,6 +1,6 @@
 import type { ConceptHint, TechKnowledge } from "./types";
 import type { Locale } from "@/types/database";
-import { getKBFromDB } from "@/server/actions/knowledge";
+import { getKBFromDB, syncSeedToDB } from "@/server/actions/knowledge";
 
 // Static imports — seed fallback for techs without DB entries
 import { NEXTJS_KNOWLEDGE } from "./data/nextjs";
@@ -8,6 +8,21 @@ import { REACT_KNOWLEDGE } from "./data/react";
 import { TYPESCRIPT_KNOWLEDGE } from "./data/typescript";
 import { SUPABASE_KNOWLEDGE } from "./data/supabase";
 import { TAILWIND_KNOWLEDGE } from "./data/tailwind";
+import { VUE_KNOWLEDGE } from "./data/vue";
+import { ANGULAR_KNOWLEDGE } from "./data/angular";
+import { SVELTE_KNOWLEDGE } from "./data/svelte";
+import { GO_KNOWLEDGE } from "./data/go";
+import { SWIFT_KNOWLEDGE } from "./data/swift";
+import { RUST_KNOWLEDGE } from "./data/rust";
+import { PYTHON_KNOWLEDGE } from "./data/python";
+import { JAVA_KNOWLEDGE } from "./data/java";
+import { KOTLIN_KNOWLEDGE } from "./data/kotlin";
+import { FLUTTER_KNOWLEDGE } from "./data/flutter";
+import { DJANGO_KNOWLEDGE } from "./data/django";
+import { SPRING_BOOT_KNOWLEDGE } from "./data/spring-boot";
+import { EXPRESS_KNOWLEDGE } from "./data/express";
+import { FASTAPI_KNOWLEDGE } from "./data/fastapi";
+import { NESTJS_KNOWLEDGE } from "./data/nestjs";
 
 const ALL_KNOWLEDGE: TechKnowledge[] = [
   NEXTJS_KNOWLEDGE,
@@ -15,6 +30,21 @@ const ALL_KNOWLEDGE: TechKnowledge[] = [
   TYPESCRIPT_KNOWLEDGE,
   SUPABASE_KNOWLEDGE,
   TAILWIND_KNOWLEDGE,
+  VUE_KNOWLEDGE,
+  ANGULAR_KNOWLEDGE,
+  SVELTE_KNOWLEDGE,
+  GO_KNOWLEDGE,
+  SWIFT_KNOWLEDGE,
+  RUST_KNOWLEDGE,
+  PYTHON_KNOWLEDGE,
+  JAVA_KNOWLEDGE,
+  KOTLIN_KNOWLEDGE,
+  FLUTTER_KNOWLEDGE,
+  DJANGO_KNOWLEDGE,
+  SPRING_BOOT_KNOWLEDGE,
+  EXPRESS_KNOWLEDGE,
+  FASTAPI_KNOWLEDGE,
+  NESTJS_KNOWLEDGE,
 ];
 
 // Index by normalized tech name for fast seed lookup
@@ -85,6 +115,17 @@ export async function getKBHints(techName: string, locale: Locale = "ko"): Promi
     if (concepts.length > 0) {
       KB_CACHE.set(cacheKey, { concepts, cachedAt: Date.now() });
       evictStaleCache();
+
+      // Lazy sync: write seed to DB in background (non-blocking)
+      syncSeedToDB(
+        tk!.technology_name,
+        normalized,
+        tk!.version,
+        concepts,
+        locale,
+      ).catch((err) => {
+        console.error("[knowledge] Background seed sync failed:", err);
+      });
     }
     return concepts;
   }
@@ -98,4 +139,28 @@ export async function getKBHints(techName: string, locale: Locale = "ko"): Promi
  */
 export function getKBTechNames(): string[] {
   return ALL_KNOWLEDGE.map((tk) => tk.technology_name);
+}
+
+/**
+ * Sync all static seeds to DB (ko locale).
+ * Skips techs that already exist in DB. Safe to call multiple times.
+ * Returns count of newly inserted rows.
+ */
+export async function syncAllSeedsToDB(): Promise<number> {
+  let synced = 0;
+  for (const tk of ALL_KNOWLEDGE) {
+    const normalized = tk.technology_name.toLowerCase();
+    const inserted = await syncSeedToDB(
+      tk.technology_name,
+      normalized,
+      tk.version,
+      tk.concepts,
+      "ko",
+    );
+    if (inserted) synced++;
+  }
+  if (synced > 0) {
+    console.log(`[knowledge] Seed sync complete: ${synced}/${ALL_KNOWLEDGE.length} inserted`);
+  }
+  return synced;
 }

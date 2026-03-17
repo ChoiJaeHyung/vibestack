@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { X, Zap, Check } from "lucide-react";
 import { createCheckoutSession } from "@/server/actions/billing";
+import { analytics } from "@/lib/utils/analytics";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -15,6 +16,10 @@ export function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
   const t = useTranslations("Billing");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) analytics.upgradeModalView(feature);
+  }, [isOpen, feature]);
 
   if (!isOpen) return null;
 
@@ -33,6 +38,7 @@ export function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
     setError(null);
 
     try {
+      analytics.upgradeClick(feature);
       const result = await createCheckoutSession("pro");
       if (!result.success || !result.data?.url) {
         setError(result.error ?? t("error.paymentRequest"));

@@ -70,5 +70,20 @@
   "subscription": {
     "title": "구독 플랜",
     "description": "현재 플랜: {plan} — 클릭하여 관리"
+  },
+  "deleteAccount": {
+    "title": "계정 삭제",
+    "description": "계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+    "button": "계정 삭제",
+    "warning": "이 작업은 되돌릴 수 없습니다. 모든 데이터가 즉시 삭제됩니다.",
+    "data1": "모든 프로젝트와 분석 결과",
+    "data2": "학습 커리큘럼과 진행 상황",
+    "data3": "AI 대화 기록과 피드백",
+    "data4": "배지, 포인트, 스트릭 기록",
+    "confirmLabel": "삭제를 확인하려면 DELETE를 입력하세요",
+    "confirmButton": "영구 삭제",
+    "deleting": "삭제 중...",
+    "cancel": "취소",
+    "error": "계정 삭제 중 오류가 발생했습니다. 다시 시도해주세요."
   }
 }

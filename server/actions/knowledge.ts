@@ -221,6 +221,57 @@ export async function generateKBForTech(
   }
 }
 
+// ─── Seed Sync (static → DB) ────────────────────────────────────────
+
+/**
+ * Sync a single static seed entry to DB if it doesn't exist.
+ * Returns true if inserted, false if already existed.
+ */
+export async function syncSeedToDB(
+  techName: string,
+  techNameNormalized: string,
+  version: string,
+  concepts: ConceptHint[],
+  locale: Locale = "ko",
+): Promise<boolean> {
+  const supabase = createKBServiceClient();
+
+  // Check if already exists
+  const { data: existing } = await supabase
+    .from("technology_knowledge")
+    .select("id")
+    .eq("technology_name_normalized", techNameNormalized)
+    .eq("locale", locale)
+    .limit(1);
+
+  if (existing && existing.length > 0) return false;
+
+  const now = new Date().toISOString();
+  const { error } = await supabase.from("technology_knowledge").insert({
+    technology_name: techName,
+    technology_name_normalized: techNameNormalized,
+    version,
+    locale,
+    concepts,
+    prerequisites: [],
+    source: "seed",
+    generation_status: "ready",
+    llm_provider: "seed",
+    llm_model: "static-seed",
+    generated_at: now,
+  });
+
+  if (error) {
+    // 23505 = unique violation — another process inserted first
+    if (error.code === "23505") return false;
+    console.error(`[knowledge] Seed sync failed for ${techName}:`, error.message);
+    return false;
+  }
+
+  console.log(`[knowledge] Synced seed to DB: ${techNameNormalized}|${locale} (${concepts.length} concepts)`);
+  return true;
+}
+
 // ─── Batch KB Generation ────────────────────────────────────────────
 
 export async function generateMissingKBs(

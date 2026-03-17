@@ -18,8 +18,14 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as Partial<ProjectCreateRequest>;
 
-    if (!body.name || typeof body.name !== "string") {
+    if (!body.name || typeof body.name !== "string" || body.name.trim().length === 0) {
       return errorResponse("name is required", 400);
+    }
+    if (body.name.length > 255) {
+      return errorResponse("name must be 255 characters or less", 400);
+    }
+    if (body.description && typeof body.description === "string" && body.description.length > 2000) {
+      return errorResponse("description must be 2000 characters or less", 400);
     }
 
     const supabase = createServiceClient();

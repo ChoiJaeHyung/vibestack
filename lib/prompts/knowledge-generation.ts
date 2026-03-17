@@ -14,7 +14,13 @@ function getKBJsonSchema(locale: "ko" | "en"): string {
     "key_points": ["string (3-5 practical key points in ${lang})"],
     "common_quiz_topics": ["string (2-3 good quiz topics in ${lang})"],
     "prerequisite_concepts": ["string (concept_key references within this same technology)"],
-    "tags": ["string (3-5 searchable tags in English, e.g. 'routing', 'server-components')"]
+    "tags": ["string (3-5 searchable tags in English, e.g. 'routing', 'server-components')"],
+    "code_signature": {
+      "import_markers": ["string (import identifiers that indicate this concept is used, e.g. 'useState', 'from \\'react\\'')"],
+      "syntax_markers": ["string (code patterns found in source files, e.g. 'const [', 'useState(')"],
+      "file_markers": ["string (file path glob patterns, e.g. '**/components/**', '**/hooks/**')"],
+      "config_markers": ["string (config file entries, e.g. 'next.config.* > images', 'tsconfig.* > strict')"]
+    }
   }
 ]`;
 }
@@ -22,7 +28,7 @@ function getKBJsonSchema(locale: "ko" | "en"): string {
 import type { Locale } from "@/types/database";
 
 /**
- * Build a prompt that instructs the LLM to generate 5-7 core educational
+ * Build a prompt that instructs the LLM to generate 12-18 core educational
  * concepts (ConceptHint[]) for the given technology.
  */
 export function buildKBGenerationPrompt(
@@ -59,13 +65,23 @@ export function buildKBGenerationPrompt(
 - **key_points**: 3-5 practical key points in English. Each point is one sentence covering what a vibe coder must know. e.g., "App Router handles routing based on the file system", "A page.tsx file becomes a page".
 - **common_quiz_topics**: 2-3 quiz topics in English. Good quiz topics for this concept. e.g., "Difference between layout.tsx and page.tsx", "How to use params in dynamic routing".
 - **prerequisite_concepts**: Array of concept_key strings from THIS SAME list that should be learned first. Use an empty array [] for foundational concepts with no prerequisites.
-- **tags**: 3-5 searchable tags in English lowercase (e.g., "routing", "file-system", "pages").`
+- **tags**: 3-5 searchable tags in English lowercase (e.g., "routing", "file-system", "pages").
+- **code_signature**: Object with 4 arrays of strings for matching concepts to project source files:
+  - **import_markers**: Import identifiers (e.g., "useState", "from 'react'"). Empty array if no distinctive imports.
+  - **syntax_markers**: Code patterns found in source (e.g., "const [", "useState("). Focus on distinctive patterns.
+  - **file_markers**: File path globs (e.g., "**/components/**", "**/hooks/**"). Empty array if no distinctive file patterns.
+  - **config_markers**: Config file entries (e.g., "next.config.* > images"). Empty array if N/A.`
     : `- **concept_key**: kebab-case English identifier (e.g., "app-router", "server-components"). Must be unique within this technology.
 - **concept_name**: Korean display name. 친근하고 이해하기 쉬운 제목 (e.g., "App Router 이해하기", "서버 컴포넌트의 비밀").
 - **key_points**: 3-5 practical key points in Korean. 각 포인트는 한 문장으로, 바이브 코더가 꼭 알아야 할 핵심 내용을 담으세요. 예시: "App Router는 파일 시스템 기반으로 라우팅을 처리해요", "page.tsx 파일이 곧 하나의 페이지가 돼요".
 - **common_quiz_topics**: 2-3 quiz topics in Korean. 이 개념에서 출제하기 좋은 퀴즈 주제를 적으세요. 예시: "layout.tsx와 page.tsx의 차이점", "동적 라우팅에서 params 사용법".
 - **prerequisite_concepts**: Array of concept_key strings from THIS SAME list that should be learned first. Use an empty array [] for foundational concepts with no prerequisites.
-- **tags**: 3-5 searchable tags in English lowercase (e.g., "routing", "file-system", "pages").`;
+- **tags**: 3-5 searchable tags in English lowercase (e.g., "routing", "file-system", "pages").
+- **code_signature**: 프로젝트 소스 파일과 개념을 매칭하기 위한 코드 마커 객체:
+  - **import_markers**: import 식별자 (예: "useState", "from 'react'"). 특징적 import가 없으면 빈 배열.
+  - **syntax_markers**: 소스 코드에서 발견되는 코드 패턴 (예: "const [", "useState("). 특징적 패턴에 집중.
+  - **file_markers**: 파일 경로 glob 패턴 (예: "**/components/**"). 특징적 파일 패턴이 없으면 빈 배열.
+  - **config_markers**: 설정 파일 항목 (예: "next.config.* > images"). 해당 없으면 빈 배열.`;
 
   const toneRule = locale === "en"
     ? `- Write ALL content in casual, approachable English. Keep it light and friendly.`
@@ -77,9 +93,11 @@ VibeUniv helps "vibe coders" — people who built working applications using AI 
 
 ## Task
 
-Generate 5-7 core educational concepts for **${techName}${versionLabel}**.
+Generate 12-18 core educational concepts for **${techName}${versionLabel}**.
 
-These concepts will be used as a knowledge base to guide personalized learning content generation. Each concept should represent a fundamental building block that a vibe coder needs to understand to work confidently with ${techName}.
+These concepts will be used as a knowledge base to guide personalized learning content generation. Each concept should represent a **specific, granular** building block that a vibe coder needs to understand to work confidently with ${techName}.
+
+**Important: Keep concepts granular.** Do NOT create broad umbrella concepts like "Hooks" or "State Management". Instead, break them into specific concepts: "useState", "useEffect", "useRef", "useMemo/useCallback", etc. Each concept should map to roughly 1-2 learning modules.
 
 ## Target Audience
 
@@ -99,7 +117,7 @@ ${fieldReqs}
 
 ${toneRule}
 - Output ONLY valid JSON matching the schema below. No markdown code fences, no explanation, no preamble.
-- Generate exactly 5-7 concepts.
+- Generate exactly 12-18 concepts.
 - concept_key must be in kebab-case English.
 - concept_name, key_points, and common_quiz_topics must be in ${lang}.
 - tags must be in English lowercase.

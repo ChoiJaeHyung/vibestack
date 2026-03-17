@@ -4,6 +4,8 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { CookieConsent } from "@/components/ui/cookie-consent";
+import { AdSenseScript } from "@/components/ui/adsense-script";
+import { GAScript } from "@/components/ui/ga-script";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -84,14 +86,14 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning className={jetbrainsMono.variable}>
-      <head>
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4760760559027921"
-          crossOrigin="anonymous"
-        />
-      </head>
+      <head />
       <body className="font-sans antialiased">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-violet-600 focus:px-4 focus:py-2 focus:text-white focus:text-sm focus:font-medium"
+        >
+          Skip to main content
+        </a>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -130,6 +132,8 @@ export default async function RootLayout({
           <ThemeProvider>
             {children}
             <CookieConsent />
+            <AdSenseScript />
+            <GAScript />
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

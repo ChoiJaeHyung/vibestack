@@ -464,4 +464,43 @@ export class VibeUnivClient {
       status: raw.status,
     };
   }
+
+  /**
+   * Try to assemble a curriculum from pre-built templates on the server.
+   * Returns the result if templates are available, null if not.
+   */
+  async tryAssembleCurriculum(
+    projectId: string,
+    difficulty: string,
+  ): Promise<{
+    mode: "prebuilt" | "instruction";
+    learningPathId?: string;
+    moduleCount?: number;
+    message?: string;
+  } | null> {
+    try {
+      interface RawAssembleResponse {
+        mode: "prebuilt" | "instruction";
+        learning_path_id?: string;
+        module_count?: number;
+        message?: string;
+      }
+
+      const raw = await this.request<RawAssembleResponse>(
+        "POST",
+        `/projects/${projectId}/curriculum/assemble`,
+        { difficulty },
+      );
+
+      return {
+        mode: raw.mode,
+        learningPathId: raw.learning_path_id,
+        moduleCount: raw.module_count,
+        message: raw.message,
+      };
+    } catch {
+      // Assembler not available — fall back to instruction mode
+      return null;
+    }
+  }
 }

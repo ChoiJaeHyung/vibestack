@@ -16,10 +16,16 @@
   "usageLabel": {
     "projects": "Projects",
     "learningPaths": "Learning Paths (this month)",
-    "aiChats": "AI Chats (this month)"
+    "aiChats": "AI Chats (this month)",
+    "tokenBudget": "Token Usage (this month)"
   },
   "plan": {
     "perMonth": "/mo",
+    "perYear": "/year",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "savePercent": "-17%",
+    "annualSaveNote": "Save $38 compared to monthly",
     "currentPlan": "Current Plan",
     "popular": "Popular",
     "free": {
@@ -43,12 +49,12 @@
       }
     },
     "team": {
-      "cta": "Start Team",
+      "cta": "Coming Soon",
       "features": {
         "pro": "All Pro features",
-        "share": "Team project sharing",
-        "dashboard": "Team learning dashboard",
-        "support": "Priority support"
+        "share": "Team project sharing (coming soon)",
+        "dashboard": "Team learning dashboard (coming soon)",
+        "support": "Priority support (coming soon)"
       }
     }
   },

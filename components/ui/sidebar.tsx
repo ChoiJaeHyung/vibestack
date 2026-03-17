@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
   FolderOpen,
@@ -25,15 +26,16 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/projects", icon: FolderOpen, label: "Projects" },
-  { href: "/learning", icon: GraduationCap, label: "Learning" },
-  { href: "/settings", icon: Settings, label: "Settings" },
-];
+  { href: "/dashboard", icon: LayoutDashboard, key: "dashboard" },
+  { href: "/projects", icon: FolderOpen, key: "projects" },
+  { href: "/learning", icon: GraduationCap, key: "learning" },
+  { href: "/settings", icon: Settings, key: "settings" },
+] as const;
 
 export function Sidebar({ userEmail, userRole }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const t = useTranslations("Common");
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -103,7 +105,7 @@ export function Sidebar({ userEmail, userRole }: SidebarProps) {
                 }`}
               >
                 <Icon className={`h-5 w-5 ${active ? "text-violet-400" : "text-text-faint"}`} />
-                {item.label}
+                {t(`sidebar.${item.key}`)}
               </Link>
             );
           })}
@@ -121,7 +123,7 @@ export function Sidebar({ userEmail, userRole }: SidebarProps) {
                 }`}
               >
                 <Shield className={`h-5 w-5 ${pathname.startsWith("/admin") ? "text-violet-400" : "text-text-faint"}`} />
-                Admin
+                {t("sidebar.admin")}
               </Link>
             </>
           )}
@@ -133,7 +135,7 @@ export function Sidebar({ userEmail, userRole }: SidebarProps) {
             className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-text-muted hover:text-text-primary hover:bg-bg-input transition-all duration-200"
           >
             <Home className="h-5 w-5 text-text-faint" />
-            Home
+            {t("sidebar.home")}
           </Link>
           <Link
             href="/guide"
@@ -141,7 +143,7 @@ export function Sidebar({ userEmail, userRole }: SidebarProps) {
             className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-text-muted hover:text-text-primary hover:bg-bg-input transition-all duration-200"
           >
             <BookOpen className="h-5 w-5 text-text-faint" />
-            Guide
+            {t("sidebar.guide")}
           </Link>
         </nav>
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Clock, Lock, BookOpen, Code2, HelpCircle, Compass } from "lucide-react";
 import { getPublicLearningPathDetail } from "@/server/actions/public-learning";
-import { getLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 interface Props {
@@ -20,6 +20,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: {
       canonical: `https://vibeuniv.com/learn/${pathId}`,
     },
+    openGraph: {
+      title: data.path.title,
+      description: data.path.description ?? undefined,
+      type: "article",
+      url: `https://vibeuniv.com/learn/${pathId}`,
+    },
   };
 }
 
@@ -30,28 +36,28 @@ const typeIcons: Record<string, typeof BookOpen> = {
   project_walkthrough: Compass,
 };
 
-const typeLabels: Record<string, string> = {
-  concept: "Concept",
-  practical: "Practical",
-  quiz: "Quiz",
-  project_walkthrough: "Walkthrough",
-};
-
 export default async function PublicLearningPathPage({ params }: Props) {
   const { pathId } = await params;
   const data = await getPublicLearningPathDetail(pathId);
   if (!data) notFound();
 
-  const locale = await getLocale();
-  const isKo = locale === "ko";
+  const tc = await getTranslations("Common");
+  const t = await getTranslations("Public");
   const { path, modules } = data;
+
+  const typeLabels: Record<string, string> = {
+    concept: tc("moduleType.concept"),
+    practical: tc("moduleType.practical"),
+    quiz: tc("moduleType.quiz"),
+    project_walkthrough: tc("moduleType.project_walkthrough"),
+  };
 
   return (
     <div className="max-w-[800px] mx-auto px-8 max-md:px-4 py-12">
       <Breadcrumb
         items={[
-          { label: "Home", href: "/" },
-          { label: "Learn", href: "/learn" },
+          { label: tc("breadcrumb.home"), href: "/" },
+          { label: tc("nav.learn"), href: "/learn" },
           { label: path.title },
         ]}
       />
@@ -68,7 +74,7 @@ export default async function PublicLearningPathPage({ params }: Props) {
             <Clock className="h-3.5 w-3.5" />
             {path.estimated_hours}h
           </span>
-          <span>{path.module_count} {isKo ? "모듈" : "modules"}</span>
+          <span>{path.module_count} {t("learnDetail.modules")}</span>
         </div>
       </div>
 
@@ -106,7 +112,7 @@ export default async function PublicLearningPathPage({ params }: Props) {
                         {typeLabels[mod.module_type ?? "concept"] ?? mod.module_type}
                       </span>
                       <span className="text-[10px] text-emerald-400 ml-auto">
-                        {isKo ? "무료 미리보기" : "Free Preview"}
+                        {tc("label.freePreview")}
                       </span>
                     </div>
                     <h3 className="text-sm font-semibold text-text-primary group-hover:text-violet-400 transition-colors">
@@ -116,7 +122,7 @@ export default async function PublicLearningPathPage({ params }: Props) {
                     {mod.estimated_minutes && (
                       <span className="inline-flex items-center gap-1 text-[10px] text-text-muted mt-2">
                         <Clock className="h-3 w-3" />
-                        {mod.estimated_minutes}{isKo ? "분" : "min"}
+                        {mod.estimated_minutes}{t("learnDetail.minutes")}
                       </span>
                     )}
                   </Link>
@@ -129,7 +135,7 @@ export default async function PublicLearningPathPage({ params }: Props) {
                       </span>
                       <span className="flex items-center gap-1 text-[10px] text-text-muted ml-auto">
                         <Lock className="h-3 w-3" />
-                        {isKo ? "회원 전용" : "Members only"}
+                        {tc("label.membersOnly")}
                       </span>
                     </div>
                     <h3 className="text-sm font-semibold text-text-secondary">{mod.title}</h3>
@@ -146,18 +152,16 @@ export default async function PublicLearningPathPage({ params }: Props) {
       <div className="mt-12 text-center rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-cyan-500/5 p-8">
         <Lock className="h-8 w-8 text-violet-400 mx-auto mb-3" />
         <h3 className="text-lg font-bold text-text-primary mb-2">
-          {isKo ? "나머지 모듈도 학습하고 싶으신가요?" : "Want to study the remaining modules?"}
+          {t("learnDetail.ctaTitle")}
         </h3>
         <p className="text-sm text-text-muted mb-6 max-w-md mx-auto">
-          {isKo
-            ? "무료 가입하면 AI 튜터, 퀴즈, 코드 챌린지와 함께 전체 커리큘럼을 학습할 수 있어요."
-            : "Sign up for free to access the full curriculum with AI tutor, quizzes, and code challenges."}
+          {t("learnDetail.ctaDesc")}
         </p>
         <Link
           href="/signup"
           className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
         >
-          {isKo ? "무료로 시작하기" : "Get Started Free"}
+          {t("learnDetail.ctaButton")}
         </Link>
       </div>
     </div>

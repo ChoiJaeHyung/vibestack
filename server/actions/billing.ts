@@ -49,13 +49,14 @@ interface PaymentHistoryResult {
 
 const PRICE_IDS: Record<string, string | undefined> = {
   pro: process.env.STRIPE_PRO_PRICE_ID,
+  "pro-annual": process.env.STRIPE_PRO_ANNUAL_PRICE_ID,
   team: process.env.STRIPE_TEAM_PRICE_ID,
 };
 
 // ─── Server Actions ─────────────────────────────────────────────────
 
 export async function createCheckoutSession(
-  plan: "pro" | "team",
+  plan: "pro" | "pro-annual" | "team",
 ): Promise<CheckoutSessionResult> {
   try {
     const user = await getAuthUser();
@@ -105,7 +106,7 @@ export async function createCheckoutSession(
       cancel_url: `${appUrl}/settings/billing?canceled=true`,
       metadata: {
         user_id: user.id,
-        plan,
+        plan: plan === "pro-annual" ? "pro" : plan,
       },
     });
 

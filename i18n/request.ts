@@ -41,6 +41,7 @@ const NAMESPACES = [
   "Legal",
   "NotFound",
   "Errors",
+  "Public",
 ] as const;
 
 export default getRequestConfig(async () => {

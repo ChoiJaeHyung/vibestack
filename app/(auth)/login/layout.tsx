@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
-export const metadata: Metadata = {
-  title: "로그인",
-  description: "VibeUniv 계정으로 로그인하세요.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("Auth");
+  return {
+    title: t("login.metaTitle"),
+    description: t("login.metaDescription"),
+  };
+}
 
 export default function LoginLayout({
   children,

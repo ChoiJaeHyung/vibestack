@@ -70,5 +70,20 @@
   "subscription": {
     "title": "Subscription Plan",
     "description": "Current plan: {plan} — Click to manage"
+  },
+  "deleteAccount": {
+    "title": "Delete Account",
+    "description": "Deleting your account will permanently remove all your data. This action cannot be undone.",
+    "button": "Delete Account",
+    "warning": "This action cannot be undone. All data will be permanently deleted.",
+    "data1": "All projects and analysis results",
+    "data2": "Learning curricula and progress",
+    "data3": "AI conversation history and feedback",
+    "data4": "Badges, points, and streak records",
+    "confirmLabel": "Type DELETE to confirm",
+    "confirmButton": "Delete Permanently",
+    "deleting": "Deleting...",
+    "cancel": "Cancel",
+    "error": "An error occurred while deleting your account. Please try again."
   }
 }

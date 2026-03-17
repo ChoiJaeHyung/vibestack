@@ -5,7 +5,8 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { checkAndAwardBadges } from "@/server/actions/badges";
 import type { NewlyEarnedBadge } from "@/server/actions/badges";
 import { updateStreak } from "@/server/actions/streak";
-import { updateMasteryFromModuleCompletion } from "@/server/actions/knowledge-graph";
+import { updateMasteryFromModuleCompletion, type MasterySignals } from "@/server/actions/knowledge-graph";
+import { getConceptMatchScores } from "@/server/actions/concept-matches";
 import { awardPoints } from "@/server/actions/points";
 import { POINT_AWARDS } from "@/server/actions/point-constants";
 import type { ContentSection, ModuleContent } from "@/server/actions/curriculum";
@@ -437,11 +438,64 @@ export async function updateLearningProgress(
 
     // ── Streak + Badge + Mastery + Points on module completion ──────────
     if (status === "completed") {
-      // Update streak (fire-and-forget, non-blocking)
-      updateStreak(user.id).catch(() => {});
+      // Collect behavioral signals for LLM-based mastery evaluation
+      let signals: MasterySignals | undefined;
+      try {
+        const serviceClient = createServiceClient();
+        const [moduleInfo, tutorCount, pathInfo] = await Promise.all([
+          supabase
+            .from("learning_modules")
+            .select("estimated_minutes, concept_keys, learning_path_id")
+            .eq("id", moduleId)
+            .single(),
+          serviceClient
+            .from("ai_conversations")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id),
+          supabase
+            .from("learning_modules")
+            .select("learning_path_id")
+            .eq("id", moduleId)
+            .single(),
+        ]);
 
-      // Update concept mastery (fire-and-forget, non-blocking)
-      updateMasteryFromModuleCompletion(user.id, moduleId, score).catch(() => {});
+        let codeMatchedCount = 0;
+        if (pathInfo.data?.learning_path_id) {
+          const { data: lp } = await supabase
+            .from("learning_paths")
+            .select("project_id")
+            .eq("id", pathInfo.data.learning_path_id)
+            .single();
+          if (lp?.project_id) {
+            const matchScores = await getConceptMatchScores(lp.project_id);
+            const conceptKeys = (moduleInfo.data?.concept_keys as string[] | null) ?? [];
+            codeMatchedCount = conceptKeys.filter((ck) => matchScores.has(ck)).length;
+          }
+        }
+
+        signals = {
+          quizScore: score,
+          timeSpentMinutes: timeSpent,
+          estimatedMinutes: moduleInfo.data?.estimated_minutes ?? undefined,
+          tutorMessagesCount: tutorCount.count ?? 0,
+          codeMatchedCount,
+          attempts: existing ? existing.attempts + 1 : 1,
+        };
+      } catch {
+        // Signal collection failure is non-critical
+      }
+
+      // Non-blocking gamification updates with error logging
+      const [streakResult, masteryResult] = await Promise.allSettled([
+        updateStreak(user.id),
+        updateMasteryFromModuleCompletion(user.id, moduleId, score, signals),
+      ]);
+      if (streakResult.status === "rejected") {
+        console.error("[learning-progress] Streak update failed:", streakResult.reason);
+      }
+      if (masteryResult.status === "rejected") {
+        console.error("[learning-progress] Mastery update failed:", masteryResult.reason);
+      }
 
       // Award points for module completion
       // Note: awardPoints returns { success: true } without newBalance when point system is disabled.

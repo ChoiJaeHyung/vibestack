@@ -35,7 +35,7 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen">
       <AdminSidebar userEmail={userEmail} userRole={userRole!} />
-      <main className="lg:pl-64">
+      <main id="main-content" className="lg:pl-64">
         <div className="mx-auto max-w-6xl px-6 py-8 pt-16 lg:pt-8">
           {children}
         </div>

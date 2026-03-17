@@ -1,3 +1,19 @@
+export type DifficultyTier = "beginner" | "intermediate" | "advanced";
+
+export interface CrossTechLink {
+  tech: string;               // normalized tech name ("react", "python")
+  concept_key: string;        // target concept key
+  relation: "foundation" | "similar" | "extends" | "alternative";
+}
+
+/** Code-level markers for matching concepts to project source files */
+export interface CodeSignature {
+  import_markers: string[];   // import identifiers: ["useState", "from 'react'"]
+  syntax_markers: string[];   // code patterns: ["const [", "useState("]
+  file_markers: string[];     // file path globs: ["**/components/**"]
+  config_markers: string[];   // config file entries: ["next.config.* > images"]
+}
+
 export interface ConceptHint {
   concept_key: string;        // "app-router"
   concept_name: string;       // "App Router 이해하기"
@@ -5,11 +21,61 @@ export interface ConceptHint {
   common_quiz_topics: string[]; // 좋은 퀴즈 주제
   prerequisite_concepts: string[]; // 선행 개념 키
   tags: string[];             // 매칭용 태그
+  difficulty_tier?: DifficultyTier;
+  category?: string;          // "fundamentals" | "state-management" | "routing" 등
+  cross_tech_links?: CrossTechLink[];
+  code_signature?: CodeSignature;
+}
+
+export type TechCategory = "language" | "frontend" | "backend" | "database" | "css" | "mobile" | "devops";
+
+/**
+ * Standardized concept domain — cross-tech matching uses this to find
+ * concept pairs that play the same "role" across different technologies.
+ */
+export type ConceptDomain =
+  | "fundamentals"        // core syntax, project structure, getting started
+  | "state-management"    // local/global state, reactivity
+  | "routing"             // URL routing, navigation
+  | "data-access"         // DB queries, ORM, API calls
+  | "auth"                // authentication, authorization, permissions
+  | "rendering"           // view rendering, templates, SSR/CSR
+  | "middleware"          // request pipeline, interceptors, guards
+  | "type-system"         // types, interfaces, generics
+  | "async"               // async/await, concurrency, promises
+  | "testing"             // unit/integration/e2e tests
+  | "styling"             // CSS, theming, layout
+  | "deployment"          // build, deploy, CI/CD, config
+  | "error-handling"      // try/catch, error boundaries, result types
+  | "patterns"            // design patterns, architecture patterns
+  | "security"            // CSRF, XSS, RLS, encryption
+  | "realtime"            // websockets, subscriptions, SSE
+  | "oop"                 // classes, inheritance, polymorphism
+  | "memory"              // ownership, borrowing, GC (language-specific)
+  | "concurrency"         // threads, goroutines, channels
+  | "forms"               // form handling, validation
+  | "storage"             // file storage, blob, CDN
+  ;
+
+/**
+ * Technology-level relationship — Level 1 of the 3-layer cross-tech model.
+ * Defines how two technologies relate to each other structurally.
+ */
+export interface TechRelation {
+  source: string;                  // normalized tech name
+  target: string;                  // normalized tech name
+  relation:
+    | "foundation"                 // source is prerequisite knowledge for target
+    | "alternative"                // same role, interchangeable
+    | "extends"                    // target builds on top of source
+    | "complement";                // commonly used together
+  strength: number;                // 0-1 how strongly related
 }
 
 export interface TechKnowledge {
   technology_name: string;    // "Next.js"
   version: string;            // "15"
+  category: TechCategory;
   concepts: ConceptHint[];
 }
 
