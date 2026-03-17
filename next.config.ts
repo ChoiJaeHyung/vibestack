@@ -10,7 +10,7 @@ const cspDirectives = [
   "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
   "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com",
   "img-src 'self' data: blob: https://pagead2.googlesyndication.com https://www.google.com https://www.google.co.kr https://googleads.g.doubleclick.net",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.google-analytics.com https://*.analytics.google.com https://*.sentry.io https://ep1.adtrafficquality.google https://fundingchoicesmessages.google.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.google-analytics.com https://*.analytics.google.com https://*.sentry.io https://*.adtrafficquality.google https://fundingchoicesmessages.google.com",
   "frame-src https://js.stripe.com https://checkout.stripe.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com",
   "object-src 'none'",
   "base-uri 'self'",
