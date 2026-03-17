@@ -7,6 +7,7 @@ import { Clock } from "lucide-react";
 import { getPostBySlug, getAllPosts, getRelatedPosts } from "@/lib/blog/posts";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { AdSlot } from "@/components/ui/ad-slot";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -79,6 +80,9 @@ export default async function BlogPostPage({ params }: Props) {
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
         </div>
       </article>
+
+      {/* Ad */}
+      <AdSlot className="mt-10" />
 
       {/* Related Posts */}
       {relatedPosts.length > 0 && (

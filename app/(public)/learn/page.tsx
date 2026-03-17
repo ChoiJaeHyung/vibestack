@@ -17,6 +17,7 @@ import {
 import { getPublicLearningPaths } from "@/server/actions/public-learning";
 import { getTranslations } from "next-intl/server";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { AdSlot } from "@/components/ui/ad-slot";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Public");
@@ -264,6 +265,9 @@ export default async function PublicLearnPage() {
           ))}
         </div>
       </section>
+
+      {/* Ad */}
+      <AdSlot className="mb-16" />
 
       {/* ===== Section 4: Public Curricula ===== */}
       <section>

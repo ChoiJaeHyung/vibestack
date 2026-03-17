@@ -4,7 +4,6 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { CookieConsent } from "@/components/ui/cookie-consent";
-import { AdSenseScript } from "@/components/ui/adsense-script";
 import { GAScript } from "@/components/ui/ga-script";
 import "./globals.css";
 
@@ -132,7 +131,6 @@ export default async function RootLayout({
           <ThemeProvider>
             {children}
             <CookieConsent />
-            <AdSenseScript />
             <GAScript />
           </ThemeProvider>
         </NextIntlClientProvider>

@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { LandingNav } from "@/components/features/landing-nav";
+import { AdSenseScript } from "@/components/ui/adsense-script";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function PublicLayout({
@@ -24,6 +25,7 @@ export default async function PublicLayout({
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <AdSenseScript />
       <LandingNav userEmail={userEmail} />
       <main id="main-content" className="flex-1 pt-16">{children}</main>
       <footer className="border-t border-border-default bg-bg-primary/50 py-8">
