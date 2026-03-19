@@ -19,38 +19,33 @@ export interface UserProfile {
 
 export const getAuthUser = cache(async (): Promise<AuthUser | null> => {
   // Fast path: read verified user from middleware-injected headers (~0ms)
+  // Middleware already checked is_banned — banned users never get x-user-id header.
   const h = await headers();
   const userId = h.get("x-user-id");
   const userEmail = h.get("x-user-email");
 
-  let authUser: AuthUser | null = null;
-
   if (userId) {
-    authUser = { id: userId, email: userEmail ?? "" };
-  } else {
-    // Slow path: call Supabase Auth API (~500ms network round-trip)
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-    if (error || !user) return null;
-    authUser = { id: user.id, email: user.email ?? "" };
+    return { id: userId, email: userEmail ?? "" };
   }
 
-  // Check if user is banned
+  // Slow path: call Supabase Auth API (~500ms network round-trip)
+  // This path is for cases where middleware didn't run (e.g., direct API calls).
   const supabase = await createClient();
-  const { data } = await supabase
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error || !user) return null;
+
+  // Slow path must also check is_banned since middleware didn't handle it
+  const { data: userData } = await supabase
     .from("users")
     .select("is_banned")
-    .eq("id", authUser.id)
+    .eq("id", user.id)
     .single();
+  if (userData?.is_banned) return null;
 
-  if (data?.is_banned) {
-    return null;
-  }
-
-  return authUser;
+  return { id: user.id, email: user.email ?? "" };
 });
 
 export const getUserProfile = cache(async (): Promise<UserProfile | null> => {
@@ -62,12 +57,12 @@ export const getUserProfile = cache(async (): Promise<UserProfile | null> => {
     .select("role, is_banned, plan_type, plan_expires_at")
     .eq("id", authUser.id)
     .single();
-  if (!data) return null;
+  if (!data || data.is_banned) return null;
   return {
     id: authUser.id,
     email: authUser.email,
     role: (data.role as UserRole) ?? "user",
-    isBanned: data.is_banned ?? false,
+    isBanned: false,
     planType: (data.plan_type ?? "free") as "free" | "pro" | "team",
     planExpiresAt: data.plan_expires_at,
   };

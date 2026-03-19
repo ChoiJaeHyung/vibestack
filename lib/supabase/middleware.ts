@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
@@ -7,6 +8,7 @@ export async function updateSession(request: NextRequest) {
   const forwardHeaders = new Headers(request.headers);
   forwardHeaders.delete("x-user-id");
   forwardHeaders.delete("x-user-email");
+  forwardHeaders.delete("x-user-banned");
 
   let supabaseResponse = NextResponse.next({
     request: { headers: forwardHeaders },
@@ -101,6 +103,34 @@ export async function updateSession(request: NextRequest) {
   // Forward verified user info to server components via request headers.
   // This eliminates the duplicate getUser() call in layout (~500ms savings).
   if (user) {
+    // Check is_banned via service client (runs once in middleware, not per Server Action)
+    const serviceUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (serviceUrl && serviceKey) {
+      const service = createClient(serviceUrl, serviceKey);
+      const { data: userData } = await service
+        .from("users")
+        .select("is_banned")
+        .eq("id", user.id)
+        .single();
+
+      if (userData?.is_banned) {
+        // Banned user — redirect to login for protected paths, block API access
+        if (isProtectedPath) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/login";
+          return NextResponse.redirect(url);
+        }
+        if (isInternalApi) {
+          return NextResponse.json(
+            { success: false, error: "Account suspended" },
+            { status: 403 },
+          );
+        }
+        return supabaseResponse;
+      }
+    }
+
     forwardHeaders.set("x-user-id", user.id);
     forwardHeaders.set("x-user-email", user.email || "");
     const cookies = supabaseResponse.cookies.getAll();

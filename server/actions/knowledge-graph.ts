@@ -3,6 +3,7 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { getAuthUser } from "@/lib/supabase/auth";
 import { createLLMProvider } from "@/lib/llm/factory";
 import { getDefaultLlmKeyWithDiagnosis } from "@/server/actions/llm-keys";
 import { MASTERY } from "./mastery-constants";
@@ -108,16 +109,12 @@ export async function getConceptGraph(
   projectId: string,
 ): Promise<{ success: boolean; data?: ConceptGraphData; error?: string }> {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    const authUser = await getAuthUser();
+    if (!authUser) {
       return { success: false, error: "Not authenticated" };
     }
+
+    const supabase = await createClient();
 
     // Verify project ownership + get locale in parallel
     const [projectResult, userResult] = await Promise.all([
@@ -125,9 +122,9 @@ export async function getConceptGraph(
         .from("projects")
         .select("id")
         .eq("id", projectId)
-        .eq("user_id", user.id)
+        .eq("user_id", authUser.id)
         .single(),
-      supabase.from("users").select("locale").eq("id", user.id).single(),
+      supabase.from("users").select("locale").eq("id", authUser.id).single(),
     ]);
 
     if (projectResult.error || !projectResult.data) {
@@ -174,7 +171,7 @@ export async function getConceptGraph(
       kbClient
         .from("user_concept_mastery")
         .select("knowledge_id, concept_key, mastery_level, last_reviewed_at, review_count")
-        .eq("user_id", user.id)
+        .eq("user_id", authUser.id)
         .in("knowledge_id", structure.knowledgeIds),
       getConceptMatchScores(projectId),
     ]);

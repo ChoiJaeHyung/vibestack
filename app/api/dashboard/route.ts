@@ -166,7 +166,14 @@ export async function GET() {
     const hasLearningPaths = learningPaths && learningPaths.length > 0;
     const pathIds = hasLearningPaths ? learningPaths.map((lp) => lp.id) : [];
 
-    const [techResult, moduleResult] = await Promise.all([
+    const planType = ((userResult.data?.plan_type as string) ?? "free") as
+      | "free"
+      | "pro"
+      | "team";
+    const isFree = planType === "free";
+
+    // ── Phase 2: Dependent queries + badges/streak + token budget in parallel
+    const [techResult, moduleResult, allBadgesData, earnedBadgesData, streakResult, tokenBudgetResult] = await Promise.all([
       projectIds.length > 0
         ? supabase
             .from("tech_stacks")
@@ -179,6 +186,10 @@ export async function GET() {
             .select("id, title, learning_path_id, module_order")
             .in("learning_path_id", pathIds)
         : Promise.resolve({ data: null } as { data: null }),
+      getAllBadges(),
+      getUserBadges(authUser.id),
+      getStreak(authUser.id),
+      isFree ? checkTokenBudget(authUser.id) : Promise.resolve(null),
     ]);
 
     // ── Compute tech distribution ───────────────────────────────────
@@ -266,13 +277,6 @@ export async function GET() {
       }),
     );
 
-    // ── Badge + Streak data ──────────────────────────────────────────
-    const [allBadgesData, earnedBadgesData, streakResult] = await Promise.all([
-      getAllBadges(),
-      getUserBadges(authUser.id),
-      getStreak(authUser.id),
-    ]);
-
     const badgesForDashboard = {
       all: allBadgesData.map((b) => ({
         id: b.id,
@@ -285,19 +289,9 @@ export async function GET() {
     };
 
     // ── Usage data ──────────────────────────────────────────────────
-    const planType = ((userResult.data?.plan_type as string) ?? "free") as
-      | "free"
-      | "pro"
-      | "team";
-    const isFree = planType === "free";
-
-    // Token budget for Free non-BYOK users
     let tokenBudget: DashboardData["usage"]["tokenBudget"] = null;
-    if (isFree) {
-      const tb = await checkTokenBudget(authUser.id);
-      if (tb.budget !== null) {
-        tokenBudget = { used: tb.used, limit: tb.budget };
-      }
+    if (tokenBudgetResult && tokenBudgetResult.budget !== null) {
+      tokenBudget = { used: tokenBudgetResult.used, limit: tokenBudgetResult.budget };
     }
 
     const dashboardData: DashboardData = {

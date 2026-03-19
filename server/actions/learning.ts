@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { getAuthUser } from "@/lib/supabase/auth";
 import { createLLMProvider } from "@/lib/llm/factory";
 import { getDefaultLlmKeyWithDiagnosis } from "@/server/actions/llm-keys";
 import { llmKeyErrorMessage } from "@/lib/utils/llm-key-errors";
@@ -47,12 +48,9 @@ async function getUserLocale(userId: string): Promise<Locale> {
  */
 export async function getAuthUserLocale(): Promise<Locale> {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return "ko";
-    return getUserLocale(user.id);
+    const authUser = await getAuthUser();
+    if (!authUser) return "ko";
+    return getUserLocale(authUser.id);
   } catch {
     return "ko";
   }
@@ -1347,23 +1345,19 @@ export async function getLearningPaths(
   projectId: string,
 ): Promise<LearningPathListResult> {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    const authUser = await getAuthUser();
+    if (!authUser) {
       return { success: false, error: "Not authenticated" };
     }
+
+    const supabase = await createClient();
 
     // Verify project belongs to user
     const { data: project, error: projectError } = await supabase
       .from("projects")
       .select("id")
       .eq("id", projectId)
-      .eq("user_id", user.id)
+      .eq("user_id", authUser.id)
       .single();
 
     if (projectError || !project) {
@@ -1376,7 +1370,7 @@ export async function getLearningPaths(
         "id, title, description, difficulty, estimated_hours, total_modules, status, created_at, updated_at",
       )
       .eq("project_id", projectId)
-      .eq("user_id", user.id)
+      .eq("user_id", authUser.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -1393,16 +1387,12 @@ export async function getLearningPathDetail(
   pathId: string,
 ): Promise<LearningPathDetailResult> {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    const authUser = await getAuthUser();
+    if (!authUser) {
       return { success: false, error: "Not authenticated" };
     }
+
+    const supabase = await createClient();
 
     // Fetch learning path
     const { data: path, error: pathError } = await supabase
@@ -1411,7 +1401,7 @@ export async function getLearningPathDetail(
         "id, title, description, difficulty, estimated_hours, total_modules, status, llm_provider, created_at, updated_at",
       )
       .eq("id", pathId)
-      .eq("user_id", user.id)
+      .eq("user_id", authUser.id)
       .single();
 
     if (pathError || !path) {
@@ -1447,7 +1437,7 @@ export async function getLearningPathDetail(
       const { data: progressData } = await supabase
         .from("learning_progress")
         .select("module_id, status, score, time_spent, completed_at")
-        .eq("user_id", user.id)
+        .eq("user_id", authUser.id)
         .in("module_id", moduleIds);
 
       if (progressData) {
